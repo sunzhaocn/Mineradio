@@ -1,78 +1,86 @@
-"""Replace the pinned template's icon launch view with the welcome wordmark.
+"""Compile a blank launch screen into a built, unsigned app using Apple's ibtool.
 
-Only fixed-length NIB values change. Object references, constraints, offsets,
-and executable code remain intact. A new storyboard name avoids the old iOS
-launch snapshot being selected after an in-place app update.
+Call after xcodebuild, before packaging/signing the device app or installing the
+simulator app. No compiled NIB or executable is patched. A distinct storyboard
+name avoids reusing the old logo's cached launch snapshot after an app update.
 """
 from pathlib import Path
 import hashlib
-import io
-import struct
+import plistlib
+import subprocess
+import tempfile
+import xml.etree.ElementTree as ET
+
+STORYBOARD_NAME = 'MineradioBlankLaunchV2'
+STORYBOARD = '''<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0"
+ targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES"
+ launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES"
+ initialViewController="local-launch-controller">
+  <device id="ipad13_0" orientation="landscape" layout="fullscreen"/>
+  <dependencies>
+    <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin"/>
+    <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+    <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+  </dependencies>
+  <scenes>
+    <scene sceneID="local-launch-scene">
+      <objects>
+        <viewController id="local-launch-controller" sceneMemberID="viewController">
+          <view key="view" contentMode="scaleToFill" id="local-launch-view">
+            <rect key="frame" x="0.0" y="0.0" width="1024" height="768"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <viewLayoutGuide key="safeArea" id="local-launch-safe-area"/>
+            <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1"
+             colorSpace="custom" customColorSpace="sRGB"/>
+          </view>
+        </viewController>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="local-launch-first-responder"
+         userLabel="First Responder" sceneMemberID="firstResponder"/>
+      </objects>
+    </scene>
+  </scenes>
+</document>
+'''
 
 
-def patch_launch_nib(raw):
-    assert raw.startswith(b'NIBArchive')
-    header = struct.unpack_from('<10I', raw, 10)
-    assert header[:2] == (1, 10)
-    count, offset, end = header[6], header[7], header[9]
-    data = bytearray(raw)
-
-    def number(pos):
-        value = shift = 0
-        while True:
-            byte = raw[pos]; pos += 1
-            value |= (byte & 127) << shift
-            if byte & 128:
-                return value, pos
-            shift += 7
-            assert shift < 35
-
-    # Keys are read from the archive, never found with an unscoped byte replace.
-    keys, pos = [], header[5]
-    for _ in range(header[4]):
-        length, pos = number(pos)
-        keys.append(raw[pos:pos + length].decode('utf-8')); pos += length
-    changes = []
-    pos = offset
-    sizes = {0: 1, 1: 2, 2: 4, 3: 8, 4: 0, 5: 0, 6: 4, 7: 8, 9: 0, 10: 4}
-    for _ in range(count):
-        key, pos = number(pos); kind = raw[pos]; pos += 1
-        if kind == 8:
-            size, pos = number(pos)
-        else:
-            size = sizes[kind]
-        value = raw[pos:pos + size]
-        replacement = None
-        if keys[key] == 'NS.bytes' and kind == 8 and value == b'Splash':
-            replacement = b'MStart'
-        elif keys[key] in ('UIRed', 'UIGreen', 'UIBlue') and kind == 6:
-            assert struct.unpack('<f', value) == (1.0,)
-            replacement = struct.pack('<f', 0.0)
-        elif keys[key] == 'NSRGB' and kind == 8:
-            assert value == b'1 1 1'
-            replacement = b'0 0 0'
-        if replacement is not None:
-            assert len(replacement) == size
-            data[pos:pos + size] = replacement
-            changes.append(keys[key])
-        pos += size
-    assert pos == end
-    assert sorted(changes) == sorted(['NS.bytes', 'UIRed', 'UIGreen', 'UIBlue', 'NSRGB'])
-    assert len(data) == len(raw)
-    return bytes(data)
-
-
-def make_welcome_png():
-    """Render a code-defined launch UI, without changing the home-screen icon."""
-    from PIL import Image, ImageDraw, ImageFont
-    font_root = Path('C:/Windows/Fonts')
-    title_font = ImageFont.truetype(str(font_root / 'seguisb.ttf'), 78)
-    caption_font = ImageFont.truetype(str(font_root / 'segoeui.ttf'), 14)
-    image = Image.new('RGB', (640, 640), '#000000')
-    draw = ImageDraw.Draw(image)
-    draw.text((320, 299), 'Mineradio', font=title_font, fill='#f8f8f2', anchor='mm')
-    draw.line((268, 360, 372, 360), fill='#7ad7c2', width=2)
-    text = 'PRIVATE VISUAL RADIO'
-    draw.text((320, 389), text, font=caption_font, fill='#aeb9bd', anchor='mm')
-    output = io.BytesIO(); image.save(output, format='PNG')
-    return output.getvalue()
+def install_blank_launch_screen(app, sdk='iphoneos'):
+    """Install the same logo-free launch UI for device and simulator builds."""
+    if sdk not in ('iphoneos', 'iphonesimulator'):
+        raise ValueError('Expected an iOS device or simulator SDK')
+    app = Path(app).resolve(strict=True)
+    info_path = app / 'Info.plist'
+    if app.suffix != '.app' or not info_path.is_file():
+        raise ValueError('Expected a built iOS .app with Info.plist')
+    info = plistlib.loads(info_path.read_bytes())
+    if info.get('CFBundleSupportedPlatforms') != [
+            'iPhoneOS' if sdk == 'iphoneos' else 'iPhoneSimulator']:
+        raise ValueError('Launch-screen SDK does not match the built application')
+    root = ET.fromstring(STORYBOARD)
+    if root.find('.//imageView') is not None or root.find('.//label') is not None:
+        raise ValueError('The launch screen must contain no image or wordmark')
+    sdk_path = subprocess.check_output(
+        ['xcrun', '--sdk', sdk, '--show-sdk-path'], text=True).strip()
+    compiled = app / (STORYBOARD_NAME + '.storyboardc')
+    with tempfile.TemporaryDirectory(prefix='mineradio-launch-') as directory:
+        source = Path(directory) / (STORYBOARD_NAME + '.storyboard')
+        source.write_text(STORYBOARD, encoding='utf-8')
+        subprocess.run(['xcrun', 'ibtool', '--compile', str(compiled), str(source),
+                        '--sdk', sdk_path, '--minimum-deployment-target',
+                        str(info.get('MinimumOSVersion', '16.4')),
+                        '--target-device', 'ipad', '--target-device', 'iphone',
+                        '--errors', '--warnings', '--notices'], check=True)
+    if not compiled.is_dir() or not any(compiled.glob('*.nib')):
+        raise RuntimeError('Apple ibtool did not produce a compiled launch screen')
+    info['UILaunchStoryboardName'] = STORYBOARD_NAME
+    for key in ('UILaunchStoryboardName~ipad', 'UILaunchStoryboardName~iphone',
+                'UILaunchScreen', 'UILaunchStoryboards'):
+        info.pop(key, None)
+    info['UIStatusBarHidden'] = True
+    # Briefcase 0.3.26's template defaults this key to true. On iPadOS 26
+    # that opts into a fixed-size scene scaled inside a user-managed window.
+    info['UIRequiresFullScreen'] = False
+    info_path.write_bytes(plistlib.dumps(info, fmt=plistlib.FMT_BINARY))
+    return dict(storyboard=STORYBOARD_NAME, containsLogo=False, sdk=sdk,
+                sourceSHA256=hashlib.sha256(STORYBOARD.encode('utf-8')).hexdigest(),
+                fullScreenPolicy='fill-current-window')

@@ -37,6 +37,9 @@ jobs:
           if [ -d checks ]; then
             python -m unittest discover -s checks -p 'test_*.py' -v
           fi
+          if [ -f checks/check_qishui_phone_security.cjs ]; then
+            node checks/check_qishui_phone_security.cjs
+          fi
       - name: Select installed Xcode 26 for iPadOS 26
         shell: python
         run: |

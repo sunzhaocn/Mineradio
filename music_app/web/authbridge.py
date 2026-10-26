@@ -55,7 +55,8 @@ class LocalAuth:
             raise _web_auth_security._error(400, 'login_provider_invalid', '请选择有效的音乐平台')
         if 'client_id' in payload and not re.fullmatch(r'[A-Za-z0-9_-]{32,128}', payload['client_id']):
             raise _web_auth_security._error(400, 'login_client_invalid', '客户端登录标识无效，请重新打开登录页面')
-        if operation in ('sms', 'login') and provider != 'netease':
+        from music_app.platform_runtime import is_ios
+        if operation in ('sms', 'login') and provider != 'netease' and not (provider == 'qishui' and is_ios()):
             raise _web_auth_security._error()
         if operation in ('sms', 'login') and not payload.get('phone'):
             raise _web_auth_security._error(400, 'login_phone_required', '请输入手机号')
@@ -64,7 +65,8 @@ class LocalAuth:
         if operation == 'session':
             method = payload.get('method', '')
             from music_app.platform_runtime import is_ios
-            official = is_ios() and method == 'official' and provider in ('netease','qq','kugou','qishui')
+            official = is_ios() and (method == 'official' and provider in ('netease','qq','kugou','qishui')
+                                    or provider == 'qishui' and method in ('', 'phone', 'sms'))
             if not official and (provider == 'qq' and method not in ('', 'qq', 'wechat', 'mobile') or
                     provider == 'netease' and method not in ('', 'phone', 'password', 'sms') or
                     provider not in ('qq', 'netease') and method):
@@ -159,7 +161,8 @@ class LocalAuth:
                 result = self.auth.check(_web_auth_data.PROVIDERS[provider], key)
             else:
                 fields = {k: v for k, v in payload.items() if k not in ('provider', 'key', 'client_id')}
-                result = self.auth.phone_action('send_sms' if operation == 'sms' else 'login_phone', key, **fields)
+                result = self.auth.phone_action('send_sms' if operation == 'sms' else 'login_phone', key,
+                                               expected_platform=_web_auth_data.PROVIDERS[provider], **fields)
             with self.lock:
                 owned = self._require_owned(provider, key, client_id)
                 response = self._public(provider, result)

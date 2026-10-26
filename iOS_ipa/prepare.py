@@ -23,6 +23,11 @@ ICON_SIZES = (20, 29, 40, 58, 60, 76, 80, 87, 120, 152, 167, 180, 640, 1024, 128
 SDK_URL = 'https://sf3-ttcdn-tos.pstatp.com/obj/volcengine/VolMetaSecML/4.3.9/VolMetaSecML.zip'
 SDK_SHA256 = '06fe7eeaef17a76f61c6480299f22a9fa651770992ffda49ee970efaa513c1d5'
 LIB_SHA256 = 'ccd447a70b69b593041efda9ccc675f8c60cc81dee61065a04977020231510d8'
+VERIFY_URL = 'https://lf-rc1.yhgfb-cn-static.com/obj/rc-verifycenter/verifycenter/1.0.0.427/index.js'
+VERIFY_URLS = (VERIFY_URL,
+    VERIFY_URL.replace('lf-rc1.yhgfb-cn-static.com', 'lf-rc2.yhgfb-cn-static.com'),
+    VERIFY_URL.replace('lf-rc1.yhgfb-cn-static.com', 'lf-cdn-tos.bytescm.com'))
+VERIFY_SHA256 = '34ab7e29bc9f638008074bf615570cb940815ca67e28ff2a29e22af24d721be2'
 
 
 def prepare_signer():
@@ -53,6 +58,27 @@ def replace_generated(source, destination):
     if destination.exists():
         shutil.rmtree(destination)
     shutil.copytree(source, destination, ignore=shutil.ignore_patterns('tests', '__pycache__', '*.pyc'))
+
+
+def prepare_phone_security(passport):
+    cache = PROJECT / 'build/passport-verify-sdk.js'
+    if not cache.is_file() or hashlib.sha256(cache.read_bytes()).hexdigest() != VERIFY_SHA256:
+        for index, url in enumerate(VERIFY_URLS):
+            try:
+                with urllib.request.urlopen(url, timeout=30) as response:
+                    raw = response.read(2 * 1024 * 1024)
+                break
+            except OSError:
+                if index == len(VERIFY_URLS) - 1:
+                    raise
+        if hashlib.sha256(raw).hexdigest() != VERIFY_SHA256:
+            raise ValueError('Official Passport verification SDK hash mismatch')
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_bytes(raw)
+    (passport / 'verify-sdk.js').write_bytes(cache.read_bytes())
+    shutil.copy2(PROJECT / 'assets/qishui-phone-security.js', passport / 'phone-security.js')
+    (passport / 'verify-provenance.json').write_text(json.dumps(dict(
+        source=VERIFY_URL, mirrors=VERIFY_URLS, sha256=VERIFY_SHA256, version='1.0.0.427'), indent=2), encoding='utf-8')
 
 
 def prepare(skip_deps=False, qishui_config=None):
@@ -89,6 +115,7 @@ def prepare(skip_deps=False, qishui_config=None):
         assets = _security_assets()
         for name in ('security_seed.html', 'security_host.html', 'bdms.js', 'sdk-glue.js', 'react.js', 'react-dom.js'):
             (passport / name).write_bytes(assets[name])
+        prepare_phone_security(passport)
         # The platform SDK is linked separately. Source preparation alone
         # never certifies its license, network callback or media runtime.
         hashes = {p.relative_to(bundle).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -97,7 +124,7 @@ def prepare(skip_deps=False, qishui_config=None):
             {'version': VERSION, 'platform': 'ios', 'files': hashes,
              'runtime': 'embedded-local', 'remoteBackendRequired': False,
              'qishuiConfigured': public['configured'],
-             'qishuiPhoneLoginImplemented': False,
+             'qishuiPhoneLoginImplemented': True,
              'validationPending': ['qishuiNativeSigning', 'qishuiAccountFlow', 'physicalDevice'],
              'accountFilesIncluded': False}, ensure_ascii=False, indent=2), encoding='utf-8')
         replace_generated(bundle, APP / 'bundle')

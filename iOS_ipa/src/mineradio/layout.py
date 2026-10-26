@@ -108,6 +108,8 @@ class LayoutMonitor:
                         applied = await self.app.web.evaluate_javascript(script)
                         if applied:
                             self._last_key = key
+                            from . import presentation
+                            presentation.write_diagnostic(self.app)
                     except Exception:
                         pass  # The initial document can still be loading.
                 await asyncio.sleep(.4)

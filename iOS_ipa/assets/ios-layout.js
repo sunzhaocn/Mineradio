@@ -1,5 +1,11 @@
 'use strict';
 (function () {
+  // The native app opens directly into its player. Use the existing fast-skip
+  // path so home/queue restoration and startup autoplay keep their normal flow.
+  try { localStorage.setItem('mineradio-startup-fast-skip-v1','1'); } catch (_) { }
+  function skipIntro() {
+    if (typeof dismissSplash==='function') dismissSplash({instant:true});
+  }
   function finite(value) { return typeof value==='number' && isFinite(value) && value>0; }
   function normalize(value) {
     if (!value || (value.deviceFamily!=='ipad' && value.deviceFamily!=='iphone')
@@ -74,6 +80,7 @@
     return true;
   }
   function ready() {
+    skipIntro();
     if (!bootstrapping) return;
     bootstrapping=false;
     if (window.mineradioIOSLayoutDiagnostic) window.mineradioIOSLayoutDiagnostic.bootstrapping=false;

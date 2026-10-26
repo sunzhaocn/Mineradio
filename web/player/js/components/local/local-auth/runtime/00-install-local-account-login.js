@@ -14,7 +14,8 @@
   var PROFILE_SCHEMA = 2;
   var currentProvider = 'netease', phoneMode = 'sms', sessionKey = '', sessionDeadline = 0;
   var sessionManual = false, sessionInteractive = false;
-  function nativeAccountLogin(provider) { return !!window.__mineradioIOS && providers.indexOf(provider) >= 0; }
+  function qishuiPhoneLogin(provider) { return !!window.__mineradioIOS && provider === 'qishui'; }
+  function nativeAccountLogin(provider) { return !!window.__mineradioIOS && providers.indexOf(provider) >= 0 && !qishuiPhoneLogin(provider); }
   var actionEpoch = 0, pollTimer = 0, smsTimer = 0, smsNextAt = 0;
   var opened = false, busy = false, reauth = false, loginMode = 'official', ui = null;
   function storageDescription() { return window.__mineradioIOS ? '登录信息保存在这台设备中。' : 'Cookie 保存在当前浏览器，每次请求自动携带。'; }
@@ -411,14 +412,16 @@
   }
   function renderProvider() {
     var provider = currentProvider, account = accounts[provider] || {};
-    var isPhone = provider === 'netease' && !window.__mineradioIOS, loggedIn = !!account.loggedIn, manual = loginMode === 'cookie';
+    var qishuiPhone = qishuiPhoneLogin(provider);
+    var isPhone = provider === 'netease' && !window.__mineradioIOS || qishuiPhone, loggedIn = !!account.loggedIn, manual = loginMode === 'cookie';
+    if (qishuiPhone) phoneMode = 'sms';
     var nativeLogin = nativeAccountLogin(provider);
     var showSaved = !!localAccount(provider).cookie && !reauth;
     ui.root.dataset.provider = provider;
     ui.title.textContent = showSaved ? labels[provider] : ('登录' + labels[provider]);
     ui.description.textContent = showSaved
       ? (account.reauthRequired ? '登录已失效，请点击重新登录。' : storageDescription())
-      : (manual ? '粘贴当前平台的 Cookie，保存到当前浏览器。' : (nativeLogin ? '在平台官方窗口使用账号密码或验证码登录，授权后回到播放器。' : isPhone ? '使用手机号和短信验证码，或账号密码登录。' : '二维码会自动生成，请扫码并在手机上确认登录。'));
+      : (manual ? '粘贴当前平台的 Cookie，保存到当前浏览器。' : (qishuiPhone ? '使用汽水官方短信验证码登录，登录信息保存在这台 iPad 中。' : nativeLogin ? '在平台官方窗口使用账号密码或验证码登录，授权后回到播放器。' : isPhone ? '使用手机号和短信验证码，或账号密码登录。' : '二维码会自动生成，请扫码并在手机上确认登录。'));
     ui.account.hidden = !showSaved;
     ui.accountActions.hidden = !showSaved;
     ui.profileRefresh.hidden = localAccount(provider).source !== 'manual';
@@ -427,12 +430,16 @@
     ui.savedCookie.value = showSaved ? (localAccount(provider).cookie || '') : '';
     ui.phoneForm.hidden = !isPhone || manual;
     ui.qrPanel.hidden = isPhone || manual || nativeLogin;
-    ui.officialBlock.hidden = !window.__mineradioIOS || manual || showSaved;
+    ui.officialBlock.hidden = !window.__mineradioIOS || manual || showSaved || qishuiPhone;
     ui.modeCookie.hidden = !!window.__mineradioIOS;
     ui.savedCredentials.hidden = !!window.__mineradioIOS || !showSaved;
     ui.officialOpen.textContent = nativeLogin ? '账号密码 / 验证码登录' : '使用官方窗口登录或完成验证';
     ui.cookieForm.hidden = !manual;
     ui.modeOfficial.textContent = nativeLogin ? '账号登录' : isPhone ? '手机号登录' : '扫码登录';
+    ui.modePassword.hidden = qishuiPhone;
+    ui.submit.textContent = '登录' + labels[provider];
+    ui.captcha.pattern = qishuiPhone ? '[0-9]{6}' : '[0-9]{4,8}';
+    ui.captcha.maxLength = qishuiPhone ? 6 : 8;
     ui.modeOfficial.classList.toggle('active', !manual);
     ui.modeCookie.classList.toggle('active', manual);
     ui.modeOfficial.setAttribute('aria-pressed', String(!manual));
@@ -478,7 +485,7 @@
     autoGenerateQr();
   }
   function autoGenerateQr() {
-    if (!nativeAccountLogin(currentProvider) && opened && currentProvider !== 'netease' && loginMode === 'official' &&
+    if (!nativeAccountLogin(currentProvider) && !qishuiPhoneLogin(currentProvider) && opened && currentProvider !== 'netease' && loginMode === 'official' &&
         (!localAccount(currentProvider).cookie || reauth) && !sessionKey && !busy) generateQr();
   }
   function switchProvider(provider) {
@@ -504,7 +511,7 @@
     if (sessionKey && Date.now() < sessionDeadline) return sessionKey;
     sessionKey = '';
     sessionDeadline = 0;
-    var result = await request('session', { provider: provider, method: provider === 'qq' ? ui.qqMethod.value : undefined });
+    var result = await request('session', { provider: provider, method: qishuiPhoneLogin(provider) ? 'sms' : provider === 'qq' ? ui.qqMethod.value : undefined });
     if (!isCurrent(epoch, provider)) return '';
     if (!result.key) throw new Error(result.message || result.msg || '未能创建登录会话，请重试。');
     rememberSession(result);
@@ -513,6 +520,14 @@
   async function openOfficialLogin() {
     if (busy || !opened || loginMode !== 'official') return;
     var provider = currentProvider, epoch = actionEpoch;
+    if (qishuiPhoneLogin(provider)) {
+      if (!sessionKey || !sessionInteractive) return;
+      setBusy(true);
+      try { await request('show', {provider:provider,key:sessionKey}); }
+      catch (error) { if (isCurrent(epoch,provider)) report(errorMessage(error),'error'); }
+      finally { if (isCurrent(epoch,provider)) setBusy(false); }
+      return;
+    }
     if (!sessionKey || !sessionManual || Date.now() >= sessionDeadline) {
       stopPending(); epoch = actionEpoch;
     }
@@ -552,6 +567,16 @@
     if (typeof showToast === 'function') showToast(labels[provider] + '登录成功');
   }
   function isAuthorized(result) { return result && (result.authorized === true || result.status === 'authorized') && typeof result.cookie === 'string' && !!result.cookie; }
+  function phoneVerification(result, epoch, provider) {
+    if (!qishuiPhoneLogin(provider) || !result) return;
+    sessionInteractive = result.verification_required === true && result.interactive_window === true;
+    ui.officialBlock.hidden = !sessionInteractive;
+    ui.officialOpen.textContent = '打开安全验证窗口';
+    if (sessionInteractive) {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(function () { pollQr(epoch,provider); },3000);
+    }
+  }
   async function sendSms() {
     if (busy || Date.now() < smsNextAt) return;
     updatePhoneValidation();
@@ -569,6 +594,7 @@
       var result = await request('sms', { provider: provider, key: key, phone: phone, countrycode: country });
       if (!isCurrent(epoch, provider)) return;
       forgetExpired(result);
+      phoneVerification(result, epoch, provider);
       var sent = result.sms_sent === true || result.status === 'sms_sent';
       report(result.message || result.msg || (sent ? '验证码已发送，请查看手机短信。' : '短信发送尚未确认，请检查安全验证提示后手动重试。'), sent ? 'success' : 'error');
     } catch (error) {
@@ -595,6 +621,7 @@
       var result = await request('login', payload);
       if (!isCurrent(epoch, provider)) return;
       forgetExpired(result);
+      phoneVerification(result, epoch, provider);
       if (isAuthorized(result)) await onAuthorized(result, epoch, provider);
       else report(result.message || result.msg || '尚未完成登录，请检查填写内容或完成官方安全验证。', 'error');
     } catch (error) {
@@ -674,6 +701,7 @@
       var result = await request('check', { provider: provider, key: sessionKey });
       if (!isCurrent(epoch, provider)) return;
       if (isAuthorized(result)) { await onAuthorized(result, epoch, provider); return; }
+      if (qishuiPhoneLogin(provider)) phoneVerification(result, epoch, provider);
       if(provider==='qishui'&&result.remote_verification&&result.verification_required&&window.mineradioQishuiVerification){
         ui.qrPanel.hidden=true;
         mineradioQishuiVerification.open(ui.login,function(input){return request('verify',{provider:provider,key:sessionKey,...(input?{input:input}:{})});},function(){return isCurrent(epoch,provider)&&!!sessionKey;});
@@ -701,7 +729,7 @@
     }
   }
   async function generateQr() {
-    if (busy || !opened || currentProvider === 'netease' || loginMode !== 'official') return;
+    if (busy || !opened || currentProvider === 'netease' || qishuiPhoneLogin(currentProvider) || loginMode !== 'official') return;
     stopPending();
     var epoch = actionEpoch, provider = currentProvider;
     setBusy(true);
@@ -746,6 +774,7 @@
     finally { if (isCurrent(epoch, provider)) { setBusy(false); autoGenerateQr(); } }
   }
   function changePhoneMode(mode) {
+    if (qishuiPhoneLogin(currentProvider) && mode !== 'sms') return;
     if (phoneMode === mode) return;
     stopPending();
     clearFields();

@@ -10,6 +10,7 @@ import sys
 import zipfile
 import tomllib
 from native_build import linker_settings
+from launch_screen import install_blank_launch_screen
 
 PROJECT = Path(__file__).resolve().parent
 VERSION = tomllib.loads((PROJECT / 'pyproject.toml').read_text(encoding='utf-8'))['tool']['briefcase']['version']
@@ -43,6 +44,7 @@ def build():
         'TARGETED_DEVICE_FAMILY=1,2', 'ARCHS=arm64', 'ONLY_ACTIVE_ARCH=NO',
         'CONFIGURATION_BUILD_DIR=' + str(products), *linker_settings('iphoneos', 'arm64'), 'build')
     app = products / 'Mineradio.app'
+    launch = install_blank_launch_screen(app, 'iphoneos')
     info = plistlib.loads((app / 'Info.plist').read_bytes())
     if set(info.get('UIDeviceFamily', [])) != {1, 2}:
         raise RuntimeError('Build must support both iPhone and iPad')
@@ -69,7 +71,8 @@ def build():
               'channel': 'ipad-local-preview', 'runtime': 'embedded-local',
               'remoteBackendRequired': False,
               'qishuiConfigured': bool(manifest.get('qishuiConfigured')),
-              'qishuiPhoneLoginImplemented': False, 'qishuiRuntimeValidated': False,
+              'qishuiPhoneLoginImplemented': True, 'qishuiAccountAuthorized': False, 'qishuiRuntimeValidated': False,
+              'presentation': launch,
               'install': 'Sign and install with your own Apple account on Windows'}
     (dist / 'build-result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     print(json.dumps(report))

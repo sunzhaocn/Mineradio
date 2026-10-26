@@ -267,7 +267,7 @@
     });
     var area=document.getElementById('login-platform-tabs');
     if (area) { var note=document.createElement('p'); note.className='mineradio-ios-note';
-      note.textContent='账号保存在这台设备中。汽水密码／验证码登录尚未接通，其他平台可通过官方窗口登录。'; area.after(note); }
+      note.textContent='账号保存在这台设备中。汽水使用短信验证码，其他平台通过官方窗口登录。'; area.after(note); }
     report();
   });
   setInterval(report,1000);

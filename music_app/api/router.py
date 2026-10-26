@@ -89,6 +89,7 @@ def _dispatch_request(path, params, *, method="GET", payload=None):
                     result = auth_router.phone_action(
                         "send_sms" if operation == "sms_send" else "login_phone",
                         payload.get("key", ""),
+                        expected_platform=platform,
                         **fields
                     )
             elif operation == "qr":

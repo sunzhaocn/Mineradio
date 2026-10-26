@@ -43,11 +43,12 @@ class OptionalSDK(unittest.TestCase):
 
 
 class IOSLogin(unittest.TestCase):
-    def test_pending_qishui_does_not_start_a_qr_browser(self):
+    def test_qishui_creates_phone_session_without_qr_or_network(self):
         with patch.dict(os.environ, MINERADIO_IOS='1'), patch.object(router, '_adapter') as adapter:
-            with self.assertRaises(router.AuthError) as result:
-                router.create('qishui', 'official')
-            self.assertEqual(result.exception.code, 'qishui_phone_login_pending')
+            result = router.create('qishui', 'official')
+            self.assertEqual(result['method'], 'phone')
+            self.assertNotIn('qr_url', result)
+            self.assertNotIn('qr_image', result)
             adapter.assert_not_called()
 
     def test_legacy_scan_methods_cannot_start_on_ios(self):
@@ -57,12 +58,12 @@ class IOSLogin(unittest.TestCase):
                     router.create('qqmusic', method)
             adapter.assert_not_called()
 
-    def test_official_qishui_request_reaches_an_honest_error(self):
+    def test_qishui_phone_session_passes_local_bridge(self):
         with patch.dict(os.environ, MINERADIO_IOS='1'):
-            from music_app.web.auth_security import LocalAuthError
-            with self.assertRaises(LocalAuthError) as result:
-                LocalAuth().handle('session', dict(provider='qishui', method='official', client_id='a' * 32))
-            self.assertEqual(result.exception.code, 'qishui_phone_login_pending')
+            result = LocalAuth().handle('session', dict(provider='qishui', method='sms', client_id='a' * 32))
+            self.assertEqual(result['method'], 'phone')
+            self.assertFalse(result.get('authorized'))
+            self.assertNotIn('qr_image', result)
 
     def test_a_different_client_cannot_take_over_a_login(self):
         auth = LocalAuth()
@@ -98,7 +99,8 @@ with tempfile.TemporaryDirectory() as directory:
         with urllib.request.urlopen(base + '/api/platform/capabilities') as response:
             caps = json.load(response)
         assert caps['qishui']['available'] is False
-        assert caps['qishui']['phoneLoginAvailable'] is False
+        assert caps['qishui']['phoneLoginAvailable'] is True
+        assert caps['qishui']['phoneLoginValidated'] is False
         # Keep an HTTP/1.1 connection open: shutdown must wake and join its
         # request worker rather than leave a daemon writing during finalization.
         idle = http.client.HTTPConnection('127.0.0.1', port, timeout=5)

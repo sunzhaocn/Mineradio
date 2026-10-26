@@ -34,7 +34,7 @@ def export():
     output = dist / ('Mineradio-iOS-' + VERSION + '-local-source.zip')
     files = {}
     for name in ('pyproject.toml', 'LICENSE.txt', 'README.md', 'build_unsigned.py', 'build_simulator_smoke.py', 'verify_ipa.py',
-                 'native_build.py', '云端构建.ps1', '开始云端构建.bat'):
+                 'native_build.py', 'launch_screen.py', '云端构建.ps1', '开始云端构建.bat'):
         data = (PROJECT / name).read_bytes()
         files[name] = b'\xef\xbb\xbf' + data.decode('utf-8-sig').encode('utf-8') if name.endswith('.ps1') else data
     for directory in ('src', 'resources', 'native'):

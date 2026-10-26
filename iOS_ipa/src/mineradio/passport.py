@@ -21,9 +21,9 @@ COOKIE_HOSTS = frozenset({'qishui.com', 'api.qishui.com', 'www.qishui.com', 'bff
 REQUEST_HOSTS = COOKIE_HOSTS - {'qishui.com'}
 RESOURCE_SUFFIXES = ('qishui.com', 'snssdk.com', 'zijieapi.com', 'douyin.com',
                      'bytedance.com', 'byteimg.com', 'bytedstatic.com', 'bytetos.com',
-                     'bytegoofy.com', 'yhgfb-cn-static.com')
+                     'bytegoofy.com', 'yhgfb-cn-static.com', 'bytescm.com')
 ASSET_NAMES = ('security_seed.html', 'security_host.html', 'bdms.js', 'sdk-glue.js',
-               'react.js', 'react-dom.js')
+               'react.js', 'react-dom.js', 'verify-sdk.js', 'phone-security.js')
 MAX_MESSAGE = 2 * 1024 * 1024
 _host = None
 _delegate_class = None
@@ -94,6 +94,10 @@ localStorage.setItem('xmst',TOKEN);localStorage.setItem('xmsty',TOKEN);
     if needle not in body:
         raise ValueError('Missing Passport verification entry')
     body = body.replace(needle, needle + "\nif(!window.__qishuiIOSAllowedResource(url))return Promise.reject(new Error('验证组件地址不受支持'));", 1)
+    body = body.replace('</body>', script(assets['verify-sdk.js'].decode('utf-8')) +
+                        script(assets['phone-security.js'].decode('utf-8')) + '</body>', 1)
+    body = body.replace('window.__qishuiCancelSecondVerify()',
+        'window.__qishuiCancelPhoneVerify();window.__qishuiCancelSecondVerify()')
     return body
 
 
@@ -157,7 +161,17 @@ async def diagnostic():
     try:
         info = await _host.open(key, secrets.token_urlsafe(88) + '==')
         origin = _host.active.origin
-        return dict(ready=True, browserInfoPresent=bool(info), securityOrigin=origin)
+        checks = await _host.active.evaluate('''({
+          phoneVerificationBridge:typeof window.__qishuiPhoneVerify==='function',
+          captchaSDK:!!(window.verifySDK&&typeof window.verifySDK.autoRender==='function')
+        })''')
+        await _host.active.call('set_cookies', [dict(name='mineradio_build_probe', value='synthetic',
+                                                   domain='api.qishui.com', path='/')])
+        cookies = await _host.active.cookies()
+        cookie_store = any(c['name'] == 'mineradio_build_probe' and c['value'] == 'synthetic' for c in cookies)
+        return dict(ready=bool(checks.get('phoneVerificationBridge') and checks.get('captchaSDK') and cookie_store),
+                    browserInfoPresent=bool(info), securityOrigin=origin, cookieStoreRoundTrip=cookie_store,
+                    **checks)
     finally:
         await _host.close(key)
 
@@ -399,6 +413,41 @@ class _Flow:
         return await asyncio.wait_for(future, timeout=5)
 
     async def call(self, method, payload):
+        if method == 'set_cookies':
+            # Only credentials returned by this flow's official response are
+            # accepted by the Python adapter. Never use the shared cookie store.
+            if not isinstance(payload, list) or len(payload) > 100:
+                raise ValueError('Invalid Passport cookies')
+            from rubicon.objc import ObjCClass, Block, ns_from_py, objc_const
+            from rubicon.objc.runtime import load_library
+            foundation = load_library('Foundation')
+            store = self.view.configuration.websiteDataStore.httpCookieStore
+            for value in payload:
+                if (not isinstance(value, dict) or value.get('domain', '').lstrip('.') not in COOKIE_HOSTS
+                        or not re.fullmatch(r"[!#$%&'*+.^_`|~0-9A-Za-z-]{1,128}", value.get('name', ''))
+                        or not isinstance(value.get('value'), str) or not value['value'] or len(value['value']) > 65536
+                        or any(ord(c) < 32 or ord(c) == 127 for c in value['value'])
+                        or value.get('path') != '/'):
+                    raise ValueError('Invalid Passport cookie')
+                properties = {
+                    str(objc_const(foundation, 'NSHTTPCookieName')): value['name'],
+                    str(objc_const(foundation, 'NSHTTPCookieValue')): value['value'],
+                    str(objc_const(foundation, 'NSHTTPCookieDomain')): value['domain'],
+                    str(objc_const(foundation, 'NSHTTPCookiePath')): '/',
+                    str(objc_const(foundation, 'NSHTTPCookieSecure')): 'TRUE',
+                    'HttpOnly': 'TRUE',
+                }
+                cookie = ObjCClass('NSHTTPCookie').cookieWithProperties(ns_from_py(properties))
+                if not cookie:
+                    raise ValueError('Invalid Passport cookie')
+                future = asyncio.get_running_loop().create_future()
+                def completed() -> None:
+                    if not future.done():
+                        future.set_result(True)
+                callback = Block(completed, None)
+                store.setCookie(cookie, completionHandler=callback)
+                await asyncio.wait_for(future, timeout=5)
+            return True
         if method == 'request':
             if not isinstance(payload, dict) or not allowed_request_url(payload.get('url')):
                 raise ValueError('Passport request URL is not allowed')
@@ -430,7 +479,7 @@ class _Flow:
             if decision.get('url') and not allowed_resource_url(decision['url']):
                 raise ValueError('Verification resource URL is not allowed')
             return await self.evaluate('''(()=>{window.__authMfaResult=null;const spec=PAYLOAD;
-                window.__qishuiSecondVerify(spec.decision,spec.options).then(value=>window.__authMfaResult=value)
+                (spec.phone?window.__qishuiPhoneVerify:window.__qishuiSecondVerify)(spec.decision,spec.options).then(value=>window.__authMfaResult=value)
                 .catch(()=>window.__authMfaResult={status:false});return true;})()'''.replace(
                     'PAYLOAD', json.dumps(payload, ensure_ascii=True)))
         if method == 'verify_status':

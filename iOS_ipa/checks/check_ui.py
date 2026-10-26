@@ -61,19 +61,28 @@ def main():
                 page.screenshot(path=str(output / 'ipad-local-player.png'))
                 for provider in ('netease', 'qq', 'kugou', 'qishui'):
                     page.evaluate('(provider) => showLoginModal({provider})', provider)
-                    button = page.locator('#local-auth-open-official')
-                    button.wait_for(state='visible')
-                    assert button.inner_text() == '账号密码 / 验证码登录'
+                    page.wait_for_function('''() => {
+                      const mask=document.getElementById('login-modal'),panel=mask&&mask.querySelector('.dual-login-modal');
+                      return mask&&panel&&Number(getComputedStyle(mask).opacity)>.95&&Number(getComputedStyle(panel).opacity)>.95;
+                    }''')
                     assert not page.get_by_role('button', name='手动输入 Cookie', exact=True).is_visible()
                     assert not page.locator('.local-auth-qr').is_visible()
-                    assert not page.get_by_role('textbox', name='手机号', exact=True).is_visible()
-                    report['providers'][provider] = dict(officialLoginButton=True, qrVisible=False)
                     if provider == 'qishui':
-                        button.click()
-                        page.get_by_role('status').filter(has_text='汽水密码／验证码登录尚未接通').wait_for()
-                        report['providers'][provider]['pendingErrorVisible'] = True
+                        field = page.get_by_role('textbox', name='手机号', exact=True)
+                        field.wait_for(state='visible')
+                        assert not page.get_by_role('button', name='账号密码', exact=True).is_visible()
+                        assert page.get_by_role('button', name='获取验证码', exact=True).is_visible()
+                        assert not page.locator('#local-auth-open-official').is_visible()
+                        report['providers'][provider] = dict(phoneLoginForm=True, qrVisible=False, nativeAccountAuthorized=False)
                         page.screenshot(path=str(output / 'ipad-local-login.png'))
+                    else:
+                        button = page.locator('#local-auth-open-official')
+                        button.wait_for(state='visible')
+                        assert button.inner_text() == '账号密码 / 验证码登录'
+                        assert not page.get_by_role('textbox', name='手机号', exact=True).is_visible()
+                        report['providers'][provider] = dict(officialLoginButton=True, qrVisible=False)
                     page.evaluate('closeLoginModal()')
+                    page.locator('#login-modal').wait_for(state='hidden')
                 page.reload(wait_until='domcontentloaded')
                 page.wait_for_function('window.MINERADIO_MODULE_STATUS && window.MINERADIO_MODULE_STATUS.ready === true', timeout=45000)
                 library = page.evaluate('async () => browserLocalMusic.listLocalMusicLibrary()')
