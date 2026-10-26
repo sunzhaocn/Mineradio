@@ -119,13 +119,6 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         """解析 URL → 调用业务路由 → 将 JSON 或 302 重定向写回客户端。"""
         request_url = urllib.parse.urlparse(self.path)
-        login_assets = {"/login/assets/" + name: (name, "text/javascript; charset=utf-8")
-                        for name in ("state.js", "view.js", "transport.js", "qr.js", "phone.js", "app.js")}
-        login_assets["/login/assets/login.css"] = ("login.css", "text/css; charset=utf-8")
-        if request_url.path in login_assets:
-            filename, content_type = login_assets[request_url.path]
-            return self._send(200, (WEB_ROOT / "login" / filename).read_bytes(),
-                              {"Content-Type": content_type})
         params = api_params.RequestParams(request_url.query)
         try:
             credentials = request_credentials.parse_request(self.headers, params, 'qishui' if request_url.path == '/qishui/audio' else None)
@@ -135,9 +128,6 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(
                 403, {"code": "login_local_only", "msg": "扫码登录接口仅供本机客户端和本机网页调用"}
             )
-        if request_url.path in ("/login/ui", "/api/login/ui"):
-            with open(str(WEB_ROOT / "login" / "index.html"), "rb") as page:
-                return self._send(200, page.read(), {"Content-Type": "text/html; charset=utf-8"})
         if request_url.path == "/qishui/audio":
             from music_app.providers.qishui.playback import serve_audio
 

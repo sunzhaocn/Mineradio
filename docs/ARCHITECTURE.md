@@ -1,6 +1,6 @@
 # 模块对应关系
 
-`main.py` → `music_app/launcher.py` → API 与网页两个 HTTPServer。
+Windows 的 `Windows_exe/backend_entry.py` 调用 `music_app/launcher.py` 管理客户端内嵌 API 与界面服务；Android 和 iOS 通过各自的客户端入口启动。
 启动器先绑定全部端口，再开启服务线程；绑定失败会回收已创建的服务，不自动漂移端口。
 
 ## 请求链

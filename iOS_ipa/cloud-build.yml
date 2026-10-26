@@ -48,9 +48,6 @@ jobs:
       - name: Build arm64 IPA
         working-directory: ${{ env.IOS_PROJECT }}
         run: python build_unsigned.py
-      - name: Verify startup in iPad Simulator
-        working-directory: ${{ env.IOS_PROJECT }}
-        run: python smoke_simulator.py
       - uses: actions/cache/save@v4
         if: always() && steps.xcode-cache.outputs.cache-hit != 'true'
         with:

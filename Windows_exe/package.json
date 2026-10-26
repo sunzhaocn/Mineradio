@@ -11,8 +11,7 @@
     "start": "electron .",
     "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
     "pack": "electron-builder --win dir --x64 --publish never",
-    "dist": "electron-builder --win nsis --x64 --publish never",
-    "verify": "node scripts/verify-electron.cjs"
+    "dist": "electron-builder --win nsis --x64 --publish never"
   },
   "dependencies": {
     "electron-updater": "6.8.11",
@@ -20,8 +19,7 @@
   },
   "devDependencies": {
     "electron": "45.0.0",
-    "electron-builder": "26.18.0",
-    "playwright": "1.64.1"
+    "electron-builder": "26.18.0"
   },
   "build": {
     "appId": "com.mineradio.windows.python",

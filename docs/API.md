@@ -1,6 +1,5 @@
 # 接口入口
 
-启动 `python main.py` 后，API 为 `http://127.0.0.1:18000`。
 平台为 `netease`、`qqmusic`、`kugou`、`qishui`，原有别名继续兼容。
 
 | 路径 | 用途 |
@@ -18,7 +17,6 @@
 | `/charts?platform=qishui` | 平台榜单目录 |
 | `/chart?platform=qishui&id=目录中的ID` | 榜单全部曲目 |
 | `/login` | 登录接口目录 |
-| `/login/ui?platform=netease` | 独立登录测试页 |
 
 网易云使用 `id`，QQ 常用 `mid`，酷狗使用搜索返回的 `hash`；以 `/platforms` 返回为准。
 网页使用同源 `/api/` 适配接口，账号入口已经接到服务端登录桥。

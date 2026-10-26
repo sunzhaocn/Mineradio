@@ -1,4 +1,4 @@
-"""播放器 HTTP 服务；生命周期由 main.py 管理。"""
+"""播放器内嵌 HTTP 服务；生命周期由客户端后端管理。"""
 import json
 import os
 from http.server import SimpleHTTPRequestHandler

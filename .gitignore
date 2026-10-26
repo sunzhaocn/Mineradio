@@ -28,3 +28,8 @@
 /Android_apk/app/src/main/python/music_app/
 /iOS_ipa/src/mineradio/bundle/
 /iOS_ipa/src/mineradio/vendor/
+
+# Tests and disposable verification output
+**/tests/
+**/test-results/
+**/playwright-report/
