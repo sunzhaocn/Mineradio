@@ -86,6 +86,7 @@ jobs:
           path: |
             ${{ env.IOS_PROJECT }}/dist/*.ipa
             ${{ env.IOS_PROJECT }}/dist/build-result.json
+            ${{ env.IOS_PROJECT }}/dist/device-build.log
             ${{ env.IOS_PROJECT }}/dist/simulator-*
           if-no-files-found: error
           retention-days: 14

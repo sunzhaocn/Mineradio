@@ -13,13 +13,14 @@ import xml.etree.ElementTree as ET
 
 STORYBOARD_NAME = 'MineradioBlankLaunchV2'
 STORYBOARD = '''<?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0"
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234"
  targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES"
  launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES"
  initialViewController="local-launch-controller">
-  <device id="ipad13_0" orientation="landscape" layout="fullscreen"/>
+  <device id="ipad12_9rounded" orientation="landscape" layout="fullscreen" appearance="dark"/>
   <dependencies>
-    <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin"/>
+    <deployment identifier="iOS"/>
+    <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22684"/>
     <capability name="Safe area layout guides" minToolsVersion="9.0"/>
     <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
   </dependencies>
@@ -57,6 +58,8 @@ def install_blank_launch_screen(app, sdk='iphoneos'):
             'iPhoneOS' if sdk == 'iphoneos' else 'iPhoneSimulator']:
         raise ValueError('Launch-screen SDK does not match the built application')
     root = ET.fromstring(STORYBOARD)
+    if not root.get('toolsVersion') or root.find('./dependencies/deployment') is None:
+        raise ValueError('Apple Interface Builder document metadata is required')
     if root.find('.//imageView') is not None or root.find('.//label') is not None:
         raise ValueError('The launch screen must contain no image or wordmark')
     sdk_path = subprocess.check_output(

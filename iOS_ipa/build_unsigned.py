@@ -16,8 +16,16 @@ PROJECT = Path(__file__).resolve().parent
 VERSION = tomllib.loads((PROJECT / 'pyproject.toml').read_text(encoding='utf-8'))['tool']['briefcase']['version']
 
 
-def run(*args):
-    subprocess.run(args, cwd=PROJECT, check=True)
+def run(*args, log_path=None):
+    if log_path is None:
+        subprocess.run(args, cwd=PROJECT, check=True)
+        return
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open('w', encoding='utf-8') as output:
+        result = subprocess.run(args, cwd=PROJECT, stdout=output, stderr=subprocess.STDOUT)
+    if result.returncode:
+        print('\n'.join(log_path.read_text(encoding='utf-8', errors='replace').splitlines()[-100:]), flush=True)
+        result.check_returncode()
 
 
 def build():
@@ -37,12 +45,14 @@ def build():
     else:
         run(sys.executable, '-m', 'briefcase', 'create', 'iOS', '--no-input')
     products = PROJECT / 'build/device-products'
+    print('Compiling the arm64 device application; full output is saved to device-build.log', flush=True)
     run('xcodebuild', '-project', str(generated), '-scheme', 'Mineradio',
         '-configuration', 'Release', '-sdk', 'iphoneos', '-destination', 'generic/platform=iOS',
         'CODE_SIGNING_ALLOWED=NO', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=',
         'EXPANDED_CODE_SIGN_IDENTITY=-', 'EXPANDED_CODE_SIGN_IDENTITY_NAME=ad-hoc',
         'TARGETED_DEVICE_FAMILY=1,2', 'ARCHS=arm64', 'ONLY_ACTIVE_ARCH=NO',
-        'CONFIGURATION_BUILD_DIR=' + str(products), *linker_settings('iphoneos', 'arm64'), 'build')
+        'CONFIGURATION_BUILD_DIR=' + str(products), *linker_settings('iphoneos', 'arm64'), 'build',
+        log_path=PROJECT / 'dist/device-build.log')
     app = products / 'Mineradio.app'
     launch = install_blank_launch_screen(app, 'iphoneos')
     info = plistlib.loads((app / 'Info.plist').read_bytes())
