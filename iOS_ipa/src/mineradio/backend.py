@@ -24,12 +24,12 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
         web_marker = Path(data_root) / 'runtime/cache/ios-web-loaded.json'
         web_marker.unlink(missing_ok=True)
         from music_app.api.server import create_server
-        api = create_server('127.0.0.1', api_port)
+        from .local_server import LocalHTTPServer
+        api = create_server('127.0.0.1', api_port, server_class=LocalHTTPServer)
         os.environ['MUSIC_API_BASE'] = 'http://127.0.0.1:' + str(api.server_address[1])
         try:
             from music_app.web.httpserver import Handler
             from music_app.web.templates import render_page
-            from music_app.core.httpserver import ExclusiveThreadingHTTPServer
             from music_app.paths import WEB_ROOT
             from music_app.web import constants
             constants.API = os.environ['MUSIC_API_BASE']
@@ -74,7 +74,7 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
                     if not head:
                         self.wfile.write(raw)
 
-            web = ExclusiveThreadingHTTPServer(('127.0.0.1', web_port), IOSHandler)
+            web = LocalHTTPServer(('127.0.0.1', web_port), IOSHandler)
         except Exception:
             api.server_close()
             raise
@@ -89,5 +89,8 @@ def stop():
     with _lock:
         for server in reversed(_servers):
             server.shutdown()
+        for server in reversed(_servers):
+            server.close_connections()
+        for server in reversed(_servers):
             server.server_close()
         _servers.clear()

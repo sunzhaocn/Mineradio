@@ -13,6 +13,19 @@ def export():
     app = PROJECT / 'src/mineradio'
     if not (app / 'bundle/source-manifest.json').is_file() or not (app / 'vendor/pyaes/__init__.py').is_file():
         raise SystemExit('Run prepare.py first')
+    manifest = json.loads((app / 'bundle/source-manifest.json').read_text(encoding='utf-8'))
+    for relative, expected in manifest['files'].items():
+        source = None
+        if relative.startswith('python/music_app/'):
+            source = PROJECT.parent / relative.removeprefix('python/')
+        elif relative.startswith('web/'):
+            source = PROJECT.parent / relative
+        elif relative.startswith('third_party/') and not relative.startswith('third_party/VolMetaSecML/'):
+            source = PROJECT.parent / relative
+        if relative in ('web/player/ios-bridge.js', 'web/player/ios-layout.js', 'web/player/ios.css'):
+            source = PROJECT / 'assets' / Path(relative).name
+        if source is not None and source.is_file() and hashlib.sha256(source.read_bytes()).hexdigest() != expected:
+            raise SystemExit('Shared source changed; run prepare.py --skip-deps before exporting: ' + relative)
     for name in ('ios-bridge.js', 'ios-layout.js', 'ios.css'):
         if (PROJECT / 'assets' / name).read_bytes() != (app / 'bundle/web/player' / name).read_bytes():
             raise SystemExit('Bridge assets changed; run prepare.py --skip-deps before exporting')

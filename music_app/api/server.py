@@ -10,9 +10,9 @@ from music_app.providers.qishui import api as qishui_api
 from music_app.providers.qqmusic import transport as qqmusic_transport
 
 
-def create_server(host=api_settings.HOST, port=api_settings.PORT):
+def create_server(host=api_settings.HOST, port=api_settings.PORT, *, server_class=ThreadingHTTPServer):
     """创建可由主启动器统一管理的服务；指定端口不可用时明确报错。"""
-    return ThreadingHTTPServer((host, port), api_http.Handler)
+    return server_class((host, port), api_http.Handler)
 
 
 def serve(host=api_settings.HOST, port=api_settings.PORT):

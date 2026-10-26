@@ -79,7 +79,7 @@ class EmbeddedRuntime(unittest.TestCase):
     def test_real_local_http_server_starts_without_cloud_or_sdk_config(self):
         # Fresh interpreter: paths are read once when shared modules import.
         script = r'''
-import json, pathlib, sys, tempfile, urllib.request
+import http.client, json, pathlib, sys, tempfile, urllib.request
 sys.path.insert(0, sys.argv[1])
 from mineradio import backend
 with tempfile.TemporaryDirectory() as directory:
@@ -99,8 +99,15 @@ with tempfile.TemporaryDirectory() as directory:
             caps = json.load(response)
         assert caps['qishui']['available'] is False
         assert caps['qishui']['phoneLoginAvailable'] is False
+        # Keep an HTTP/1.1 connection open: shutdown must wake and join its
+        # request worker rather than leave a daemon writing during finalization.
+        idle = http.client.HTTPConnection('127.0.0.1', port, timeout=5)
+        idle.request('GET', '/api/app/version')
+        idle.getresponse().read()
     finally:
         backend.stop()
+        if 'idle' in locals():
+            idle.close()
 print('LOCAL_RUNTIME_PASS')
 '''
         bundle = PROJECT / 'src/mineradio/bundle'

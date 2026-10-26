@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import subprocess
+import sys
 import time
 
 from native_build import linker_settings
@@ -17,11 +18,24 @@ def run(*args, timeout=240):
                           timeout=timeout).stdout
 
 
+def select_simulator():
+    devices = json.loads(run('xcrun', 'simctl', 'list', 'devices', 'available', '-j'))['devices']
+    choices = [(runtime, device) for runtime, group in devices.items()
+               if 'iOS-26' in runtime for device in group if 'iPad' in device['name']]
+    if not choices:
+        raise RuntimeError('No iPadOS 26 simulator is installed on this runner')
+    runtime, device = choices[0]
+    if device['state'] not in ('Booted', 'Booting'):
+        run('xcrun', 'simctl', 'boot', device['udid'])
+    return runtime, device
+
+
 def main():
     DIST.mkdir(exist_ok=True)
     report = dict(deviceValidated=False, simulatorValidated=False, accountAuthorized=False)
     simulator = None
     try:
+        print('Building the iPad Simulator application', flush=True)
         products = PROJECT / 'build/simulator-products'
         args = ['xcodebuild', '-project', str(PROJECT / 'build/mineradio/ios/xcode/Mineradio.xcodeproj'),
                 '-scheme', 'Mineradio', '-configuration', 'Debug', '-sdk', 'iphonesimulator',
@@ -36,18 +50,20 @@ def main():
             raise
         finally:
             (DIST / 'simulator-build.log').write_text(log, encoding='utf-8')
-        devices = json.loads(run('xcrun', 'simctl', 'list', 'devices', 'available', '-j'))['devices']
-        choices = [(runtime, device) for runtime, group in devices.items()
-                   if 'iOS-26' in runtime for device in group if 'iPad' in device['name']]
-        if not choices:
-            raise RuntimeError('No iPadOS 26 simulator is installed on this runner')
-        runtime, device = choices[0]
+        runtime, device = select_simulator()
         simulator = device['udid']
         report.update(runtime=runtime, simulator=device['name'])
-        if device['state'] != 'Booted':
-            run('xcrun', 'simctl', 'boot', simulator)
-        run('xcrun', 'simctl', 'bootstatus', simulator, '-b', timeout=180)
+        print('Booting ' + device['name'] + ' on ' + runtime, flush=True)
+        try:
+            run('xcrun', 'simctl', 'bootstatus', simulator, '-b', timeout=420)
+        except subprocess.TimeoutExpired as error:
+            captured = error.stdout or b''
+            if isinstance(captured, bytes):
+                captured = captured.decode('utf-8', errors='replace')
+            (DIST / 'simulator-boot.log').write_text(captured, encoding='utf-8')
+            raise
         run('xcrun', 'simctl', 'install', simulator, str(products / 'Mineradio.app'))
+        print('Launching the installed local application', flush=True)
         run('xcrun', 'simctl', 'launch', simulator, APP_ID)
         data = Path(run('xcrun', 'simctl', 'get_app_container', simulator, APP_ID, 'data').strip())
         deadline = time.monotonic() + 150
@@ -62,6 +78,7 @@ def main():
                 break
             time.sleep(2)
         report['modules'] = status
+        print('Player readiness: ' + json.dumps(status), flush=True)
         for pattern in ('*diagnostic*.json', '*failure*.txt', 'Mineradio-startup-diagnostic.txt'):
             for path in data.rglob(pattern):
                 if path.is_file():
@@ -84,4 +101,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if '--warmup' in sys.argv:
+        runtime, device = select_simulator()
+        print('Simulator warming up: ' + device['name'] + ' on ' + runtime, flush=True)
+    else:
+        main()

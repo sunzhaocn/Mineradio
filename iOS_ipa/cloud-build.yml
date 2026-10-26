@@ -57,6 +57,9 @@ jobs:
             ${{ env.IOS_PROJECT }}/build/mineradio/ios/xcode
             ~/Library/Developer/Xcode/DerivedData/Mineradio-*
           key: ios-native-cache-v2-${{ env.XCODE_CACHE_VERSION }}-${{ runner.arch }}-${{ hashFiles('pyproject.toml', 'iOS_ipa/pyproject.toml') }}-briefcase0326
+      - name: Warm the iPadOS 26 simulator while compiling
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: python build_simulator_smoke.py --warmup
       - name: Build arm64 IPA
         working-directory: ${{ env.IOS_PROJECT }}
         run: python build_unsigned.py

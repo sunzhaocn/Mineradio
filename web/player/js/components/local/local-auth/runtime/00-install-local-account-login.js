@@ -17,6 +17,7 @@
   function nativeAccountLogin(provider) { return !!window.__mineradioIOS && providers.indexOf(provider) >= 0; }
   var actionEpoch = 0, pollTimer = 0, smsTimer = 0, smsNextAt = 0;
   var opened = false, busy = false, reauth = false, loginMode = 'official', ui = null;
+  function storageDescription() { return window.__mineradioIOS ? '登录信息保存在这台设备中。' : 'Cookie 保存在当前浏览器，每次请求自动携带。'; }
   var clientId = '';
 
   var health = {}, healthTimer = 0;
@@ -403,7 +404,7 @@
     ui.accountHealth.classList.toggle('expired', !!account.reauthRequired);
     ui.accountHealth.textContent = account.reauthRequired ? '登录已失效' : account.checkFailed ? '暂时无法检测，请稍后重试' : account.authState === 'valid' ? '登录正常' : '登录状态待检测';
     if (localAccount(currentProvider).cookie && !reauth) {
-      ui.description.textContent = account.reauthRequired ? '登录已失效，请点击重新登录。' : 'Cookie 保存在当前浏览器，每次请求自动携带。';
+      ui.description.textContent = account.reauthRequired ? '登录已失效，请点击重新登录。' : storageDescription();
       if (account.reauthRequired) report('账号已失效，需要重新登录。', 'error');
       else if (ui.message && ui.message.textContent === '账号已失效，需要重新登录。') report(account.checkFailed ? '暂时无法检测，请稍后重试。' : '登录正常', account.checkFailed ? '' : 'success');
     }
@@ -416,7 +417,7 @@
     ui.root.dataset.provider = provider;
     ui.title.textContent = showSaved ? labels[provider] : ('登录' + labels[provider]);
     ui.description.textContent = showSaved
-      ? (account.reauthRequired ? '登录已失效，请点击重新登录。' : 'Cookie 保存在当前浏览器，每次请求自动携带。')
+      ? (account.reauthRequired ? '登录已失效，请点击重新登录。' : storageDescription())
       : (manual ? '粘贴当前平台的 Cookie，保存到当前浏览器。' : (nativeLogin ? '在平台官方窗口使用账号密码或验证码登录，授权后回到播放器。' : isPhone ? '使用手机号和短信验证码，或账号密码登录。' : '二维码会自动生成，请扫码并在手机上确认登录。'));
     ui.account.hidden = !showSaved;
     ui.accountActions.hidden = !showSaved;
@@ -456,7 +457,7 @@
     };
     ui.avatar.src = providerAvatarSrc(provider, account);
     ui.accountName.textContent = account.nickname || labels[provider];
-    ui.accountId.textContent = account.userId ? ('ID · ' + account.userId) : '本地已保存 Cookie';
+    ui.accountId.textContent = account.userId ? ('ID · ' + account.userId) : (window.__mineradioIOS ? '本机已保存登录信息' : '本地已保存 Cookie');
     ui.logout.textContent = '退出' + shortLabels[provider];
     if (!sessionKey) {
       ui.qrImage.hidden = true;
@@ -473,7 +474,7 @@
     ui.password.required = phoneMode === 'password';
     renderTabs();
     setBusy(busy);
-    if (!sessionKey && !busy) report(showSaved ? (account.reauthRequired ? '账号已失效，需要重新登录。' : account.checkFailed ? '网络或平台暂时不可用，尚未确认登录失效。' : '已使用本地 Cookie，可直接查看和复制。') : '', account.reauthRequired ? 'error' : '');
+    if (!sessionKey && !busy) report(showSaved ? (account.reauthRequired ? '账号已失效，需要重新登录。' : account.checkFailed ? '网络或平台暂时不可用，尚未确认登录失效。' : window.__mineradioIOS ? '已使用本机保存的登录信息。' : '已使用本地 Cookie，可直接查看和复制。') : '', account.reauthRequired ? 'error' : '');
     autoGenerateQr();
   }
   function autoGenerateQr() {
@@ -851,7 +852,7 @@
     ui.installId = makeInput('text', 'install_id（可选）'); ui.installId.maxLength = 128; ui.installId.setAttribute('aria-label', '安装 ID'); labeled(ui.qishuiFields, '安装 ID（install_id，可选）', ui.installId); ui.cookieForm.appendChild(ui.qishuiFields);
     ui.cookieSubmit = element('button', 'local-auth-primary', '保存并应用 Cookie'); ui.cookieSubmit.type = 'submit'; ui.cookieForm.appendChild(ui.cookieSubmit); ui.cookieForm.appendChild(element('p', 'local-auth-footnote', 'Cookie 只保存在当前浏览器，读取昵称与头像时随请求发送到对应平台。')); ui.login.appendChild(ui.cookieForm);
     ui.message = element('p', 'local-auth-message'); ui.message.setAttribute('role', 'status'); ui.message.setAttribute('aria-live', 'polite'); root.appendChild(ui.message);
-    root.appendChild(element('p', 'local-auth-footnote', 'Cookie 随每次平台请求发送，切换平台互不影响。'));
+    root.appendChild(element('p', 'local-auth-footnote', window.__mineradioIOS ? '各平台账号分别保存在本机，切换平台互不影响。' : 'Cookie 随每次平台请求发送，切换平台互不影响。'));
     panel.appendChild(root);
     smsTimer = setInterval(updateSmsButton, 1000);
     document.addEventListener('keydown', function (event) {

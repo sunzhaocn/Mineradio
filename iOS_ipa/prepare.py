@@ -10,11 +10,13 @@ import tempfile
 import urllib.request
 import zipfile
 import io
+import tomllib
 from qishui_config import load_config
 
 PROJECT = Path(__file__).resolve().parent
 ROOT = PROJECT.parent
 APP = PROJECT / 'src/mineradio'
+VERSION = tomllib.loads((PROJECT / 'pyproject.toml').read_text(encoding='utf-8'))['tool']['briefcase']['version']
 DEPENDENCIES = ['pyaes==1.6.1', 'rsa==4.9.1', 'pyasn1==0.6.1',
                 'qrcode==8.2', 'pypng==0.20220715.0', 'paho-mqtt==2.1.0']
 ICON_SIZES = (20, 29, 40, 58, 60, 76, 80, 87, 120, 152, 167, 180, 640, 1024, 1280, 1920)
@@ -92,7 +94,7 @@ def prepare(skip_deps=False, qishui_config=None):
         hashes = {p.relative_to(bundle).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in sorted(bundle.rglob('*')) if p.is_file()}
         (bundle / 'source-manifest.json').write_text(json.dumps(
-            {'version': '0.1.1', 'platform': 'ios', 'files': hashes,
+            {'version': VERSION, 'platform': 'ios', 'files': hashes,
              'runtime': 'embedded-local', 'remoteBackendRequired': False,
              'qishuiConfigured': public['configured'],
              'qishuiPhoneLoginImplemented': False,
