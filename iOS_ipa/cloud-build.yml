@@ -24,7 +24,19 @@ jobs:
             exit 1
           fi
       - name: Install pinned build tooling
-        run: python -m pip install briefcase==0.3.26
+        run: python -m pip install briefcase==0.3.26 Pillow==13.0.0
+      - name: Prepare the public source checkout when necessary
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: |
+          if [ ! -f src/mineradio/bundle/source-manifest.json ]; then
+            python prepare.py
+          fi
+      - name: Check local runtime and login isolation
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: |
+          if [ -d checks ]; then
+            python -m unittest discover -s checks -p 'test_*.py' -v
+          fi
       - name: Select installed Xcode 26 for iPadOS 26
         shell: python
         run: |
@@ -48,6 +60,9 @@ jobs:
       - name: Build arm64 IPA
         working-directory: ${{ env.IOS_PROJECT }}
         run: python build_unsigned.py
+      - name: Launch the installed app on iPadOS 26 Simulator
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: python build_simulator_smoke.py
       - uses: actions/cache/save@v4
         if: always() && steps.xcode-cache.outputs.cache-hit != 'true'
         with:

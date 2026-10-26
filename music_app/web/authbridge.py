@@ -64,7 +64,7 @@ class LocalAuth:
         if operation == 'session':
             method = payload.get('method', '')
             from music_app.platform_runtime import is_ios
-            official = is_ios() and method == 'official' and provider in ('netease','qq','kugou')
+            official = is_ios() and method == 'official' and provider in ('netease','qq','kugou','qishui')
             if not official and (provider == 'qq' and method not in ('', 'qq', 'wechat', 'mobile') or
                     provider == 'netease' and method not in ('', 'phone', 'password', 'sms') or
                     provider not in ('qq', 'netease') and method):

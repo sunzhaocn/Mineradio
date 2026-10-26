@@ -8,9 +8,11 @@ import shutil
 import subprocess
 import sys
 import zipfile
+import tomllib
 from native_build import linker_settings
 
 PROJECT = Path(__file__).resolve().parent
+VERSION = tomllib.loads((PROJECT / 'pyproject.toml').read_text(encoding='utf-8'))['tool']['briefcase']['version']
 
 
 def run(*args):
@@ -50,7 +52,7 @@ def build():
         raise RuntimeError('Native app executable is missing')
     dist = PROJECT / 'dist'
     dist.mkdir(exist_ok=True)
-    output = dist / 'Mineradio-0.1.0-unsigned.ipa'
+    output = dist / ('Mineradio-' + VERSION + '-local-unsigned.ipa')
     # ditto preserves framework symlinks and Unix modes needed by iOS.
     payload = PROJECT / 'build/ipa-stage/Payload'
     payload.mkdir(parents=True, exist_ok=True)
@@ -64,7 +66,10 @@ def build():
     run(sys.executable, str(PROJECT / 'verify_ipa.py'), str(output))
     report = {'artifact': output.name, 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
               'signed': False, 'deviceValidated': False,
-              'channel': 'qishui-integration-preview', 'qishuiRuntimeValidated': False,
+              'channel': 'ipad-local-preview', 'runtime': 'embedded-local',
+              'remoteBackendRequired': False,
+              'qishuiConfigured': bool(manifest.get('qishuiConfigured')),
+              'qishuiPhoneLoginImplemented': False, 'qishuiRuntimeValidated': False,
               'install': 'Sign and install with your own Apple account on Windows'}
     (dist / 'build-result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     print(json.dumps(report))

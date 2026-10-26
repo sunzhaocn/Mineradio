@@ -1,0 +1,85 @@
+name: Mineradio iPhone and iPad
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/ipad-local-login]
+    paths: ["iOS_ipa/**", "music_app/**", "web/**", ".github/workflows/ipad-local.yml"]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Locate prepared iOS project
+        shell: bash
+        run: |
+          if [ -f iOS_ipa/pyproject.toml ]; then
+            echo "IOS_PROJECT=iOS_ipa" >> "$GITHUB_ENV"
+          elif [ -f pyproject.toml ]; then
+            echo "IOS_PROJECT=." >> "$GITHUB_ENV"
+          else
+            echo 'Upload the contents of the prepared source ZIP first.' >&2
+            exit 1
+          fi
+      - name: Install pinned build tooling
+        run: python -m pip install briefcase==0.3.26 Pillow==13.0.0
+      - name: Prepare the public source checkout when necessary
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: |
+          if [ ! -f src/mineradio/bundle/source-manifest.json ]; then
+            python prepare.py
+          fi
+      - name: Check local runtime and login isolation
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: |
+          if [ -d checks ]; then
+            python -m unittest discover -s checks -p 'test_*.py' -v
+          fi
+      - name: Select installed Xcode 26 for iPadOS 26
+        shell: python
+        run: |
+          import os, re
+          from pathlib import Path
+          candidates = list(Path('/Applications').glob('Xcode_26*.app'))
+          if not candidates:
+              raise SystemExit('The runner has no installed Xcode 26')
+          selected = max(candidates, key=lambda p:tuple(map(int,re.findall(r'\d+',p.name))))
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write('DEVELOPER_DIR='+str(selected/'Contents/Developer')+'\n')
+              output.write('XCODE_CACHE_VERSION='+selected.name+'\n')
+          print('Selected', selected)
+      - uses: actions/cache/restore@v4
+        id: xcode-cache
+        with:
+          path: |
+            ${{ env.IOS_PROJECT }}/build/mineradio/ios/xcode
+            ~/Library/Developer/Xcode/DerivedData/Mineradio-*
+          key: ios-native-cache-v2-${{ env.XCODE_CACHE_VERSION }}-${{ runner.arch }}-${{ hashFiles('pyproject.toml', 'iOS_ipa/pyproject.toml') }}-briefcase0326
+      - name: Build arm64 IPA
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: python build_unsigned.py
+      - name: Launch the installed app on iPadOS 26 Simulator
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: python build_simulator_smoke.py
+      - uses: actions/cache/save@v4
+        if: always() && steps.xcode-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ${{ env.IOS_PROJECT }}/build/mineradio/ios/xcode
+            ~/Library/Developer/Xcode/DerivedData/Mineradio-*
+          key: ${{ steps.xcode-cache.outputs.cache-primary-key }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Mineradio-iOS-unsigned
+          path: |
+            ${{ env.IOS_PROJECT }}/dist/*.ipa
+            ${{ env.IOS_PROJECT }}/dist/build-result.json
+            ${{ env.IOS_PROJECT }}/dist/simulator-*
+          if-no-files-found: error
+          retention-days: 14

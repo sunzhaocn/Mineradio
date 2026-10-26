@@ -3,8 +3,10 @@ import hashlib
 import json
 from pathlib import Path
 import zipfile
+import tomllib
 
 PROJECT = Path(__file__).resolve().parent
+VERSION = tomllib.loads((PROJECT / 'pyproject.toml').read_text(encoding='utf-8'))['tool']['briefcase']['version']
 
 
 def export():
@@ -16,21 +18,24 @@ def export():
             raise SystemExit('Bridge assets changed; run prepare.py --skip-deps before exporting')
     dist = PROJECT / 'dist'
     dist.mkdir(exist_ok=True)
-    output = dist / 'Mineradio-iOS-0.1.0-cloud-source.zip'
+    output = dist / ('Mineradio-iOS-' + VERSION + '-local-source.zip')
     files = {}
-    for name in ('pyproject.toml', 'LICENSE.txt', 'README.md', 'build_unsigned.py', 'verify_ipa.py',
+    for name in ('pyproject.toml', 'LICENSE.txt', 'README.md', 'build_unsigned.py', 'build_simulator_smoke.py', 'verify_ipa.py',
                  'native_build.py', '云端构建.ps1', '开始云端构建.bat'):
         data = (PROJECT / name).read_bytes()
         files[name] = b'\xef\xbb\xbf' + data.decode('utf-8-sig').encode('utf-8') if name.endswith('.ps1') else data
     for directory in ('src', 'resources', 'native'):
         for path in sorted((PROJECT / directory).rglob('*')):
-            if path.is_file() and not set(path.parts).intersection({'__pycache__', 'tests', 'node_modules'}) and path.suffix != '.pyc':
+            if (path.is_file() and path.name != 'remote_app.py'
+                    and not set(path.parts).intersection({'__pycache__', 'tests', 'node_modules'})
+                    and path.suffix != '.pyc'):
                 files[path.relative_to(PROJECT).as_posix()] = path.read_bytes()
     files['.github/workflows/ios-build.yml'] = (PROJECT / 'cloud-build.yml').read_bytes()
     # Generated app/vendor directories must be committed in this standalone kit.
     files['.gitignore'] = b'.venv/\nbuild/\ndist/\n__pycache__/\n*.pyc\n.DS_Store\n'
     files['.gitattributes'] = b'* -text\n'
-    files['prepared-source.json'] = json.dumps(dict(version='0.1.0', prepared=True,
+    files['prepared-source.json'] = json.dumps(dict(version=VERSION, prepared=True,
+        runtime='embedded-local', remoteBackendRequired=False,
         accountFilesIncluded=False, deviceValidated=False, platform='ios'), indent=2).encode()
     files['manifest.sha256'] = ('\n'.join(hashlib.sha256(data).hexdigest()+'  '+name
         for name, data in sorted(files.items()))+'\n').encode()

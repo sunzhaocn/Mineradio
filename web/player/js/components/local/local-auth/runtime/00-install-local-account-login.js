@@ -14,7 +14,7 @@
   var PROFILE_SCHEMA = 2;
   var currentProvider = 'netease', phoneMode = 'sms', sessionKey = '', sessionDeadline = 0;
   var sessionManual = false, sessionInteractive = false;
-  function nativeAccountLogin(provider) { return !!window.__mineradioIOS && (provider === 'qq' || provider === 'kugou'); }
+  function nativeAccountLogin(provider) { return !!window.__mineradioIOS && providers.indexOf(provider) >= 0; }
   var actionEpoch = 0, pollTimer = 0, smsTimer = 0, smsNextAt = 0;
   var opened = false, busy = false, reauth = false, loginMode = 'official', ui = null;
   var clientId = '';
@@ -410,7 +410,7 @@
   }
   function renderProvider() {
     var provider = currentProvider, account = accounts[provider] || {};
-    var isPhone = provider === 'netease', loggedIn = !!account.loggedIn, manual = loginMode === 'cookie';
+    var isPhone = provider === 'netease' && !window.__mineradioIOS, loggedIn = !!account.loggedIn, manual = loginMode === 'cookie';
     var nativeLogin = nativeAccountLogin(provider);
     var showSaved = !!localAccount(provider).cookie && !reauth;
     ui.root.dataset.provider = provider;
@@ -426,7 +426,9 @@
     ui.savedCookie.value = showSaved ? (localAccount(provider).cookie || '') : '';
     ui.phoneForm.hidden = !isPhone || manual;
     ui.qrPanel.hidden = isPhone || manual || nativeLogin;
-    ui.officialBlock.hidden = !window.__mineradioIOS || manual || provider === 'qishui' || showSaved;
+    ui.officialBlock.hidden = !window.__mineradioIOS || manual || showSaved;
+    ui.modeCookie.hidden = !!window.__mineradioIOS;
+    ui.savedCredentials.hidden = !!window.__mineradioIOS || !showSaved;
     ui.officialOpen.textContent = nativeLogin ? '账号密码 / 验证码登录' : '使用官方窗口登录或完成验证';
     ui.cookieForm.hidden = !manual;
     ui.modeOfficial.textContent = nativeLogin ? '账号登录' : isPhone ? '手机号登录' : '扫码登录';
@@ -510,8 +512,7 @@
   async function openOfficialLogin() {
     if (busy || !opened || loginMode !== 'official') return;
     var provider = currentProvider, epoch = actionEpoch;
-    if (provider === 'qishui' && (!sessionKey || !sessionInteractive)) return;
-    if (provider !== 'qishui' && (!sessionKey || !sessionManual || Date.now() >= sessionDeadline)) {
+    if (!sessionKey || !sessionManual || Date.now() >= sessionDeadline) {
       stopPending(); epoch = actionEpoch;
     }
     setBusy(true);

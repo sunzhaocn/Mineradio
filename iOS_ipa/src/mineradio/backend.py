@@ -41,13 +41,15 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
                     if path == '/ios-bridge.js':
                         web_marker.write_text('{"webResourcesLoaded":true}', encoding='utf-8')
                     if path == '/api/app/version':
-                        return self.json(dict(version='0.1.0', platform='ios'))
+                        return self.json(dict(version='0.1.1', platform='ios',
+                                              runtime='embedded-local', remoteBackendRequired=False))
                     if path == '/api/platform/capabilities':
                         data = self.route(path, {})
                         from music_app.providers.qishui.api import local_status
                         state = local_status()
                         data['qishui'].update(available=state['available'], reason=state['reason'],
-                            signerReady=state['signer_ready'], activationRequired=not state['signer_initialized'])
+                            signerReady=state['signer_ready'], activationRequired=not state['signer_initialized'],
+                            phoneLoginAvailable=False)
                         return self.json(data)
                     return super()._get()
 

@@ -40,12 +40,14 @@ class Mineradio(toga.App):
             passport.install(self)
             official_login.install(self)
             self.signer_config = json.loads((Path(__file__).parent / 'bundle/sdk-config.json').read_text(encoding='utf-8'))
-            signer.install(self.signer_config)
+            if self.signer_config.get('configured'):
+                signer.install(self.signer_config)
             self.qishui_enabled = False
             preference = self.paths.data / 'qishui-connection.json'
             try:
                 approved = json.loads(preference.read_text(encoding='utf-8'))
-                if approved.get('privacyAgreed') is True and isinstance(approved.get('deviceId'), str):
+                if (self.signer_config.get('configured') and approved.get('privacyAgreed') is True
+                        and isinstance(approved.get('deviceId'), str)):
                     self.signer_config.update(privacyAgreed=True, deviceId=approved['deviceId'])
                     signer.install(self.signer_config)
             except (OSError, ValueError, RuntimeError):
@@ -146,6 +148,8 @@ class Mineradio(toga.App):
 
     async def enable_qishui(self, identifier):
         try:
+            if not self.signer_config.get('configured'):
+                raise RuntimeError('汽水本地连接尚未配置，当前版本不能使用汽水；本地曲库和其他平台可正常使用。')
             if not self.qishui_enabled:
                 agreed = self.signer_config.get('privacyAgreed') is True
                 if not agreed:

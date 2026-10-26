@@ -131,9 +131,16 @@ def shutdown():
 
 
 def create(platform, method=""):
-    adapter = _adapter(platform)
     method = method.strip().lower()
     from music_app.platform_runtime import is_ios
+    if is_ios() and platform == 'qishui':
+        raise AuthError(501, 'qishui_phone_login_pending',
+                        '汽水密码／验证码登录尚未接通，当前版本不能登录汽水；不会自动切换为扫码登录。')
+    if is_ios():
+        if method not in ('', 'official'):
+            raise AuthError(400, 'login_method_invalid', 'iPad 请使用官方账号密码／验证码登录窗口')
+        method = 'official'
+    adapter = _adapter(platform)
     official = method == 'official' and is_ios() and platform in ('netease','qqmusic','kugou')
     if official and platform != 'netease':
         adapter = importlib.import_module('music_app.auth.ios_official')

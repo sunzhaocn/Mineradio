@@ -10,6 +10,7 @@ import tempfile
 import urllib.request
 import zipfile
 import io
+from qishui_config import load_config
 
 PROJECT = Path(__file__).resolve().parent
 ROOT = PROJECT.parent
@@ -52,7 +53,8 @@ def replace_generated(source, destination):
     shutil.copytree(source, destination, ignore=shutil.ignore_patterns('tests', '__pycache__', '*.pyc'))
 
 
-def prepare(skip_deps=False):
+def prepare(skip_deps=False, qishui_config=None):
+    public = load_config(qishui_config)
     prepare_signer()
     APP.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='mineradio-ios-') as staging:
@@ -74,11 +76,9 @@ def prepare(skip_deps=False):
         shutil.copy2(PROJECT / 'native/vendor/provenance.json', sdk_notice / 'provenance.json')
         for name in ('ios-bridge.js', 'ios-layout.js', 'ios.css'):
             shutil.copy2(PROJECT / 'assets' / name, bundle / 'web/player' / name)
-        # This is the upstream app's public SDK configuration, never an account
-        # Cookie, device session, signing certificate, or user credential.
-        public = json.loads((ROOT / 'runtime/android-portability/com.luna.music-21.3.0/full-verification/probe-runtime-config.json').read_text(encoding='utf-8-sig'))
-        public = {key:public[key] for key in ('appId', 'license', 'clientType', 'channel')}
-        public.update(collectMode=290, privacyAgreed=False)
+        # A clean checkout must build without the original developer's runtime/.
+        # Missing optional Qishui settings must not prevent local music or the
+        # other platforms from starting. Never invent an app license.
         (bundle / 'sdk-config.json').write_text(json.dumps(public), encoding='utf-8')
         sys.path.insert(0, str(ROOT))
         from music_app.auth.qishui.browser import _security_assets
@@ -92,7 +92,10 @@ def prepare(skip_deps=False):
         hashes = {p.relative_to(bundle).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in sorted(bundle.rglob('*')) if p.is_file()}
         (bundle / 'source-manifest.json').write_text(json.dumps(
-            {'version': '0.1.0', 'platform': 'ios', 'files': hashes,
+            {'version': '0.1.1', 'platform': 'ios', 'files': hashes,
+             'runtime': 'embedded-local', 'remoteBackendRequired': False,
+             'qishuiConfigured': public['configured'],
+             'qishuiPhoneLoginImplemented': False,
              'validationPending': ['qishuiNativeSigning', 'qishuiAccountFlow', 'physicalDevice'],
              'accountFilesIncluded': False}, ensure_ascii=False, indent=2), encoding='utf-8')
         replace_generated(bundle, APP / 'bundle')
@@ -129,4 +132,7 @@ def prepare(skip_deps=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--skip-deps', action='store_true')
-    prepare(parser.parse_args().skip_deps)
+    parser.add_argument('--qishui-config', type=Path,
+                        help='Optional authorized SDK settings; never account cookies or device state')
+    args = parser.parse_args()
+    prepare(args.skip_deps, args.qishui_config)
