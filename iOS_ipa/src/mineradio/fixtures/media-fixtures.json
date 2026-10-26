@@ -1,0 +1,27 @@
+{
+  "synthetic": true,
+  "fixtures": [
+    {
+      "file": "synthetic-aac-encrypted.m4a",
+      "codec": "aac",
+      "encryptedSha256": "b1173cdf63e028a236cbd33c8ffe03310721cc8d3d3a2ec16ebd33c7dc2826ca",
+      "syntheticKeyHex": "00112233445566778899aabbccddeeff",
+      "pcmSha256": "e1e323ffb764d53b3ec31777b5b248463c4bd7144f91f1f0489a6d6e44659fa3",
+      "pcmBytes": 132300,
+      "sampleRate": 44100,
+      "channels": 1,
+      "clearSha256": "816663d7d9a3dbfd6b65955c810411a4ecb4dacf0242b970364b1c4ab10c50db"
+    },
+    {
+      "file": "synthetic-flac-encrypted.mp4",
+      "codec": "flac",
+      "encryptedSha256": "15dbe39eb14fc5e5102219691d44d05064b4982b2be5811e70930f43aa84171e",
+      "syntheticKeyHex": "00112233445566778899aabbccddeeff",
+      "pcmSha256": "b211f5b9fb006cd9dec017e23de27de2b842bdecc92a1a29ffd70f40b2af5d3d",
+      "pcmBytes": 96000,
+      "sampleRate": 48000,
+      "channels": 1,
+      "clearSha256": "a4c567de5a52adbbae5609fb9fbf5c0effde437cd8cd85d532548db7296233d0"
+    }
+  ]
+}

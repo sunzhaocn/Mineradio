@@ -1,0 +1,138 @@
+<div class="fx-advanced" id="fx-advanced">
+        <div class="fx-advanced-head" onclick="document.getElementById('fx-advanced').classList.toggle('open')">
+          <span>高级参数</span><span class="arrow">▶</span>
+        </div>
+        <div class="fx-advanced-body">
+          <div class="fx-section-label">自动混音</div>
+          <button id="cuefield-automix-btn" class="fx-mini-btn ghost" type="button" onclick="toggleCuefieldAutoMix()"
+            title="Cuefield AutoMix（实验功能，默认关闭）" aria-pressed="false">自动混音</button>
+          <div class="fx-section-label">直播 / 后台</div>
+          <div class="fx-seg" id="performance-background-seg" title="控制窗口隐藏、最小化或后台运行时的渲染策略">
+            <button data-performance-background="auto">自动优化</button>
+            <button data-performance-background="keep">保持运行</button>
+            <button data-performance-background="release">停止释放</button>
+          </div>
+          <div class="fx-section-label">关闭窗口</div>
+          <div class="fx-seg" id="close-behavior-seg" title="点击右上角关闭按钮时的行为">
+            <button data-close-behavior="exit">直接退出</button>
+            <button data-close-behavior="tray">后台托盘</button>
+          </div>
+          <div class="fx-section-label">启动播放</div>
+          <div class="fx-toggle-grid">
+            <div class="fx-toggle" id="t-startupAutoplay" onclick="toggleStartupAutoplay()" title="打开软件后从上次保存进度自动继续播放">
+              <span>启动自动播放</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-startupFastSkip" onclick="toggleStartupFastSkip()" title="打开软件后直接进入主页，不等待启动动画">
+              <span>秒启动跳过启动页</span><span class="dot"></span></div>
+          </div>
+          <div class="fx-seg" id="startup-resume-mode-seg" title="控制恢复上次播放时从哪里开始">
+            <button data-startup-resume-mode="resume">按上次进度</button>
+            <button data-startup-resume-mode="restart">重播整首</button>
+          </div>
+          <div class="fx-section-label">输出接口</div>
+          <div class="audio-output-section" id="audio-output-panel">
+            <div class="quality-output-head"><span>播放输出设备</span><span class="quality-output-actions"><button class="quality-output-refresh" type="button"
+                onclick="refreshAudioOutputDevices(true)">刷新</button><button class="quality-output-refresh" type="button"
+                onclick="openAudioOutputWorkflowPanel()">面板</button></span></div>
+            <div id="audio-output-list" class="audio-output-list"></div>
+          </div>
+          <div class="fx-section-label">画质档位</div>
+          <div class="fx-seg" id="performance-quality-seg" title="控制可见状态下的渲染像素预算，重启后保留">
+            <button data-performance-quality="eco">低</button>
+            <button data-performance-quality="balanced">中</button>
+            <button data-performance-quality="high">高</button>
+            <button data-performance-quality="ultra">超高</button>
+          </div>
+          <div class="fx-section-label">前台帧率上限</div>
+          <div class="fx-seg foreground-fps-seg" id="foreground-fps-seg" role="group"
+            aria-label="前台帧率上限" title="默认跟随屏幕垂直同步；固定档位用于节能或降低负载">
+            <button data-foreground-fps="vsync">跟随屏幕</button>
+            <button data-foreground-fps="45">45</button>
+            <button data-foreground-fps="60">60</button>
+            <button data-foreground-fps="75">75</button>
+            <button data-foreground-fps="90">90</button>
+            <button data-foreground-fps="120">120</button>
+          </div>
+          <div class="fx-section-label">实时视觉性能</div>
+          <div class="fx-toggle-grid" id="visual-performance-toggle-grid">
+            <div class="fx-toggle" id="t-lyricLiveViewportFit" onclick="toggleFx('lyricLiveViewportFit')"
+              title="逐帧读取歌词在屏幕两侧的真实余量；关闭后停止相机投影计算"><span>歌词实时边界</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-lyricContextHighQuality" onclick="toggleFx('lyricContextHighQuality')"
+              title="为可见上下句和翻译预热高清纹理；关闭后只保留当前原文和当前翻译高清"><span>上下句高清纹理</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-lyricBackdropAdapt" onclick="toggleFx('lyricBackdropAdapt')"
+              title="让所有可见歌词根据亮背景实时增强可读性；关闭后保留基础文字层"><span>全局歌词避光</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-coverBackdropAdapt" onclick="toggleFx('coverBackdropAdapt')"
+              title="在封面粒子着色器中启用亮底避光；关闭后跳过对应片元增强"><span>封面粒子避光</span><span class="dot"></span></div>
+          </div>
+          <div class="fx-toggle-grid">
+            <div class="fx-toggle" id="t-liveBackgroundKeep" onclick="toggleFx('liveBackgroundKeep')"
+              title="开启后后台或最小化时保持视觉渲染，不进入低占用暂停"><span>直播后台保持</span><span class="dot"></span></div>
+          </div>
+          <div class="fx-section-label">内存压缩 / Mem Reduct</div>
+          <div class="memory-status-chip" id="memory-status-chip">系统内存读取中...</div>
+          <div class="fx-sub memory-status-sub" id="memory-status-sub">后台先压缩播放器进程；系统级释放可清工作集、修改页、待机页</div>
+          <div class="fx-toggle-grid">
+            <div class="fx-toggle" id="t-memoryAutoTrimApp" onclick="toggleFx('memoryAutoTrimApp')"
+              title="最小化、托盘后台或深度后台时压缩 Mineradio / Electron 工作集"><span>自动压缩播放器</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-memoryAutoTrimOnBackground" onclick="toggleFx('memoryAutoTrimOnBackground')"
+              title="只在最小化、隐藏或不可见后台触发自动压缩，前台播放不打断"><span>后台触发压缩</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-memoryAutoSystemTrim" onclick="toggleFx('memoryAutoSystemTrim')"
+              title="按阈值和间隔启用系统级 Mem Reduct；默认不自动弹管理员权限"><span>系统级定时释放</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-memorySystemAutoElevate" onclick="toggleFx('memorySystemAutoElevate')"
+              title="完整释放工作集/修改页/待机页可能需要 UAC；关闭时只尝试当前权限可完成的部分"><span>需要时请求管理员</span><span class="dot"></span></div>
+          </div>
+          <div class="fx-seg memory-mask-seg" id="memory-mask-seg" title="Mem Reduct 系统释放范围">
+            <button data-memory-mask="workingSet" class="active">工作集</button>
+            <button data-memory-mask="modifiedList" class="active">修改页</button>
+            <button data-memory-mask="standbyList" class="active">待机页</button>
+            <button data-memory-mask="standbyLow" class="active">低优先待机</button>
+          </div>
+          <div class="fx-slider"><label>定时释放(分)</label><input id="fx-memory-interval" type="range" min="5" max="180"
+              step="1"><output></output></div>
+          <div class="fx-slider"><label>占用阈值(%)</label><input id="fx-memory-threshold" type="range" min="50" max="98"
+              step="1"><output></output></div>
+          <div class="memory-action-row">
+            <button class="fx-mini-btn ghost" type="button" onclick="runAppMemoryTrim('manual')">压缩播放器</button>
+            <button class="fx-mini-btn ghost" type="button" onclick="runSystemMemoryPurge(false)">系统释放</button>
+            <button class="fx-mini-btn ghost" type="button" onclick="runSystemMemoryPurge(true)">提权释放</button>
+          </div>
+          <div class="fx-section-label">本地缓存</div>
+          <div class="cache-storage-panel" id="cache-storage-panel">
+            <div class="cache-storage-head"><span>统一缓存目录</span><span id="cache-storage-total">读取中...</span></div>
+            <code class="cache-storage-path" id="cache-storage-root">桌面版启动后读取</code>
+            <div class="cache-storage-actions">
+              <button class="fx-mini-btn ghost" type="button" onclick="chooseMineradioCacheRoot()">更改目录</button>
+              <button class="fx-mini-btn ghost" type="button" onclick="refreshMineradioCacheSettings()">刷新占用</button>
+              <button class="fx-mini-btn ghost" type="button" id="cache-storage-restart" onclick="restartMineradioForCachePath()" hidden>重启生效</button>
+            </div>
+            <div class="cache-storage-row"><span>歌词 / 译文缓存</span><b id="cache-storage-lyrics-size">—</b></div>
+            <code class="cache-storage-path small" id="cache-storage-lyrics-path">—</code>
+            <div class="cache-storage-row"><span>封面、网络与音频分片缓存</span><b id="cache-storage-chromium-size">—</b></div>
+            <code class="cache-storage-path small" id="cache-storage-chromium-path">—</code>
+            <div class="cache-storage-row"><span>节奏分析缓存</span><b id="cache-storage-beatmaps-size">—</b></div>
+            <code class="cache-storage-path small" id="cache-storage-beatmaps-path">—</code>
+            <div class="cache-storage-row"><span>Wallpaper Engine 静音场景缓存</span><b id="cache-storage-wallpaper-size">—</b></div>
+            <code class="cache-storage-path small" id="cache-storage-wallpaper-path">—</code>
+            <div class="cache-storage-row muted"><span>设置与登录资料（安全固定）</span><b id="cache-storage-userdata-size">—</b></div>
+            <code class="cache-storage-path small" id="cache-storage-userdata-path">—</code>
+            <div class="fx-sub cache-storage-note" id="cache-storage-note">歌词缓存立即切换；网络、节奏分析与 WE 静音场景缓存目录在下次重启后切换。</div>
+          </div>
+          <div class="fx-slider"><label>粒子尺寸</label><input id="fx-point" type="range" min="0.5" max="2.2"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>流速</label><input id="fx-speed" type="range" min="0.2" max="2.5"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>扭曲</label><input id="fx-twist" type="range" min="0" max="0.6"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>色彩张力</label><input id="fx-color" type="range" min="0.5" max="2.0"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>溢光强度</label><input id="fx-bloom" type="range" min="0" max="1.6"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>离散感</label><input id="fx-scatter" type="range" min="0" max="0.5"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>背景压缩</label><input id="fx-bgfade" type="range" min="0" max="1.2"
+              step="0.01"><output></output></div>
+        </div>
+      </div>
+
+      <div class="fx-actions">
+        <button class="fx-mini-btn" onclick="resetFx()">恢复默认</button>
+      </div>

@@ -1,0 +1,116 @@
+{
+  "name": "mineradio-windows",
+  "productName": "Mineradio",
+  "version": "2.3.11",
+  "description": "Mineradio 四平台音乐播放器 Windows 桌面版",
+  "author": "Mineradio contributors",
+  "license": "GPL-3.0-only",
+  "private": true,
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "pack": "electron-builder --win dir --x64 --publish never",
+    "dist": "electron-builder --win nsis --x64 --publish never",
+    "verify": "node scripts/verify-electron.cjs"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11",
+    "music-metadata": "11.14.0"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0",
+    "playwright": "1.64.1"
+  },
+  "build": {
+    "appId": "com.mineradio.windows.python",
+    "productName": "Mineradio",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "assets/icon.ico",
+      "assets/icon.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "build/backend/MineradioBackend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc"
+        ]
+      },
+      {
+        "from": "build/tools",
+        "to": "tools",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "sdk",
+        "to": "qishui-sdk",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../third_party",
+        "to": "licenses/project",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "npmRebuild": false,
+    "compression": "normal",
+    "win": {
+      "executableName": "Mineradio",
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": true,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "guid": "2542aae7-0464-5cfc-bce5-8b4935dc8fb9",
+      "artifactName": "Mineradio-${version}-Setup-x64.exe",
+      "uninstallDisplayName": "Mineradio",
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mineradio",
+      "runAfterFinish": false,
+      "deleteAppDataOnUninstall": false,
+      "include": "assets/installer.nsh"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "sunzhaocn",
+        "repo": "Mineradio",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sunzhaocn/Mineradio.git"
+  },
+  "homepage": "https://github.com/sunzhaocn/Mineradio"
+}

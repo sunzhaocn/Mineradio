@@ -1,0 +1,178 @@
+
+    :root{
+      --lyric-primary:#f6fdff;
+      --lyric-secondary:#a8f6ff;
+      --lyric-highlight:#fff0b8;
+      --lyric-glow:#9cffdf;
+      --lyric-font:Inter,"Noto Sans SC","PingFang SC","Microsoft YaHei",Arial,sans-serif;
+      --lyric-weight:900;
+      --lyric-letter-spacing:0px;
+      --lyric-line-height:1;
+      --lyric-size:58px;
+      --lyric-progress:0%;
+      --lyric-feather:5.5%;
+      --lyric-fit-x:1;
+      --lyric-scroll-x:0px;
+      --lyric-edge-width:92px;
+      --lyric-mask-edge-width:92px;
+      --lyric-vertical-feather:46px;
+      --lyric-css-beat-glow:0px;
+      --lyric-shadow-soft:rgba(156,255,223,.34);
+      --lyric-shadow-glow:rgba(156,255,223,.26);
+      --lyric-shadow-hot:rgba(255,240,184,.22);
+      --lyric-edge:rgba(4,6,12,.42);
+      --lyric-drop:rgba(156,255,223,.38);
+      --lyric-drop-paused:rgba(156,255,223,.22);
+    }
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;user-select:none}
+    body{opacity:0;transition:opacity .22s ease;-webkit-app-region:no-drag}
+    body.show{opacity:1}
+    canvas{display:none}
+    .wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 12px;pointer-events:none}
+    .stage{
+      position:relative;
+      max-width:calc(100vw - 24px);
+      padding:104px 86px 94px;
+      box-sizing:border-box;
+      pointer-events:auto;
+      cursor:default;
+      transform-style:preserve-3d;
+      transform-origin:center;
+      will-change:transform,filter;
+      contain:layout style;
+      backface-visibility:hidden;
+      -webkit-app-region:no-drag;
+    }
+    body.unlocked .stage{cursor:move}
+    body.unlocked .stage.hint-visible{cursor:move;-webkit-app-region:no-drag}
+    .lyric-viewport{
+      position:relative;
+      z-index:2;
+      display:block;
+      width:min(100%,1120px);
+      max-width:calc(100vw - 24px);
+      margin:0 auto;
+      padding:1.24em var(--lyric-edge-width) 1.34em;
+      box-sizing:border-box;
+      overflow:hidden;
+      text-align:center;
+      pointer-events:none;
+      isolation:isolate;
+      -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--lyric-mask-edge-width),#000 calc(100% - var(--lyric-mask-edge-width)),transparent 100%);
+      mask-image:linear-gradient(90deg,transparent 0,#000 var(--lyric-mask-edge-width),#000 calc(100% - var(--lyric-mask-edge-width)),transparent 100%);
+      filter:drop-shadow(0 1px 2.4px rgba(4,6,12,.58)) drop-shadow(0 0 4.8px rgba(4,6,12,.30));
+      transform:translateZ(0);
+      will-change:transform,filter;
+    }
+    body.unlocked .stage.hint-visible .lyric-viewport{pointer-events:auto;cursor:move;-webkit-app-region:no-drag}
+    .lyric-scroll{
+      display:inline-block;
+      transform:translate3d(var(--lyric-scroll-x),0,0) scaleX(var(--lyric-fit-x));
+      transform-origin:center;
+      will-change:transform;
+      backface-visibility:hidden;
+    }
+    .line{
+      position:relative;
+      z-index:2;
+      display:inline-block;
+      max-width:none;
+      color:#fff;
+      font-family:var(--lyric-font);
+      font-size:var(--lyric-size);
+      font-weight:var(--lyric-weight);
+      line-height:var(--lyric-line-height);
+      letter-spacing:var(--lyric-letter-spacing);
+      text-align:center;
+      white-space:nowrap;
+      overflow:visible;
+      text-overflow:clip;
+      padding:.20em .12em .34em;
+      margin:-.20em -.12em -.34em;
+      background:linear-gradient(90deg,var(--lyric-primary),var(--lyric-primary));
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+      -webkit-text-stroke:.18px rgba(255,255,255,.72);
+      paint-order:stroke fill;
+      text-shadow:0 0 1px rgba(255,255,255,.34),0 0 calc(6px + var(--lyric-css-beat-glow)) var(--lyric-shadow-soft),0 0 calc(14px + var(--lyric-css-beat-glow)) var(--lyric-shadow-glow);
+      filter:none;
+      opacity:0;
+      transform:translate3d(0,0,0);
+      transform-origin:center;
+      backface-visibility:hidden;
+      will-change:opacity,filter,transform,background;
+    }
+    body.highlight .line{
+      background:linear-gradient(90deg,
+        var(--lyric-highlight) 0%,
+        var(--lyric-highlight) max(0%,calc(var(--lyric-progress) - var(--lyric-feather))),
+        var(--lyric-glow) calc(var(--lyric-progress) + 1.2%),
+        var(--lyric-primary) calc(var(--lyric-progress) + var(--lyric-feather)),
+        var(--lyric-primary) 100%);
+      -webkit-background-clip:text;
+      background-clip:text;
+    }
+    .line.in{animation:lyr-in 820ms cubic-bezier(.16,.84,.32,1.02) forwards}
+    body.paused .line{filter:none;opacity:.84}
+    .lock-hint{
+      position:absolute;
+      z-index:4;
+      left:50%;
+      top:72px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      min-width:92px;
+      min-height:30px;
+      padding:0 11px;
+      border-radius:999px;
+      border:1px solid color-mix(in srgb,var(--lyric-glow) 58%,rgba(255,255,255,.36));
+      background:rgba(4,6,10,.44);
+      color:rgba(255,255,255,.84);
+      font:800 12px/1 "Microsoft YaHei",sans-serif;
+      text-shadow:0 1px 10px rgba(0,0,0,.55);
+      box-shadow:0 0 20px color-mix(in srgb,var(--lyric-glow) 30%,transparent),inset 0 1px 0 rgba(255,255,255,.16);
+      opacity:0;
+      pointer-events:none;
+      transform:translateX(-50%) translateY(-8px) scale(.92);
+      transition:opacity .16s ease,transform .16s ease;
+      -webkit-app-region:no-drag;
+    }
+    .lock-icon{
+      position:relative;
+      width:13px;
+      height:13px;
+      flex:0 0 auto;
+    }
+    .lock-icon::before{content:"";position:absolute;left:2px;bottom:1px;width:9px;height:7px;border:1.7px solid var(--lyric-highlight);border-radius:2px;box-sizing:border-box}
+    .lock-icon::after{content:"";position:absolute;left:3px;top:0;width:7px;height:8px;border:1.7px solid var(--lyric-highlight);border-bottom:0;border-radius:7px 7px 0 0;box-sizing:border-box}
+    body.unlocked .lock-icon::after{left:7px;transform:rotate(24deg);transform-origin:left bottom}
+    .lyrics-close{
+      display:none;
+      align-items:center;
+      justify-content:center;
+      height:22px;
+      width:auto;
+      margin-right:-4px;
+      border:0;
+      border-left:1px solid rgba(255,255,255,.14);
+      padding:0 0 1px 9px;
+      background:transparent;
+      color:rgba(255,255,255,.82);
+      font:800 12px/1 "Microsoft YaHei",sans-serif;
+      cursor:pointer;
+      text-shadow:0 0 12px var(--lyric-primary);
+      -webkit-app-region:no-drag;
+    }
+    .lyrics-close:hover{color:#fff}
+    body.unlocked .lyrics-close{display:flex}
+    body.unlocked .stage.hint-visible .lock-hint{pointer-events:auto;-webkit-app-region:no-drag}
+    .stage.hint-visible .lock-hint{opacity:.94;transform:translateX(-50%) translateY(0) scale(1)}
+    @keyframes lyr-in{
+      0%{opacity:0;transform:translate3d(0,32px,-120px) rotateX(24deg) rotateY(-18deg) scale(.78);filter:blur(12px)}
+      58%{opacity:1;filter:blur(0)}
+      100%{opacity:1;transform:translate3d(0,0,0) rotateX(0deg) rotateY(0deg) scale(1);filter:blur(0)}
+    }
+  

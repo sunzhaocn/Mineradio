@@ -1,0 +1,378 @@
+.upload-tip-title {
+  display: block;
+  color: #fff0bf;
+  font-weight: 700;
+  margin-bottom: 2px
+}
+
+.upload-tip-close {
+  position: absolute;
+  right: 9px;
+  top: 8px;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, .38);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 18px;
+  padding: 0;
+  font-family: inherit
+}
+
+.upload-tip-close:hover {
+  background: rgba(255, 255, 255, .08);
+  color: #fff
+}
+
+#user-btn {
+  padding: 0 16px;
+  width: auto;
+  min-width: 58px;
+  height: 44px;
+  border-radius: 24px;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: .4px
+}
+
+.user-capsule-hide-btn {
+  width: 18px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .035);
+  color: rgba(255, 255, 255, .34);
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateX(6px) scale(.92);
+  transition: opacity .18s, transform .18s, background .18s, color .18s, border-color .18s;
+  cursor: pointer
+}
+
+#top-right:hover .user-capsule-hide-btn,
+.user-capsule-hide-btn.on {
+  opacity: 1;
+  transform: translateX(0) scale(1)
+}
+
+.user-capsule-hide-btn:hover,
+.user-capsule-hide-btn.on {
+  border-color: rgba(var(--fc-accent-rgb), .34);
+  background: rgba(var(--fc-accent-rgb), .10);
+  color: #fff
+}
+
+body.user-capsule-auto-hide #top-right {
+  right: -96px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: right .28s cubic-bezier(.16, 1, .3, 1), opacity .18s, visibility 0s linear .18s, transform .24s
+}
+
+body.user-capsule-auto-hide #top-right:hover,
+body.user-capsule-auto-hide.user-capsule-peek #top-right {
+  right: 18px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: right .28s cubic-bezier(.16, 1, .3, 1), opacity .16s, transform .24s
+}
+
+body.user-capsule-auto-hide #top-right::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: -18px;
+  width: 82px;
+  height: 80px
+}
+
+#home-btn {
+  width: 44px;
+  min-width: 44px;
+  border-color: rgba(0, 245, 212, .18);
+  background: rgba(255, 255, 255, .04);
+  color: rgba(232, 236, 239, .78)
+}
+
+#home-btn:hover {
+  border-color: rgba(0, 245, 212, .44);
+  background: rgba(0, 245, 212, .075);
+  color: #fff;
+  box-shadow: 0 14px 38px rgba(0, 245, 212, .08)
+}
+
+body.empty-home-active #home-btn {
+  border-color: rgba(255, 83, 103, .36);
+  background: rgba(255, 83, 103, .11);
+  color: #fff
+}
+
+body.desktop-shell #empty-home {
+  top: 132px;
+  bottom: 46px;
+  width: calc(100vw - 44px)
+}
+
+body.desktop-shell .empty-home-shell {
+  min-height: 0
+}
+
+body.desktop-shell .home-hero {
+  min-height: 390px
+}
+
+body.desktop-shell .home-card {
+  min-height: 148px
+}
+
+body.desktop-shell .home-tile {
+  min-height: 154px
+}
+
+body.desktop-shell .home-tile-cover {
+  height: 84px
+}
+
+body.desktop-shell.desktop-fullscreen #empty-home,
+html:fullscreen body.desktop-shell #empty-home {
+  top: 96px;
+  bottom: 52px;
+  width: min(1480px, calc(100vw - 96px))
+}
+
+body.desktop-shell.desktop-fullscreen .empty-home-shell,
+html:fullscreen body.desktop-shell .empty-home-shell {
+  max-width: 1480px;
+  margin: 0 auto;
+  grid-template-columns: minmax(380px, .92fr) minmax(560px, 1.08fr)
+}
+
+body.desktop-shell.desktop-fullscreen .home-mosaic,
+html:fullscreen body.desktop-shell .home-mosaic {
+  height: clamp(146px, 16vh, 208px)
+}
+
+body.desktop-shell.desktop-fullscreen .home-mosaic-cell.has-cover,
+html:fullscreen body.desktop-shell .home-mosaic-cell.has-cover {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-color: rgba(8, 10, 14, .54)
+}
+
+@media (max-height:760px) {
+  body.desktop-shell #empty-home {
+    top: 118px;
+    bottom: 34px
+  }
+
+  body.desktop-shell .home-hero {
+    min-height: 330px;
+    padding: 22px
+  }
+
+  body.desktop-shell .home-visual {
+    height: 196px;
+    max-width: 260px
+  }
+
+  body.desktop-shell .home-card {
+    min-height: 128px;
+    padding: 14px
+  }
+
+  body.desktop-shell .home-tile {
+    min-height: 130px
+  }
+
+  body.desktop-shell .home-tile-cover {
+    height: 70px
+  }
+
+  body.desktop-shell .home-mosaic {
+    height: 150px;
+    min-height: 126px
+  }
+}
+
+@media (max-width:1120px) {
+  body.desktop-shell #empty-home {
+    width: calc(100vw - 44px)
+  }
+
+  body.desktop-shell .empty-home-shell {
+    grid-template-columns: minmax(300px, .88fr) minmax(430px, 1.12fr);
+    gap: 12px
+  }
+
+  body.desktop-shell .home-hero {
+    padding: 22px
+  }
+
+  body.desktop-shell .home-hero-inner {
+    grid-template-columns: minmax(0, 1.16fr) minmax(126px, .52fr);
+    column-gap: 14px
+  }
+
+  body.desktop-shell .home-title {
+    font-size: clamp(30px, 4vw, 48px);
+    max-width: 340px
+  }
+
+  body.desktop-shell .home-sub {
+    font-size: 12.5px;
+    line-height: 1.5;
+    max-width: 314px
+  }
+
+  body.desktop-shell .home-visual {
+    height: 190px;
+    max-width: 226px
+  }
+
+  body.desktop-shell .home-mosaic {
+    height: 132px;
+    min-height: 116px;
+    margin-top: 14px
+  }
+
+  body.desktop-shell .home-grid {
+    gap: 10px
+  }
+
+  body.desktop-shell .home-card {
+    min-height: 122px;
+    padding: 14px
+  }
+
+  body.desktop-shell .home-card-label {
+    margin-bottom: 6px
+  }
+
+  body.desktop-shell .home-card-title {
+    font-size: 16px;
+    max-width: 66%
+  }
+
+  body.desktop-shell .home-card-sub {
+    margin-top: 6px;
+    font-size: 10.6px;
+    line-height: 1.32;
+    max-width: 64%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden
+  }
+
+  body.desktop-shell .home-card-art {
+    right: 11px;
+    bottom: 11px;
+    width: 78px;
+    height: 78px;
+    border-radius: 18px
+  }
+
+  body.desktop-shell .home-card::after {
+    right: 86px;
+    bottom: 14px;
+    width: 30px;
+    height: 54px
+  }
+
+  body.desktop-shell .home-rail {
+    gap: 8px
+  }
+
+  body.desktop-shell .home-tile {
+    min-height: 120px
+  }
+
+  body.desktop-shell .home-tile-cover {
+    height: 62px
+  }
+}
+
+@media (max-height:700px) {
+  body.desktop-shell #empty-home {
+    top: 106px;
+    bottom: 30px
+  }
+
+  body.desktop-shell .home-hero {
+    min-height: 0;
+    padding: 18px
+  }
+
+  body.desktop-shell .home-title {
+    font-size: clamp(27px, 3.5vw, 40px)
+  }
+
+  body.desktop-shell .home-sub {
+    font-size: 11.8px;
+    line-height: 1.4
+  }
+
+  body.desktop-shell .home-weather-meta {
+    margin-top: 11px
+  }
+
+  body.desktop-shell .home-quick-row {
+    margin-top: 12px
+  }
+
+  body.desktop-shell .home-visual {
+    height: 166px;
+    max-width: 206px
+  }
+
+  body.desktop-shell .home-mosaic {
+    height: 104px;
+    min-height: 98px
+  }
+
+  body.desktop-shell .home-card {
+    min-height: 104px;
+    padding: 12px
+  }
+
+  body.desktop-shell .home-card-title {
+    font-size: 15px
+  }
+
+  body.desktop-shell .home-card-sub {
+    font-size: 10.2px;
+    line-height: 1.28
+  }
+
+  body.desktop-shell .home-card-art {
+    width: 66px;
+    height: 66px;
+    border-radius: 15px
+  }
+
+  body.desktop-shell .home-card::after {
+    right: 72px;
+    width: 24px;
+    height: 44px
+  }
+
+  body.desktop-shell .home-tile {
+    min-height: 104px;
+    padding: 9px
+  }
+
+  body.desktop-shell .home-tile-cover {
+    height: 50px;
+    margin-bottom: 8px
+  }
+
+  body.desktop-shell .home-section-head {
+    min-height: 28px
+  }
+}

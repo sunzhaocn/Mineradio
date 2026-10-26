@@ -1,0 +1,27 @@
+html { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+body { overscroll-behavior: none; }
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+}
+.browser-runtime #desktop-titlebar { display: none !important; }
+button, [role="button"] { touch-action: manipulation; }
+#canvas-container, #canvas-container canvas, .mineradio-particle-surface, #heart-btn, button[onclick*="toggleLike"], button[data-web-heart-source] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.mineradio-particle-surface { touch-action: none; }
+@media (max-width: 900px) {
+  html.ipad-app-shell body.web-mobile-active[data-mobile-page="player"] #bottom-bar.soft-hidden {
+    opacity: 1; pointer-events: auto; transform: none; filter: none;
+  }
+  html.ipad-app-shell body.web-mobile-active[data-mobile-page="player"] #web-player-dock {
+    transition: opacity 240ms ease, transform 240ms ease;
+  }
+  html.ipad-app-shell body.web-mobile-active[data-mobile-page="player"] #bottom-bar.soft-hidden #web-player-dock {
+    opacity: 0; pointer-events: none; transform: translateY(32px);
+  }
+  html.ipad-app-shell body.web-mobile-active[data-mobile-page="player"] #bottom-handle {
+    display: flex !important; z-index: 110; bottom: calc(var(--web-nav-height, 58px) + 8px);
+  }
+}

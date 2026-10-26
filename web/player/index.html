@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mineradio</title>
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#10131c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mineradio">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/features/shell/standalone.css">
+  <script defer src="js/features/shell/standalone.js"></script>
+  <script defer src="js/features/account/qishui-verification.js"></script>
+  <script src="js/features/mobile/mobile-simple-mode.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&family=UnifrakturCook:wght@700&display=swap"
+    rel="stylesheet">
+  <script src="vendor/three.r128.min.js"></script>
+  <script src="vendor/music-tempo.min.js"></script>
+  <script src="vendor/gsap.min.js"></script>
+  <script src="js/features/core/preload-mode.js"></script>
+  <link rel="stylesheet" href="css/index.css?v=20260716-we-continuity-vsync">
+  <link rel="stylesheet" href="css/local-adapter.css">
+  <link rel="stylesheet" href="css/features/account/local-auth.css">
+  <link rel="stylesheet" href="css/features/library/local-library.css">
+  <link rel="stylesheet" href="css/features/library/local-cloud-heart.css">
+  <link rel="stylesheet" href="css/features/shell/responsive-layout.css?v=20261023">
+  <link rel="stylesheet" href="css/features/shell/responsive-panels.css?v=20261023">
+  <link rel="stylesheet" href="css/features/mobile/mobile-navigation.css?v=20261023">
+  <link rel="stylesheet" href="css/features/mobile/mobile-panels.css?v=20261023">
+  <link rel="stylesheet" href="css/features/shell/themed-surfaces.css?v=20261023-glass">
+  <link rel="stylesheet" href="css/features/mobile/mobile-lyrics.css?v=20261023-player-v3">
+  <link rel="stylesheet" href="css/features/mobile/mobile-player-controls.css?v=20261023-player-v3">
+  <link rel="stylesheet" href="css/features/radio/personal-radio.css?v=20261023-radio-toggle">
+  <link rel="stylesheet" href="css/features/playback/player-controls-spacing.css?v=20261023-spacing">
+  <link rel="stylesheet" href="css/features/shell/theme-actions.css?v=20261023">
+  <link rel="stylesheet" href="css/features/shell/browser-capabilities.css">
+  <script src="js/features/shell/theme-actions.js"></script>
+</head>
+
+<body>
+  <div id="desktop-window-shell">
+    <!-- component:shell/desktop-titlebar -->
+    <!-- component:shell/fullscreen-diy-zone -->
+    <!-- component:shell/custom-bg -->
+    <!-- component:shell/wallpaper-engine-layer -->
+    <!-- component:shell/wallpaper-engine-glass-sampler -->
+    <!-- component:shell/album-bg -->
+    <!-- component:shell/album-bg-next -->
+    <!-- component:shell/canvas-container -->
+    <!-- component:overlays/idle-guide-canvas -->
+
+    <!-- 启动页 -->
+    <!-- component:shell/splash -->
+
+    <!-- component:shell/hint -->
+
+    <!-- 顶部搜索 -->
+    <!-- component:discovery/search-area -->
+
+    <!-- 音乐 Home：只承载当前 Mineradio 数据，不引入外部仓库的服务端接口。 -->
+    <!-- component:discovery/empty-home -->
+
+    <!-- component:discovery/home-platform-recommend-mask -->
+    <!-- component:overlays/local-library -->
+
+    <!-- 顶部右侧 (只保留用户) -->
+    <!-- component:discovery/top-right -->
+
+    <!-- component:settings/fx-fab -->
+    <!-- component:settings/fx-fab-hide-btn -->
+
+    <!-- 控制台 (右侧贴边自动显示, 无关闭按钮) -->
+    <!-- component:settings/fx-panel -->
+
+    <!-- 歌单/队列面板 (左侧贴边自动显示, 无关闭按钮) -->
+    <!-- component:shell/playlist-panel -->
+
+    <!-- 试听提醒 -->
+    <!-- component:playback/trial-banner -->
+
+    <!-- AI 深度加载角标 -->
+    <!-- component:playback/ai-depth-chip -->
+
+    <!-- 节拍分析角标 -->
+    <!-- component:playback/beat-chip -->
+
+    <!-- 舞台歌词 (大字 3D, 由 JS 动态填充) -->
+    <!-- component:playback/stage-lyrics -->
+
+    <!-- 手势 HUD + 手骨架 -->
+    <!-- component:playback/gesture-hud -->
+    <!-- component:playback/hand-canvas -->
+
+    <!-- 左下小封面 -->
+    <!-- component:playback/thumb-wrap -->
+
+    <!-- 底部控件 -->
+    <!-- component:playback/control-glass-svg -->
+    <!-- component:playback/bottom-handle -->
+    <!-- component:playback/bottom-bar -->
+
+    <!-- component:shell/file-input -->
+    <!-- component:shell/cover-input -->
+    <!-- component:shell/folder-input -->
+    <!-- component:shell/lyric-font-input -->
+    <!-- component:shell/background-image-input -->
+    <!-- component:shell/drop-overlay -->
+    <!-- component:shell/free-camera-hint -->
+    <!-- component:shell/loading-overlay -->
+
+    <!-- component:overlays/login-guide-canvas -->
+
+    <!-- 登录模态 -->
+    <!-- component:overlays/login-modal -->
+
+    <!-- component:overlays/login-easter-unlock-cinematic -->
+
+    <!-- component:overlays/login-easter-achievement -->
+
+    <!-- 音频路由牵线面板 -->
+    <!-- component:overlays/audio-output-workflow-modal -->
+
+    <!-- 用户模态 -->
+    <!-- component:overlays/user-modal -->
+
+    <!-- 封面裁剪模态 -->
+    <!-- component:overlays/cover-crop-modal -->
+
+    <!-- component:overlays/background-crop-modal -->
+
+    <!-- component:overlays/wallpaper-engine-modal -->
+
+    <!-- 收藏到歌单模态 -->
+    <!-- component:overlays/collect-modal -->
+
+    <!-- component:overlays/local-beat-modal -->
+
+    <!-- component:overlays/custom-lyric-modal -->
+
+    <!-- component:overlays/track-detail-modal -->
+
+    <!-- component:overlays/update-modal -->
+
+    <!-- component:overlays/toast -->
+    <!-- component:overlays/cuefield-feedback -->
+    <!-- component:overlays/cookie-export-prompt -->
+    <!-- component:overlays/source-fallback-notice -->
+
+    <!-- component:overlays/visual-guide -->
+
+  </div>
+
+  <!-- component:shell/mobile-navigation -->
+
+  <!-- component:shell/desktop-mode-control-dock -->
+
+  <link rel="stylesheet" href="css/features/shell/player-updates.css?v=20261024">
+  <link rel="stylesheet" href="css/components/045-player-repairs.css?v=20261025">
+  <script src="js/features/cache/media-store.js"></script>
+  <script src="js/features/visual/slideshow.js"></script>
+  <script src="js/features/library/browser-local-music.js"></script>
+  <script src="js/features/shell/browser-capabilities.js"></script>
+  <script src="js/index-loader.js"></script>
+  <script src="js/features/shell/responsive-layout.js?v=20261023"></script>
+  <script src="js/features/mobile/mobile-navigation.js?v=20261023"></script>
+  <script src="js/features/mobile/mobile-player-controls.js?v=20261023-player-v3" defer></script>
+  <script src="js/features/mobile/mobile-lyrics.js?v=20261023-player-v3" defer></script>
+  <script src="js/features/library/library-motion.js?v=20261023-glass" defer></script>
+  <script src="js/features/playback/player-motion.js?v=20261023-glass" defer></script>
+  <script src="js/features/radio/personal-radio-engine.js?v=20261023-radio" defer></script>
+  <script src="js/features/radio/personal-radio.js?v=20261023-radio-toggle" defer></script>
+  <script src="js/features/shell/player-updates.js?v=20261024" defer></script>
+  <script src="js/features/visual/song-mv.js?v=20261024" defer></script>
+  <script src="js/features/shell/pointer-lifecycle.js" defer></script>
+  <script src="js/features/playlists/filter.js" defer></script>
+  <script src="js/features/playback/track-transition.js" defer></script>
+  <script src="js/features/playback/media-lifecycle.js" defer></script>
+  <script src="js/features/playback/media-session.js?v=20261025-1" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,159 @@
+/* Keep search outside the account/window action area at every desktop width. */
+@media (min-width: 901px) {
+  body #search-area, body.simple-mode #search-area {
+    left: 24px; transform: none; width: min(620px, calc(100vw - var(--header-actions-width, 340px) - 60px));
+    max-width: calc(100vw - var(--header-actions-width, 340px) - 60px);
+  }
+  body #search-area #search-stack, body.simple-mode #search-area #search-stack { width: 100%; min-width: 0; }
+  body #search-area #search-input { min-width: 0; }
+  body.desktop-shell #search-area.peek, body.desktop-shell #search-area.stage-mode.peek { top: 58px; }
+}
+/* The Windows shell keeps its desktop controls even in a narrow window. */
+body.desktop-shell #search-area, body.desktop-shell.simple-mode #search-area {
+  left:24px; transform:none; width:min(620px,calc(100vw - var(--header-actions-width,340px) - 60px));
+  max-width:calc(100vw - var(--header-actions-width,340px) - 60px);
+}
+body.desktop-shell #search-stack { width:100%; min-width:0; }
+body.mobile-device .fullscreen-toggle-btn, body.mobile-device #volume-slider,
+body.mobile-device #volume-value, body.mobile-device .volume-main-row { display: none !important; }
+@media (max-width: 900px) {
+  body.web-mobile-more-open[data-mobile-page="player"] #web-player-stage { visibility: hidden; pointer-events: none; }
+  body.web-adapter.web-mobile-more-open[data-mobile-page="player"] #web-player-more {
+    height: calc(var(--web-viewport-height, 100dvh) - var(--web-mobile-top, 72px) - var(--web-nav-height, 64px) - 184px);
+    max-height: none; align-content: start;
+  }
+  body.mobile-device #web-player-more #volume-btn svg { display: none; }
+  body.mobile-device #web-player-more #volume-btn::before { content: '↗↘'; font-size: 20px; }
+}
+@media (max-width:900px) and (prefers-reduced-motion:no-preference) {
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-cover {
+    transition:opacity .24s ease .24s,transform .24s ease .24s !important;
+  }
+  body.web-adapter.web-mobile-active.web-mobile-lyrics-open[data-mobile-page="player"] #web-player-stage .control-cover {
+    transition:opacity .24s ease,transform .24s ease !important;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-mobile-lyrics {
+    transition:opacity .24s ease,transform .24s ease,visibility 0s .24s !important;
+  }
+  body.web-adapter.web-mobile-active.web-mobile-lyrics-open[data-mobile-page="player"] #web-mobile-lyrics {
+    transition:opacity .24s ease .24s,transform .24s ease .24s,visibility 0s !important;
+  }
+}
+#song-mv-layer { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0; transition: opacity .35s; background: #050609; }
+#song-mv-layer.active { opacity: 1; }
+#song-mv-layer video { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+html.player-controls-shell #song-mv-layer { overflow: hidden; max-width: 100%; max-height: 100%; }
+html.player-controls-shell #song-mv-layer video { display: block; object-fit: contain; max-width: 100%; max-height: 100%; }
+body.song-mv-active #canvas-container { visibility: hidden; }
+body.empty-home-active #song-mv-layer { opacity: 0; visibility: hidden; }
+body.immersive-mode #bottom-bar {
+  transition-duration: .18s, .18s, .18s, .22s, .18s;
+}
+/* Keep the video below the controls within the desktop shell's stacking context. */
+body.song-mv-selected #bottom-bar { z-index: 32; }
+body.song-mv-selected:not(.immersive-mode) #desktop-titlebar {
+  opacity: 1 !important; visibility: visible !important;
+}
+/* Avoid re-filtering every decoded video frame through the SVG glass filter. */
+body.song-mv-active #bottom-bar.visible,
+html.control-glass-svg-ok body.song-mv-active #bottom-bar.visible {
+  background: rgba(18, 20, 25, .88); backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+body.song-mv-selected.immersive-mode #bottom-bar.visible {
+  width: min(1080px, calc(100vw - 56px)); border-radius: 50px;
+}
+body.song-mv-selected.immersive-mode .control-track { display: flex !important; }
+body.song-mv-selected.immersive-mode #heart-btn,
+body.song-mv-selected.immersive-mode #collect-btn,
+body.song-mv-selected.immersive-mode #play-mode-btn,
+body.song-mv-selected.immersive-mode .lyrics-toggle-btn,
+body.song-mv-selected.immersive-mode #mini-queue-btn,
+body.song-mv-selected.immersive-mode #quality-control,
+body.song-mv-selected.immersive-mode #volume-control,
+body.song-mv-selected.immersive-mode .control-divider { display: revert !important; }
+body.song-mv-selected.immersive-mode .control-cluster.actions { display: flex; }
+body.song-mv-selected.immersive-mode #mini-queue-popover { display: block !important; }
+body.song-mv-selected.immersive-mode #controls { flex-wrap: nowrap; }
+/* An invisible, touchable edge remains available while immersed. */
+body.song-mv-selected.immersive-mode:not(.controls-visible) #bottom-handle {
+  display: block; opacity: 0 !important; pointer-events: auto !important;
+  bottom: 0; height: 48px; width: min(620px, 90vw); transform: translateX(-50%) !important;
+}
+.mv-fallback-settings {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 4px;
+  color: var(--text-secondary, #bfc1c8); font-size: 12px;
+}
+.mv-fallback-settings[hidden] { display: none; }
+.mv-fallback-settings select {
+  flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; color: inherit;
+  background: rgba(90, 90, 100, .18); border: 1px solid rgba(160, 160, 170, .3); font: inherit;
+}
+.mv-fallback-settings option { background: #202126; color: #eee; }
+
+/* Touch launchers occupy the header; panels begin below them in both rotations. */
+html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen):not(.desktop-wallpaper-mode) {
+  --web-safe-top: 58px; --web-header-bottom: 170px;
+}
+html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen):not(.desktop-wallpaper-mode) #top-right,
+html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen):not(.desktop-wallpaper-mode) #search-area.peek {
+  top: 58px !important;
+}
+html.player-controls-shell body:is(.web-adapter,.desktop-shell) #fx-panel {
+  left: auto !important;
+  top: max(148px, var(--web-header-bottom, 122px), calc(var(--player-actions-bottom, 54px) + 80px)) !important;
+  bottom: calc(var(--web-player-space, 190px) + 12px) !important;
+  max-height: none !important;
+  width: min(444px, calc(100vw - 24px)) !important;
+}
+/* The queue shares the same measured player clearance at every tablet width. */
+html.player-controls-shell body:is(.web-adapter,.desktop-shell) #playlist-panel {
+  --web-queue-top: max(82px, var(--web-header-bottom, 122px), calc(var(--player-actions-bottom, 54px) + 18px));
+  box-sizing: border-box; top: var(--web-queue-top) !important;
+  bottom: calc(var(--web-player-space, 190px) + 12px) !important;
+  max-height: max(0px, calc(var(--web-viewport-height, 100dvh) - var(--web-queue-top) - var(--web-player-space, 190px) - 12px)) !important;
+  min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+html.player-controls-shell body:is(.web-adapter,.desktop-shell) #fx-fab {
+  top: calc(var(--player-actions-bottom, 68px) + 18px) !important;
+  bottom: auto !important; right: var(--web-safe-right, 12px) !important;
+  width: 44px; height: 44px; opacity: 1 !important; pointer-events: auto !important;
+  transform: none !important;
+}
+html.player-controls-shell body:is(.web-adapter,.desktop-shell) #fx-fab-hide-btn { display: none; }
+html.player-controls-shell body:is(.web-adapter,.desktop-shell) #top-right { flex-direction: row; width: auto; gap: 8px; }
+html.player-controls-shell body:is(.web-adapter,.desktop-shell) #diy-mode-btn {
+  position: relative; top: auto; right: auto; margin: 0;
+  width: 44px !important; min-width: 44px !important; height: 44px !important;
+  padding: 0 !important; display: inline-flex !important; align-items: center; justify-content: center;
+  text-align: center; gap: 0; font-size: 11px; line-height: 1; letter-spacing: 0;
+}
+html.player-controls-shell #diy-mode-btn::before,
+html.player-controls-shell #diy-mode-btn::after { display: none !important; }
+@media (max-width: 900px) {
+  html.player-controls-shell body:is(.web-adapter,.desktop-shell) #top-right { width: 148px; height: 44px; }
+  html.player-controls-shell body:is(.web-adapter,.desktop-shell) #search-area,
+  html.player-controls-shell body:is(.web-adapter,.desktop-shell) #search-area.peek {
+    width: calc(100% - var(--web-safe-left) - var(--web-safe-right) - 164px);
+  }
+}
+#mv-resume-btn {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  pointer-events: auto; min-height: 48px; padding: 12px 20px; border-radius: 20px;
+  color: #fff; background: rgba(20,24,30,.9); border: 1px solid #888;
+}
+#mv-cache-status {
+  position: fixed; z-index: 40; top: 124px; left: 50%; transform: translateX(-50%);
+  padding: 10px 18px; border-radius: 18px; background: #171b29ed;
+  color: #edf1ff; font: 13px system-ui; pointer-events: none;
+}
+html.player-controls-shell:not(.hover-player-panels) .playlist-panel-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  float: right; min-width: 40px; height: 40px; margin-left: 8px;
+  border: 1px solid #ffffff25; background: #ffffff08; border-radius: 12px;
+  color: inherit; font: 24px system-ui; cursor: pointer;
+}
+html.player-controls-shell.mobile-simple-player body #diy-mode-btn,
+html.player-controls-shell.mobile-simple-player body #fx-fab,
+html.player-controls-shell.mobile-simple-player body #fx-panel { display: none !important; }
+html.player-controls-shell.hover-player-panels .playlist-panel-close { display: none !important; }

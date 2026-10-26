@@ -1,0 +1,17 @@
+<div id="audio-output-workflow-modal" class="modal-mask">
+      <div class="modal audio-output-workflow-modal">
+        <div class="login-panel-head">
+          <div><b>音频路由</b><small>Patch Bay</small></div>
+          <button class="login-panel-close" type="button" onclick="closeAudioOutputWorkflowPanel()">×</button>
+        </div>
+        <div class="audio-output-workflow-title">
+          <b>音频路由</b>
+          <small id="audio-output-workflow-subtitle">Patch Bay</small>
+        </div>
+        <div id="audio-output-workflow-body" class="audio-output-workflow-body"></div>
+        <div class="btn-row audio-output-workflow-actions">
+          <button class="modal-btn" type="button" onclick="setAudioOutputDevice('', true)">系统默认</button>
+          <button class="modal-btn primary" type="button" onclick="refreshAudioOutputDevices(true)">刷新接口</button>
+        </div>
+      </div>
+    </div>

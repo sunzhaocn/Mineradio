@@ -1,0 +1,116 @@
+<section id="empty-home" aria-label="Mineradio 音乐首页">
+      <div class="empty-home-shell">
+        <div class="home-hero" aria-live="polite">
+          <div class="daily-review-card">
+            <div id="daily-review-date" class="daily-review-date"></div>
+            <div id="daily-review-time" class="daily-review-time">--:--</div>
+            <div class="daily-review-quote">“让今天的声音，从你喜欢的地方开始。”</div>
+            <div class="daily-review-source">— Mineradio</div>
+            <div class="daily-review-actions">
+              <button type="button" onclick="homeDashboardNextReview()">换一条</button>
+              <button id="home-dashboard-video-choose" type="button" onclick="openHomeDashboardVideoPicker()">选择 MP4</button>
+              <button id="home-dashboard-video-clear" type="button" onclick="clearHomeDashboardVideo()" hidden>移除视频</button>
+            </div>
+          </div>
+          <input id="home-dashboard-video-input" type="file" accept=".mp4,video/mp4" hidden aria-hidden="true">
+        </div>
+
+        <div class="home-grid home-quick-grid" aria-label="常用音乐入口">
+          <button class="home-card home-card-featured" data-home-tone="search" type="button"
+            onclick="resumeHomeDashboardPlayback()">
+            <div class="home-card-label">CONTINUE</div>
+            <div class="home-card-title">继续播放</div>
+            <div class="home-card-sub">从当前队列或最近播放继续</div>
+            <div class="home-card-art"></div>
+          </button>
+          <button class="home-card home-card-quick" data-home-tone="library" type="button"
+            onclick="openHomeDashboardLibrary()">
+            <div class="home-card-label">LIBRARY</div>
+            <div class="home-card-title">音乐库</div>
+            <div class="home-card-sub">歌单、本地音乐和已登录平台</div>
+            <div class="home-card-art"></div>
+          </button>
+          <button class="home-card home-card-quick" data-home-tone="mix" type="button"
+            onclick="playHomeDaily()">
+            <div class="home-card-label">DAILY MIX</div>
+            <div class="home-card-title">每日推荐</div>
+            <div class="home-card-sub">使用当前 Mineradio 推荐数据</div>
+            <div class="home-card-art"></div>
+          </button>
+          <button class="home-card home-card-quick" data-home-tone="playlist" type="button"
+            onclick="playHomeRecent()">
+            <div class="home-card-label">RECENT</div>
+            <div class="home-card-title">最近播放</div>
+            <div class="home-card-sub">播放过的歌曲会出现在这里</div>
+            <div class="home-card-art"></div>
+          </button>
+        </div>
+
+        <div class="home-rail home-insight-rail">
+          <div id="home-insight-dock" class="home-insight-dock" aria-label="今日聆听和音乐发现">
+            <section class="home-insight-card home-listen-card" aria-labelledby="home-listen-heading">
+              <div class="home-insight-head">
+                <div id="home-listen-heading" class="home-insight-kicker">LISTENING TODAY · 今日聆听</div>
+                <button class="home-insight-link" type="button" onclick="openHomeInsight()">查看偏好</button>
+              </div>
+              <div class="home-listen-metrics">
+                <div class="home-listen-metric"><strong id="home-today-time" class="home-listen-value">0 分钟</strong><span
+                    class="home-listen-label">聆听时长</span></div>
+                <div class="home-listen-metric"><strong id="home-today-count" class="home-listen-value">0 首</strong><span
+                    class="home-listen-label">今日歌曲</span></div>
+                <div class="home-listen-metric"><strong id="home-today-artist" class="home-listen-value">等待记录</strong><span
+                    id="home-today-streak" class="home-listen-label">开始播放后生成</span></div>
+              </div>
+            </section>
+
+            <button id="home-next-card" class="home-insight-card home-next-card" type="button"
+              onclick="playHomeNextFromDock()" aria-label="播放下一首">
+              <span id="home-next-cover" class="home-next-cover" aria-hidden="true"></span>
+              <span class="home-next-copy">
+                <span class="home-insight-kicker">NEXT UP · 接下来播放</span>
+                <span id="home-next-title" class="home-next-title">队列里还没有歌曲</span>
+                <span id="home-next-sub" class="home-next-sub">点击打开音乐库</span>
+              </span>
+              <span class="home-next-arrow" aria-hidden="true">›</span>
+            </button>
+
+            <section class="home-discovery-strip" aria-label="为你挑选">
+              <div class="home-discovery-copy">
+                <span class="home-insight-kicker">FOR YOU · 为你挑选</span>
+                <span class="home-discovery-title">换一首，也许正合心意</span>
+                
+              </div>
+              <div id="home-discovery-list" class="home-discovery-list" aria-live="polite"></div>
+            </section>
+
+            <button class="home-insight-card home-ranking-entry" type="button" onclick="openHomeDashboardCharts()"
+              aria-label="打开音乐发现">
+              <span class="home-ranking-entry-copy">
+                <span class="home-insight-kicker">DISCOVER · 音乐发现</span>
+                <span class="home-ranking-entry-title">平台热歌与个人偏好</span>
+                <span class="home-ranking-entry-sub">打开平台推荐中心；没有可信推荐接口时会明确留空</span>
+              </span>
+              <span class="home-ranking-entry-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="home-next-arrow" aria-hidden="true">›</span>
+            </button>
+
+            <button class="home-insight-card home-ranking-entry home-radio-entry" type="button"
+              onclick="openHomeDashboardRadio()" aria-label="打开平台推荐">
+              <span class="home-ranking-entry-copy">
+                <span class="home-insight-kicker">PLATFORM PICKS · 平台推荐</span>
+                <span class="home-ranking-entry-title">推荐电台 / 歌单</span>
+                <span class="home-ranking-entry-sub">读取每日歌曲、推荐歌单与推荐 Feed，不用关键词搜索</span>
+              </span>
+              <span class="home-radio-entry-art" aria-hidden="true"><i></i><i></i></span>
+              <span class="home-next-arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+
+          <div class="home-legacy-rail" aria-hidden="true">
+            <div id="home-rail-title"></div>
+            <div id="home-rail-note"></div>
+            <div id="home-tile-row" class="home-tile-row"></div>
+          </div>
+        </div>
+      </div>
+    </section>

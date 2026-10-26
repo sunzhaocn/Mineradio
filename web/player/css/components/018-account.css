@@ -1,0 +1,428 @@
+@media (max-width: 620px) {
+  body.immersive-mode #bottom-bar {
+    width: calc(100vw - 20px);
+    padding: 10px 12px 12px
+  }
+
+  body.immersive-mode #controls {
+    gap: 10px
+  }
+
+  body.immersive-mode .control-cluster {
+    gap: 10px;
+    height: 60px
+  }
+
+  body.immersive-mode .ctrl-btn {
+    width: 36px;
+    height: 36px
+  }
+
+  body.immersive-mode .ctrl-btn svg {
+    width: 20px;
+    height: 20px
+  }
+
+  body.immersive-mode #play-btn {
+    width: 58px;
+    height: 58px
+  }
+
+  body.immersive-mode #time-display {
+    min-width: 72px;
+    font-size: 10.5px
+  }
+}
+
+@media (max-width: 420px) {
+  body.immersive-mode #time-display {
+    display: none
+  }
+}
+
+body.immersive-mode::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 118px;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, .16))
+}
+
+/* ---------- 试听提醒 ---------- */
+
+#trial-banner {
+  position: fixed;
+  z-index: 8;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: rgba(244, 210, 138, 0.11);
+  border: 1px solid rgba(244, 210, 138, 0.40);
+  color: var(--champagne);
+  padding: 10px 18px 10px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  letter-spacing: .3px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s, transform .5s;
+  max-width: 90vw
+}
+
+#trial-banner.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto
+}
+
+#trial-banner .ic {
+  flex-shrink: 0;
+  color: var(--champagne)
+}
+
+#trial-banner .login-link {
+  margin-left: 6px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background .2s;
+  border: 1px solid rgba(255, 255, 255, 0.15)
+}
+
+#trial-banner .login-link:hover {
+  background: rgba(255, 255, 255, 0.18)
+}
+
+#trial-banner .close {
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 2px 4px;
+  margin-left: 4px;
+  transition: color .2s
+}
+
+#trial-banner .close:hover {
+  color: #fff
+}
+
+/* ---------- 模态 ---------- */
+
+#login-guide-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .24s ease
+}
+
+body.login-guide-active #login-guide-canvas {
+  opacity: 1
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: radial-gradient(circle at 50% 48%, rgba(244, 210, 138, .07), transparent 34%), rgba(0, 0, 0, 0.78);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden
+}
+
+.modal-mask.show {
+  display: flex;
+  opacity: 1;
+  visibility: visible
+}
+
+.modal-mask::before {
+  content: none
+}
+
+.modal {
+  position: relative;
+  background: linear-gradient(180deg, rgba(24, 23, 26, 0.96), rgba(12, 11, 12, 0.92));
+  border: 1px solid rgba(244, 210, 138, 0.16);
+  border-radius: 18px;
+  padding: 32px;
+  max-width: 380px;
+  width: 90vw;
+  text-align: center;
+  box-shadow: 0 26px 90px rgba(0, 0, 0, .56), 0 0 0 1px rgba(255, 255, 255, .035), inset 0 1px 0 rgba(255, 255, 255, .07);
+  will-change: opacity, transform, filter
+}
+
+.modal h2 {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  margin-bottom: 18px;
+  color: rgba(255, 255, 255, 0.95)
+}
+
+.modal .desc {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 20px;
+  line-height: 1.6
+}
+
+.dual-login-modal,
+.dual-user-modal {
+  width: min(470px, 92vw);
+  max-width: min(470px, 92vw)
+}
+
+.dual-login-modal {
+  width: fit-content;
+  min-width: min(610px, calc(100vw - 44px));
+  max-width: min(720px, calc(100vw - 44px));
+  max-height: calc(100vh - 42px);
+  padding: 24px 30px 26px;
+  overflow: auto;
+  text-align: left;
+  scrollbar-width: thin;
+  background: radial-gradient(circle at 18% 10%, rgba(255, 255, 255, .09), transparent 28%), radial-gradient(circle at 78% 62%, rgba(var(--fc-accent-rgb), .055), transparent 38%), rgba(6, 7, 10, .34);
+  border-color: rgba(255, 255, 255, .060);
+  border-radius: 24px;
+  box-shadow: 0 26px 84px rgba(0, 0, 0, .40), inset 0 1px 0 rgba(255, 255, 255, .060);
+  backdrop-filter: blur(28px) saturate(1.18);
+  -webkit-backdrop-filter: blur(28px) saturate(1.18);
+  transition: min-width .46s cubic-bezier(.16, 1, .3, 1), box-shadow .46s ease, background .46s ease
+}
+
+.login-easter-egg-gate {
+  display: none
+}
+
+#login-modal.login-easter-egg-locked .dual-login-modal {
+  width: min(560px, calc(100vw - 44px));
+  min-width: min(560px, calc(100vw - 44px));
+  min-height: min(520px, calc(100vh - 42px));
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 37%, rgba(255, 255, 255, .07), transparent 28%), radial-gradient(circle at 76% 68%, rgba(var(--fc-accent-rgb), .055), transparent 34%), rgba(5, 6, 9, .48)
+}
+
+#login-modal.login-easter-egg-locked #login-node-graph,
+#login-modal.login-easter-egg-locked #login-auth-drawer,
+#login-modal.login-easter-egg-locked .login-reset-all-btn {
+  display: none !important
+}
+
+#login-modal.login-easter-egg-locked .login-easter-egg-gate {
+  position: relative;
+  display: flex;
+  min-height: 452px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 18px 28px 8px;
+  text-align: center;
+  isolation: isolate
+}
+
+.login-easter-egg-gate::before {
+  content: '';
+  position: absolute;
+  inset: 46px 58px 34px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .035), transparent 64%);
+  filter: blur(24px);
+  opacity: .9;
+  pointer-events: none
+}
+
+.login-easter-eye-trigger {
+  position: relative;
+  width: 174px;
+  height: 174px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 42% 34%, rgba(255, 255, 255, .075), rgba(255, 255, 255, .018) 52%, transparent 76%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 24px 56px rgba(0, 0, 0, .3);
+  cursor: pointer;
+  outline: none;
+  transition: width .9s cubic-bezier(.16, 1, .3, 1), height .9s cubic-bezier(.16, 1, .3, 1), transform .9s cubic-bezier(.16, 1, .3, 1), opacity .55s ease, border-color .22s ease
+}
+
+.login-easter-eye-trigger::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .14), transparent 38%, rgba(255, 255, 255, .035)) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none
+}
+
+.login-easter-eye-trigger:hover,
+.login-easter-eye-trigger:focus-visible {
+  border-color: rgba(255, 255, 255, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 26px 64px rgba(0, 0, 0, .34), 0 0 34px rgba(255, 255, 255, .04)
+}
+
+.login-easter-eye-trigger.tap-feedback {
+  animation: login-easter-eye-tap .48s cubic-bezier(.36, .07, .19, .97)
+}
+
+@keyframes login-easter-eye-tap {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0) }
+  18% { transform: translate3d(-5px, 1px, 0) rotate(-2deg) }
+  38% { transform: translate3d(6px, -1px, 0) rotate(2.4deg) }
+  58% { transform: translate3d(-4px, 0, 0) rotate(-1.5deg) }
+  78% { transform: translate3d(2px, 0, 0) rotate(.8deg) }
+}
+
+.login-easter-hint {
+  min-height: 20px;
+  margin-top: 18px;
+  color: rgba(255, 255, 255, .44);
+  font-size: 11px;
+  letter-spacing: .16em;
+  transition: opacity .35s ease, transform .35s ease
+}
+
+.login-easter-egg-wish {
+  position: absolute;
+  left: 50%;
+  top: 202px;
+  width: min(390px, calc(100% - 58px));
+  opacity: 0;
+  filter: blur(18px);
+  transform: translate(-50%, 24px) scale(.95);
+  pointer-events: none;
+  transition: opacity 1.35s ease, filter 1.5s cubic-bezier(.16, 1, .3, 1), transform 1.35s cubic-bezier(.16, 1, .3, 1)
+}
+
+.login-easter-egg-wish h1 {
+  margin: 0 0 28px;
+  color: rgba(255, 255, 255, .96);
+  font-family: SimHei, 'Microsoft YaHei', sans-serif;
+  font-size: clamp(42px, 6vw, 58px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .16em;
+  text-indent: .16em;
+  text-shadow: 0 12px 38px rgba(0, 0, 0, .34)
+}
+
+.login-easter-egg-gate.is-revealed .login-easter-eye-trigger {
+  width: 86px;
+  height: 86px;
+  transform: translateY(-146px) scale(.82);
+  border-color: rgba(255, 255, 255, .06);
+  opacity: .64
+}
+
+.login-easter-egg-gate.is-revealed .login-easter-eye-trigger .login-easter-eyes {
+  transform: scale(.52)
+}
+
+.login-easter-egg-gate.is-revealed .login-easter-hint {
+  opacity: 0;
+  transform: translateY(-16px)
+}
+
+.login-easter-egg-gate.is-revealed .login-easter-egg-wish {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate(-50%, 0) scale(1);
+  pointer-events: auto
+}
+
+.login-easter-input-shell {
+  position: relative;
+  width: 100%
+}
+
+.login-easter-cells {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  pointer-events: none
+}
+
+.login-easter-cell {
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .035);
+  color: rgba(255, 255, 255, .94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .055), 0 12px 28px rgba(0, 0, 0, .16);
+  font-family: SimHei, 'Microsoft YaHei', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  transition: border-color .22s ease, background .22s ease, transform .22s ease, color .22s ease
+}
+
+.login-easter-cell.filled {
+  border-color: rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .07);
+  transform: translateY(-2px)
+}
+
+.login-easter-cell.fixed {
+  color: rgba(255, 226, 170, .96);
+  border-color: rgba(244, 210, 138, .32);
+  background: rgba(244, 210, 138, .07)
+}
+
+.login-easter-input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  opacity: 1;
+  font-size: 24px;
+  cursor: text;
+  pointer-events: auto;
+  touch-action: manipulation
+}
+
+.login-easter-status {
+  min-height: 22px;
+  margin-top: 18px;
+  color: rgba(255, 255, 255, .38);
+  font-size: 11px;
+  letter-spacing: .1em
+}
+
+.login-easter-status[data-mode='error'] { color: rgba(255, 153, 153, .82) }
+
+.login-easter-status[data-mode='hint'] { color: rgba(255, 226, 170, .82) }
+
+.login-easter-status[data-mode='success'] { color: rgba(185, 255, 221, .88) }

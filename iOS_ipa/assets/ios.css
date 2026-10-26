@@ -1,0 +1,6 @@
+html { -webkit-text-size-adjust: 100%; }
+body { overscroll-behavior: none; }
+.mineradio-ios-note { font: 12px/1.5 system-ui, sans-serif; padding: 6px 12px; opacity: .7; }
+@supports (padding: env(safe-area-inset-bottom)) {
+  #web-mobile-nav { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+}

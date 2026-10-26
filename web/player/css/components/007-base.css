@@ -1,0 +1,349 @@
+.home-tile::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  height: 92px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tone-a) 12%, transparent), transparent 48%, color-mix(in srgb, var(--tone-b) 10%, transparent));
+  opacity: .9;
+  pointer-events: none
+}
+
+.home-tile:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tone-a) 36%, rgba(255, 255, 255, .18));
+  background: rgba(255, 255, 255, .068);
+  box-shadow: 0 22px 62px rgba(0, 0, 0, .28), 0 0 26px color-mix(in srgb, var(--tone-a) 12%, transparent)
+}
+
+.home-tile-cover {
+  position: relative;
+  width: 100%;
+  height: 92px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tone-a) 74%, #16161b), color-mix(in srgb, var(--tone-b) 58%, #08090d));
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .26), inset 0 1px 0 rgba(255, 255, 255, .14);
+  margin-bottom: 10px;
+  overflow: hidden
+}
+
+.home-tile-cover:not(.has-cover)::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, rgba(255, 255, 255, .14) 0 1px, transparent 1px 7px), conic-gradient(from 180deg, var(--tone-a), var(--tone-b), var(--tone-c), var(--tone-a));
+  box-shadow: inset 0 0 0 10px rgba(5, 5, 8, .42)
+}
+
+.home-tile-cover:not(.has-cover)::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 14px;
+  width: 46px;
+  height: 48px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .72) 0 3px, transparent 3px 9px);
+  opacity: .32
+}
+
+.home-tile-title {
+  font-size: 12px;
+  font-weight: 720;
+  color: rgba(255, 255, 255, .90);
+  line-height: 1.28;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden
+}
+
+.home-tile-sub {
+  display: none;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, .42);
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+
+.home-skeleton {
+  position: relative;
+  overflow: hidden
+}
+
+.home-skeleton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent, rgba(255, 255, 255, .08), transparent);
+  transform: translateX(-100%);
+  animation: home-shimmer 1.5s ease-in-out infinite
+}
+
+@keyframes home-shimmer {
+  100% {
+    transform: translateX(100%)
+  }
+}
+
+@media (max-width:1120px) {
+  #empty-home {
+    width: calc(100vw - 48px)
+  }
+
+  .empty-home-shell {
+    grid-template-columns: minmax(300px, .88fr) minmax(440px, 1.12fr);
+    gap: 12px
+  }
+
+  .home-hero {
+    padding: 24px
+  }
+
+  .home-hero-inner {
+    grid-template-columns: minmax(0, 1.16fr) minmax(128px, .52fr);
+    column-gap: 14px
+  }
+
+  .home-title {
+    font-size: clamp(30px, 4vw, 48px);
+    max-width: 340px
+  }
+
+  .home-sub {
+    font-size: 12.5px;
+    line-height: 1.5;
+    max-width: 314px
+  }
+
+  .home-visual {
+    height: 198px;
+    max-width: 236px
+  }
+
+  .home-mosaic {
+    height: 142px;
+    min-height: 126px;
+    margin-top: 14px
+  }
+
+  .home-grid {
+    gap: 10px
+  }
+
+  .home-card {
+    min-height: 126px;
+    padding: 14px;
+    border-radius: 20px
+  }
+
+  .home-card-label {
+    margin-bottom: 6px
+  }
+
+  .home-card-title {
+    font-size: 16.5px;
+    max-width: 66%
+  }
+
+  .home-card-sub {
+    margin-top: 6px;
+    font-size: 10.8px;
+    line-height: 1.34;
+    max-width: 64%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden
+  }
+
+  .home-card-art {
+    right: 11px;
+    bottom: 11px;
+    width: 80px;
+    height: 80px;
+    border-radius: 18px
+  }
+
+  .home-card-art:not(.has-cover)::before {
+    inset: 14px;
+    box-shadow: inset 0 0 0 11px rgba(5, 5, 8, .44), 0 10px 24px rgba(0, 0, 0, .24)
+  }
+
+  .home-card::after {
+    right: 88px;
+    bottom: 14px;
+    width: 30px;
+    height: 56px
+  }
+
+  .home-rail {
+    gap: 8px
+  }
+
+  .home-tile {
+    min-height: 128px
+  }
+
+  .home-tile-cover {
+    height: 66px
+  }
+}
+
+@media (max-height:760px) {
+  #empty-home {
+    top: 132px;
+    bottom: 44px
+  }
+
+  .empty-home-shell {
+    min-height: 0
+  }
+
+  .home-hero {
+    min-height: 0;
+    padding: 22px
+  }
+
+  .home-hero-inner {
+    grid-template-columns: minmax(0, 1.22fr) minmax(136px, .54fr);
+    column-gap: 14px
+  }
+
+  .home-title {
+    font-size: clamp(31px, 3.75vw, 48px);
+    max-width: 360px
+  }
+
+  .home-sub {
+    font-size: 12.5px;
+    line-height: 1.55;
+    max-width: 330px
+  }
+
+  .home-quick-row {
+    margin-top: 16px
+  }
+
+  .home-visual {
+    height: 206px;
+    max-width: 246px
+  }
+
+  .home-mosaic {
+    height: 132px;
+    min-height: 120px;
+    margin-top: 14px
+  }
+
+  .home-card {
+    min-height: 134px;
+    padding: 14px
+  }
+
+  .home-card-title {
+    font-size: 17px
+  }
+
+  .home-card-art {
+    width: 92px;
+    height: 92px;
+    border-radius: 21px
+  }
+
+  .home-tile {
+    min-height: 132px
+  }
+
+  .home-tile-cover {
+    height: 72px
+  }
+}
+
+@media (max-height:700px) {
+  #empty-home {
+    top: 126px;
+    bottom: 34px
+  }
+
+  .home-hero {
+    padding: 20px
+  }
+
+  .home-title {
+    font-size: clamp(28px, 3.55vw, 42px)
+  }
+
+  .home-sub {
+    font-size: 12px;
+    line-height: 1.42
+  }
+
+  .home-weather-meta {
+    margin-top: 12px
+  }
+
+  .home-quick-row {
+    margin-top: 12px
+  }
+
+  .home-visual {
+    height: 174px;
+    max-width: 216px
+  }
+
+  .home-mosaic {
+    height: 112px;
+    min-height: 104px
+  }
+
+  .home-card {
+    min-height: 112px;
+    padding: 12px
+  }
+
+  .home-card-title {
+    font-size: 15.5px
+  }
+
+  .home-card-sub {
+    font-size: 10.5px;
+    line-height: 1.28;
+    -webkit-line-clamp: 2
+  }
+
+  .home-card-art {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px
+  }
+
+  .home-card::after {
+    right: 78px;
+    height: 48px
+  }
+
+  .home-tile {
+    min-height: 112px;
+    padding: 9px
+  }
+
+  .home-tile-cover {
+    height: 54px;
+    margin-bottom: 8px
+  }
+
+  .home-section-head {
+    min-height: 30px
+  }
+}

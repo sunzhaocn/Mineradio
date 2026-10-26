@@ -1,0 +1,27 @@
+<div id="background-crop-modal" class="modal-mask">
+      <div class="modal cover-crop-modal background-crop-modal">
+        <h2>裁切背景媒体</h2>
+        <div class="background-crop-layout">
+          <div id="background-crop-stage" class="background-crop-stage">
+            <img id="background-crop-img" alt="">
+            <video id="background-crop-video" muted loop playsinline preload="metadata"></video>
+          </div>
+          <div class="cover-crop-side">
+            <div id="background-crop-preview" class="background-crop-preview" aria-hidden="true">
+              <img id="background-crop-preview-img" alt="">
+              <video id="background-crop-preview-video" muted loop playsinline preload="metadata"></video>
+            </div>
+            <label class="cover-zoom-control">
+              <span>缩放</span>
+              <input id="background-crop-zoom" type="range" min="1" max="2.8" step="0.01" value="1">
+            </label>
+            <div class="background-crop-note">拖动预览调整位置</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="modal-btn" onclick="cancelCustomBackgroundCropModal()">取消</button>
+          <button class="modal-btn" onclick="resetCustomBackgroundCropInModal()">复位</button>
+          <button class="modal-btn primary" onclick="commitCustomBackgroundCropModal()">使用裁切</button>
+        </div>
+      </div>
+    </div>

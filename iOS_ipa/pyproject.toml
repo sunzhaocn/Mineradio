@@ -1,0 +1,27 @@
+[tool.briefcase]
+project_name = "Mineradio"
+bundle = "dev.mineradio"
+version = "0.1.0"
+url = "https://github.com/XxHuberrr/Mineradio-paused"
+license.file = "LICENSE.txt"
+author = "Mineradio contributors"
+author_email = ""
+
+[tool.briefcase.app.mineradio]
+formal_name = "Mineradio"
+description = "Local music player for iPhone and iPad"
+sources = ["src/mineradio"]
+requires = []
+icon = "resources/icon"
+
+[tool.briefcase.app.mineradio.iOS]
+requires = ["toga-iOS==0.5.3", "Pillow==13.0.0"]
+min_os_version = "16.4"
+supported = true
+info.UIBackgroundModes = ["audio"]
+info.UIFileSharingEnabled = true
+info.LSSupportsOpeningDocumentsInPlace = true
+info.ITSAppUsesNonExemptEncryption = false
+info.NSAppTransportSecurity.NSAllowsLocalNetworking = true
+info.NSAppTransportSecurity.NSAllowsArbitraryLoadsInWebContent = true
+info.NSMotionUsageDescription = "汽水连接组件使用运动传感器信息进行设备环境及平台安全验证。"

@@ -1,0 +1,192 @@
+/* Mobile routes use the same content bounds as the page header and mini player. */
+#web-mobile-upload { display: none; }
+@media (max-width: 900px) {
+  /* The mobile website is a simple audio player. Keep state changes immediate
+     and let the browser spend its frame budget on input, audio and scrolling. */
+  body.web-adapter.web-mobile-active,
+  body.web-adapter.web-mobile-active *,
+  body.web-adapter.web-mobile-active *::before,
+  body.web-adapter.web-mobile-active *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  body.web-adapter.web-mobile-active #fx-panel,
+  body.web-adapter.web-mobile-active #home-dashboard-video-choose,
+  body.web-adapter.web-mobile-active #home-dashboard-video-clear,
+  body.web-adapter.web-mobile-active #home-dashboard-video-input,
+  body.web-adapter.web-mobile-active .home-dashboard-video,
+  body.web-adapter.web-mobile-active #diy-mode-btn,
+  body.web-adapter.web-mobile-active #cuefield-automix-btn,
+  body.web-adapter.web-mobile-active #gesture-hud,
+  body.web-adapter.web-mobile-active #hand-canvas,
+  body.web-adapter.web-mobile-active #sonic-audio-monitor,
+  body.web-adapter.web-mobile-active #canvas-container,
+  body.web-adapter.web-mobile-active #custom-bg,
+  body.web-adapter.web-mobile-active #album-bg,
+  body.web-adapter.web-mobile-active #album-bg-next,
+  body.web-adapter.web-mobile-active #wallpaper-engine-layer {
+    display: none !important;
+  }
+  body.web-mobile-active #web-mobile-upload { display: block; }
+  body.web-adapter.web-mobile-active:not([data-mobile-page="library"]) #web-library-mask,
+  body.web-adapter.web-mobile-active:not([data-mobile-page="library-detail"]) #playlist-panel {
+    display: none !important;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] #web-library-mask,
+  body.web-adapter.web-mobile-active[data-mobile-page="library-detail"] #playlist-panel {
+    box-sizing: border-box;
+    position: fixed;
+    inset: auto 0;
+    top: var(--web-mobile-top, 72px) !important;
+    bottom: var(--web-mobile-bottom, 140px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 20;
+    width: 100% !important;
+    min-width: 0;
+    max-width: none !important;
+    height: auto;
+    min-height: 0;
+    max-height: max(0px, calc(var(--web-viewport-height, 100dvh) - var(--web-mobile-top, 72px) - var(--web-mobile-bottom, 140px))) !important;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #101720 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] #web-library-mask {
+    display: block !important;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #101720;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] #web-library-close,
+  body.web-adapter.web-mobile-active[data-mobile-page="library-detail"] .playlist-panel-close {
+    display: none !important;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-head {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-head h2 {
+    margin: 6px 0;
+    font-size: 19px;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-toolbar {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-tabs button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-actions button {
+    flex: 1 1 auto;
+    padding-inline: 8px;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-head,
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-toolbar,
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-status,
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-content {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-status {
+    flex: 0 0 auto;
+    padding: 10px 16px 0;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 14px 16px 24px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-foot {
+    display: none;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library-detail"] #playlist-panel {
+    display: block !important;
+    padding: 16px max(16px, env(safe-area-inset-right, 0px)) 28px max(16px, env(safe-area-inset-left, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-padding-block: 16px;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library-detail"] #playlist-panel .playlist-panel-sticky {
+    top: -16px;
+    margin: -16px -16px 10px;
+    padding: 12px 16px;
+    border-radius: 0;
+    background: #101720;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+}
+
+/* Short landscape pages scroll as a whole while the app header/nav stay visible. */
+@media (max-width: 900px) and (max-height: 520px) {
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body.web-adapter.web-mobile-active[data-mobile-page="library"] .web-library-content {
+    overflow-y: visible;
+  }
+}

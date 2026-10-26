@@ -1,0 +1,40 @@
+'use strict';
+
+function makeContentListManagerInitialize(_moduleState) {
+_moduleState.group = null;
+_moduleState.rows = [];
+_moduleState.panel = null;
+_moduleState.allTracks = [];
+_moduleState.renderedStart = -1;
+_moduleState.CONTENT_VISIBLE_RADIUS = 5;
+_moduleState.CONTENT_MAX_RENDER = _moduleState.CONTENT_VISIBLE_RADIUS * 2 + 1;
+_moduleState.CONTENT_PREFETCH_AHEAD = Math.max(24, Math.floor((typeof PLAYLIST_LAZY_BATCH_SIZE === 'number' ? PLAYLIST_LAZY_BATCH_SIZE : 48) * 0.75));
+_moduleState.CONTENT_COVER_PREFETCH_LIMIT = 18;
+_moduleState.open = false;
+_moduleState.centerTarget = 0;
+_moduleState.centerSmooth = 0;
+_moduleState.playlistTitle = '';
+_moduleState.contentKind = 'playlist';
+_moduleState.contentSource = null;
+_moduleState.contentNextOffset = 0;
+_moduleState.contentTotalCount = 0;
+_moduleState.contentHasMore = false;
+_moduleState.contentLoadingMore = false;
+_moduleState.sourceCard = null;
+_moduleState.requestToken = 0;
+_moduleState.contentWarmPrefetchTimer = 0;
+_moduleState.contentCoverPrefetchKey = '';
+_moduleState.openAnimAt = -10;
+_moduleState.rowAnimAt = -10;
+_moduleState.panelDirty = true;
+_moduleState.rowsDirty = true;
+_moduleState.panelDrawAt = -10;
+_moduleState.rowDrawAt = -10;
+_moduleState.LOADING_ANIM_INTERVAL = 1 / 30;
+_moduleState.DETAIL_BASE = { x: 1.28, y: 0.18, z: 1.36, rx: -0.008, ry: 0.020 };
+_moduleState.detailCameraDir = new THREE.Vector3();
+_moduleState.detailCameraRight = new THREE.Vector3();
+_moduleState.detailCameraUp = new THREE.Vector3();
+_moduleState.detailCameraPos = new THREE.Vector3();
+return makeContentListManagerApi(_moduleState);
+}

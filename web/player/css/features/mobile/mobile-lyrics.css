@@ -1,0 +1,88 @@
+#web-mobile-lyrics, #web-player-stage, #web-player-dock { display: none; }
+
+@media (max-width: 900px) {
+  body.web-mobile-active #playback-loading-lyrics {
+    color: rgba(var(--surface-accent), 1); font-size: clamp(17px, 4.8vw, 23px);
+    font-weight: 750; line-height: 1.7; letter-spacing: normal;
+    text-shadow: 0 0 22px rgba(var(--surface-accent), .12);
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #bottom-bar {
+    overflow: visible; padding: 18px 16px 14px; gap: 12px; min-height: 0;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage {
+    position: relative; display: flex; flex: 1 1 0; min-height: 0; overflow: hidden;
+    --web-player-meta-height: 86px;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-track {
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+    width: 100%; max-width: none; height: 100%; min-height: 0; gap: 0;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-cover {
+    flex: 0 1 auto; width: min(63vw, 31dvh, 290px); height: auto; aspect-ratio: 1;
+    max-height: calc(100% - var(--web-player-meta-height) - 22px); margin-block: auto;
+    transition: opacity .24s ease .24s, transform .24s ease .24s, box-shadow .5s, border-color .5s;
+    opacity: 1; transform: scale(1); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-meta {
+    display: flex; flex: 0 0 var(--web-player-meta-height); justify-content: center;
+    width: 100%; min-height: 0; padding-top: 10px; box-sizing: border-box; gap: 6px;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-title {
+    font-size: clamp(17px, 4.6vw, 22px); gap: 5px; line-height: 1.4;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-title-text {
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-artist {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-mobile-lyrics {
+    display: flex; position: absolute; inset: 0 0 calc(var(--web-player-meta-height) + 8px);
+    z-index: 2; flex-direction: column; min-height: 0; max-height: none;
+    background: transparent; border: 0; box-shadow: none; border-radius: 0; animation: none;
+    opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(6px);
+    transition: opacity .24s ease, transform .24s ease, visibility 0s .24s;
+  }
+  body.web-adapter.web-mobile-active.web-mobile-lyrics-open[data-mobile-page="player"] #web-mobile-lyrics {
+    opacity: 1; visibility: visible; pointer-events: auto; transform: none;
+    transition: opacity .24s ease .24s, transform .24s ease .24s, visibility 0s;
+  }
+  body.web-adapter.web-mobile-active.web-mobile-lyrics-open[data-mobile-page="player"] #web-player-stage .control-cover {
+    opacity: 0; transform: scale(.96); pointer-events: none; transition-delay: 0s;
+  }
+  .web-mobile-lyric-list {
+    position: relative; flex: 1 1 0; min-height: 0; padding: 24% 9px 45%;
+    overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; text-align: center; touch-action: pan-y;
+    mask-image: linear-gradient(transparent, #000 12%, #000 86%, transparent);
+  }
+  .web-mobile-lyric-list::-webkit-scrollbar { display: none; }
+  .web-mobile-lyric-list:focus-visible { outline: 1px solid rgba(var(--surface-accent), .3); outline-offset: -2px; border-radius: 14px; }
+  .web-mobile-lyric-line, .web-mobile-lyric-audio-loading { margin: 0; padding: 12px 0; color: #ffffff85; font-size: clamp(17px, 4.8vw, 23px); font-weight: 550; line-height: 1.7; overflow-wrap: anywhere; transition: color .24s, text-shadow .24s; }
+  .web-mobile-lyric-line.current, .web-mobile-lyric-audio-loading { color: rgba(var(--surface-accent), 1); font-weight: 750; text-shadow: 0 0 22px rgba(var(--surface-accent), .12); }
+  .web-mobile-lyric-audio-loading { opacity: 0; transition: opacity .25s linear; }
+  .web-mobile-lyric-line small { display: block; margin-top: 4px; font-size: .65em; font-weight: 400; opacity: .65; }
+  .web-mobile-lyric-empty { color: #ffffff85; font-size: 15px; line-height: 1.8; padding-top: 28%; }
+  .web-mobile-lyric-hint { flex: 0 0 auto; margin: 10px 0 0; color: #ffffff66; font-size: 10px; letter-spacing: 1px; text-align: center; pointer-events: none; }
+}
+@media (max-width: 900px) and (max-height: 650px) {
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #bottom-bar { padding: 10px 12px; gap: 8px; }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage { --web-player-meta-height: 62px; }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-cover { width: min(50vw, 26dvh); max-height: calc(100% - var(--web-player-meta-height) - 4px); }
+  .web-mobile-lyric-line, .web-mobile-lyric-audio-loading { padding-block: 7px; font-size: 17px; }
+  .web-mobile-lyric-hint { margin-top: 4px; font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.web-adapter #web-mobile-lyrics, body.web-adapter #web-mobile-lyrics *,
+  body.web-adapter #web-player-stage .control-cover { transition: none !important; animation: none !important; }
+}
+
+@media (max-width: 900px) and (min-width: 600px) and (max-height: 480px) {
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-track { flex-direction: row; gap: 14px; }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-cover { width: min(26vw, 24dvh); max-height: 100%; margin: auto; }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-player-stage .control-meta { flex: 0 0 48%; height: 100%; padding: 0; }
+  body.web-adapter.web-mobile-active[data-mobile-page="player"] #web-mobile-lyrics { inset: 0 52% 0 0; }
+  .web-mobile-lyric-list { padding-block: 15% 30%; }
+  .web-mobile-lyric-hint { display: none; }
+}
+

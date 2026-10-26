@@ -1,0 +1,57 @@
+body.desktop-wallpaper-mode.desktop-wallpaper-interactive:not(.empty-home-active):not(.home-controls-locked) #bottom-bar.visible:not(.soft-hidden) {
+  opacity: .91 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translateX(-50%) translateY(0) scale(1) !important;
+}
+
+body.desktop-shell.desktop-wallpaper-mode.desktop-wallpaper-interactive #top-right {
+  top: calc(var(--desktop-safe-top) + 62px);
+  right: calc(var(--desktop-safe-right) + 24px);
+}
+
+body.desktop-mode-controls-open.desktop-shell.desktop-wallpaper-mode.desktop-wallpaper-interactive #top-right {
+  top: calc(var(--desktop-safe-top) + 137px);
+}
+
+body.desktop-wallpaper-mode #bottom-handle {
+  left: calc(50% + (var(--desktop-safe-left) - var(--desktop-safe-right)) / 2);
+  bottom: calc(var(--desktop-safe-bottom) + 13px);
+}
+
+body.desktop-wallpaper-mode #bottom-bar,
+body.desktop-wallpaper-mode #bottom-bar.stage-mode,
+body.desktop-wallpaper-mode.simple-mode #bottom-bar,
+body.desktop-wallpaper-mode.diy-mode #bottom-bar,
+body.desktop-wallpaper-mode.diy-mode #bottom-bar.stage-mode,
+body.desktop-shell.desktop-wallpaper-mode.diy-mode #bottom-bar,
+body.desktop-shell.desktop-wallpaper-mode.diy-mode #bottom-bar.stage-mode {
+  left: calc(50% + (var(--desktop-safe-left) - var(--desktop-safe-right)) / 2);
+  bottom: calc(var(--desktop-safe-bottom) + 16px);
+  width: min(1120px, calc(100vw - var(--desktop-safe-left) - var(--desktop-safe-right) - 48px));
+}
+
+@media (max-width:720px) {
+  body.desktop-wallpaper-mode.desktop-wallpaper-interactive #desktop-mode-control-dock {
+    right: calc(var(--desktop-safe-right) + 12px);
+  }
+
+  body.desktop-shell.desktop-wallpaper-mode.desktop-wallpaper-interactive #top-right {
+    top: calc(var(--desktop-safe-top) + 58px);
+    right: calc(var(--desktop-safe-right) + 12px);
+  }
+
+  body.desktop-mode-controls-open.desktop-shell.desktop-wallpaper-mode.desktop-wallpaper-interactive #top-right {
+    top: calc(var(--desktop-safe-top) + 133px);
+  }
+
+  body.desktop-wallpaper-mode #bottom-bar,
+  body.desktop-wallpaper-mode #bottom-bar.stage-mode,
+  body.desktop-wallpaper-mode.simple-mode #bottom-bar,
+  body.desktop-wallpaper-mode.diy-mode #bottom-bar,
+  body.desktop-wallpaper-mode.diy-mode #bottom-bar.stage-mode,
+  body.desktop-shell.desktop-wallpaper-mode.diy-mode #bottom-bar,
+  body.desktop-shell.desktop-wallpaper-mode.diy-mode #bottom-bar.stage-mode {
+    width: calc(100vw - var(--desktop-safe-left) - var(--desktop-safe-right) - 24px);
+  }
+}

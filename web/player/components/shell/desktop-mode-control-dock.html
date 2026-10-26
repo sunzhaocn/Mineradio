@@ -1,0 +1,33 @@
+<div id="desktop-mode-control-dock" aria-label="桌面模式控制器">
+    <button id="desktop-mode-control-handle" type="button" title="打开桌面模式控制"
+      aria-label="打开桌面模式控制" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 7h14M5 12h14M5 17h14" />
+        <circle cx="9" cy="7" r="1.45" />
+        <circle cx="15" cy="12" r="1.45" />
+        <circle cx="11" cy="17" r="1.45" />
+      </svg>
+    </button>
+    <div id="desktop-mode-control-panel" role="group" aria-label="桌面模式开关" aria-hidden="true" inert>
+      <div class="desktop-mode-control-heading">
+        <span>桌面控制</span>
+        <small>Esc 退出</small>
+      </div>
+      <button id="desktop-software-lock-toggle" class="desktop-mode-switch" type="button" role="switch"
+        aria-checked="false">
+        <span class="desktop-mode-switch-copy">
+          <strong>锁定软件操作</strong>
+          <small id="desktop-software-lock-state">软件可正常操作</small>
+        </span>
+        <span class="desktop-mode-switch-track" aria-hidden="true"><span></span></span>
+      </button>
+      <button id="desktop-icons-visible-toggle" class="desktop-mode-switch" type="button" role="switch"
+        aria-checked="true">
+        <span class="desktop-mode-switch-copy">
+          <strong>显示桌面图标</strong>
+          <small id="desktop-icons-visible-state">图标已显示</small>
+        </span>
+        <span class="desktop-mode-switch-track" aria-hidden="true"><span></span></span>
+      </button>
+    </div>
+  </div>

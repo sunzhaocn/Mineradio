@@ -1,0 +1,94 @@
+/* Compact action cards use the same glass and accent as the rest of the player. */
+.modal-mask.mineradio-action-layer {
+  z-index: 100050;
+  box-sizing: border-box;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 28px 20px max(118px, env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, .26));
+  -webkit-app-region: no-drag;
+}
+.mineradio-action-card {
+  box-sizing: border-box;
+  width: min(440px, 100%);
+  max-height: calc(100dvh - 160px);
+  overflow: auto;
+  margin: 0;
+  padding: 25px;
+  border: 1px solid var(--surface-edge, rgba(151, 228, 203, .24));
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 5% 0%, rgba(var(--surface-accent, 151, 228, 203), .10), transparent 70%), var(--surface-glass, linear-gradient(135deg, #273833ed, #0d1519f5));
+  box-shadow: var(--surface-shadow, inset 0 1px 0 #ffffff20, 0 22px 80px #0008);
+  backdrop-filter: blur(32px) saturate(1.15);
+  -webkit-backdrop-filter: blur(32px) saturate(1.15);
+  color: rgba(255, 255, 255, .94);
+  font-family: var(--font-sans, Inter, "Noto Sans SC", sans-serif);
+  text-align: left;
+  animation: mineradio-action-in .22s cubic-bezier(.16, 1, .3, 1);
+}
+.mineradio-action-heading { display: flex; align-items: center; gap: 12px; }
+.mineradio-action-heading h2 { margin: 0; font-size: 19px; font-weight: 650; line-height: 1.5; letter-spacing: .3px; }
+.mineradio-action-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  height: 32px;
+  border: 1px solid rgba(var(--surface-accent, 151, 228, 203), .24);
+  border-radius: 50%;
+  background: rgba(var(--surface-accent, 151, 228, 203), .065);
+  color: rgba(var(--surface-accent, 151, 228, 203), .9);
+  font-size: 22px;
+  font-weight: 300;
+}
+.mineradio-action-description { margin: 14px 0 0; color: #ffffff9c; font-size: 13px; line-height: 1.85; white-space: pre-line; overflow-wrap: anywhere; }
+.mineradio-action-label { display: block; margin: 21px 0 8px; color: #ffffff94; font-size: 11px; font-weight: 550; letter-spacing: .4px; }
+.mineradio-action-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid #ffffff21;
+  border-radius: 12px;
+  outline: none;
+  background: #00000024;
+  box-shadow: inset 0 1px 4px #0002;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color .16s, box-shadow .16s;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.mineradio-action-input:focus { border-color: rgba(var(--surface-accent, 151, 228, 203), .55); box-shadow: 0 0 0 3px rgba(var(--surface-accent, 151, 228, 203), .065); }
+textarea.mineradio-action-input { resize: vertical; min-height: 132px; max-height: 35vh; font: 11px/1.7 "JetBrains Mono", monospace; overflow-wrap: anywhere; }
+.mineradio-action-error { margin: 8px 0 0; color: #f0bcb1; font-size: 11px; }
+.mineradio-action-buttons { display: flex; justify-content: flex-end; gap: 9px; margin-top: 23px; }
+.mineradio-action-button {
+  min-width: 82px;
+  min-height: 40px;
+  padding: 9px 20px;
+  border: 1px solid #ffffff1f;
+  border-radius: 999px;
+  background: var(--saved-button-glass-bg, #ffffff08);
+  box-shadow: inset 0 1px 0 #ffffff0d;
+  color: #ffffffac;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .16s, border-color .16s, transform .16s;
+}
+.mineradio-action-button.is-primary { color: rgba(var(--surface-accent, 151, 228, 203), 1); border-color: rgba(var(--surface-accent, 151, 228, 203), .40); background: rgba(var(--surface-accent, 151, 228, 203), .11); box-shadow: var(--surface-button-shadow, inset 0 1px 0 #ffffff17); }
+.mineradio-action-button:hover { border-color: rgba(var(--surface-accent, 151, 228, 203), .5); background: rgba(var(--surface-accent, 151, 228, 203), .16); color: #fff; }
+.mineradio-action-button:active { transform: scale(.97); }
+.mineradio-action-button:focus-visible { outline: 2px solid rgba(var(--surface-accent, 151, 228, 203), .8); outline-offset: 3px; }
+@keyframes mineradio-action-in { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 560px), (max-height: 550px) {
+  .modal-mask.mineradio-action-layer { padding: 16px 12px max(24px, env(safe-area-inset-bottom, 0px)); }
+  .mineradio-action-card { max-height: calc(100dvh - 48px); padding: 21px; border-radius: 21px; }
+  .mineradio-action-buttons > button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mineradio-action-card { animation: none; }
+  .mineradio-action-input, .mineradio-action-button { transition: none; }
+}

@@ -1,0 +1,7 @@
+'use strict';
+
+
+
+var LYRIC_READABILITY_BUILD_PHASES = 4;
+
+var LYRIC_GLOW_BUILD_PHASES = 12;

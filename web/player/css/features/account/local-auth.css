@@ -1,0 +1,71 @@
+/* The local API uses the existing account modal and its glass surface. */
+#login-modal.local-auth-modal .dual-login-modal { width: min(580px, calc(100vw - 28px)); min-width: 0; max-width: min(580px, calc(100vw - 28px)); min-height: 0; max-height: calc(100dvh - 40px); overflow-y: auto; display: block; padding: 24px; }
+#login-modal.local-auth-modal .login-panel-head { position: relative; margin: 0 0 22px; }
+#login-modal.local-auth-modal .login-panel-head small { margin-top: 5px; }
+#login-modal.local-auth-modal .login-panel-close { margin-left: auto; }
+#login-modal.local-auth-modal #login-easter-egg-gate,
+#login-modal.local-auth-modal #login-node-graph,
+#login-modal.local-auth-modal #login-auth-drawer,
+#login-modal.local-auth-modal #login-reset-all-btn { display: none !important; }
+.local-auth { --local-auth-accent: #e99ba6; color: rgba(255,255,255,.92); text-align: left; font-size: 14px; }
+.local-auth[data-provider="qq"] { --local-auth-accent: #c8df8a; }
+.local-auth[data-provider="kugou"] { --local-auth-accent: #83def1; }
+.local-auth[data-provider="qishui"] { --local-auth-accent: #8de3bc; }
+.local-auth button, .local-auth input, .local-auth select, .local-auth textarea { font: inherit; box-sizing: border-box; }
+.local-auth button { cursor: pointer; }
+.local-auth button:disabled { cursor: default; opacity: .5; }
+.local-auth button:focus-visible, .local-auth input:focus-visible, .local-auth select:focus-visible, .local-auth textarea:focus-visible { outline: 2px solid var(--local-auth-accent); outline-offset: 3px; }
+.local-auth-tabs { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 25px; }
+.local-auth-tabs button { min-width: 0; padding: 12px 5px; border: 1px solid #ffffff16; border-radius: 14px; background: #ffffff05; color: #e4e9ed; }
+.local-auth-tabs button.active { border-color: var(--local-auth-accent); background: #ffffff0b; box-shadow: inset 0 0 24px #ffffff04; }
+.local-auth-tabs b { display: block; white-space: nowrap; font-size: 12px; font-weight: 600; }
+.local-auth-tabs small { display: block; font-size: 10px; color: #a7b1bd; margin-top: 6px; }
+.local-auth-tabs small.online { color: #a1e5c4; }
+.local-auth h2 { margin: 0 0 8px; font-size: 21px; letter-spacing: -.3px; font-weight: 600; }
+.local-auth-description { margin: 0 0 20px; color: #aeb8c3; line-height: 1.7; font-size: 12px; }
+.local-auth-message { min-height: 20px; margin: 14px 0; color: #bbc6d2; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.local-auth-message[data-kind="error"] { color: #ffb1b8; }
+.local-auth-message[data-kind="success"] { color: #a1e5c4; }
+.local-auth-mode { display: flex; gap: 5px; background: #00000026; border: 1px solid #ffffff0e; padding: 4px; border-radius: 12px; margin: 0 0 18px; }
+.local-auth-mode button { flex: 1; min-height: 36px; border: 0; border-radius: 8px; background: transparent; color: #aeb8c3; font-size: 12px; }
+.local-auth-mode button.active { background: #ffffff10; color: #fff; }
+.local-auth-label { display: block; font-size: 12px; color: #c2cbd4; margin: 14px 0 8px; }
+.local-auth-field { display: flex; gap: 8px; }
+.local-auth input, .local-auth select { width: 100%; min-width: 0; height: 44px; border: 1px solid #ffffff1c; border-radius: 10px; background: #00000028; color: #f3f5f8; padding: 0 12px; }
+.local-auth input::placeholder { color: #7e8997; }
+.local-auth textarea { display: block; width: 100%; min-height: 128px; resize: vertical; margin-top: 8px; padding: 12px; border: 1px solid #ffffff1c; border-radius: 10px; background: #00000028; color: #f3f5f8; line-height: 1.65; overflow-wrap: anywhere; }
+.local-auth textarea::placeholder { color: #7e8997; }
+.local-auth .local-auth-country { width: 88px; flex-shrink: 0; }
+.local-auth select option { background: #16202b; color: #fff; }
+.local-auth .local-auth-send { min-width: 110px; min-height: 44px; border: 1px solid #ffffff20; background: #ffffff09; color: #d5dee6; border-radius: 10px; padding: 0 12px; font-size: 12px; }
+.local-auth-primary { width: 100%; min-height: 44px; margin-top: 20px; border: 1px solid var(--local-auth-accent); border-radius: 11px; background: #ffffff0f; color: #fff; font-size: 13px; font-weight: 600; }
+.local-auth-primary:hover { background: #ffffff17; }
+.local-auth-footnote { color: #85929f; font-size: 11px; line-height: 1.7; margin: 17px 0 0; }
+.local-auth-qr { display: flex; flex-direction: column; align-items: center; padding: 3px 0 8px; }
+.local-auth-qr img { width: 208px; height: 208px; max-width: 100%; object-fit: contain; padding: 10px; border-radius: 14px; background: #fff; box-sizing: border-box; margin: 17px 0 5px; }
+.local-auth-qr-placeholder { width: 208px; height: 170px; display: grid; place-items: center; border: 1px dashed #ffffff25; border-radius: 14px; color: #83919e; font-size: 12px; margin: 17px 0 5px; }
+.local-auth-qr .local-auth-primary { max-width: 240px; }
+.local-auth-account { display: flex; align-items: center; gap: 14px; margin: 22px 0; padding: 18px; border: 1px solid #ffffff16; border-radius: 14px; background: #ffffff04; }
+.local-auth-account img { width: 50px; height: 50px; flex-shrink: 0; border-radius: 50%; object-fit: cover; }
+.local-auth-account b { display: block; overflow-wrap: anywhere; font-size: 15px; }
+.local-auth-account small { display: block; color: #94a3b1; margin-top: 7px; overflow-wrap: anywhere; font-size: 11px; }
+.local-auth-account-actions { display: flex; gap: 8px; }
+.local-auth-account-actions button { flex: 1; min-height: 42px; border: 1px solid #ffffff20; border-radius: 10px; color: #d1dbe5; background: #ffffff06; font-size: 12px; }
+.local-auth-account-actions .local-auth-logout { color: #e5abb1; }
+.local-auth-configured { padding: 11px 13px; margin: 12px 0 17px; border: 1px solid #dfc78a30; border-radius: 10px; background: #b1904b09; color: #d5c393; line-height: 1.6; font-size: 11px; }
+@media (max-width: 480px) {
+  #login-modal.local-auth-modal .dual-login-modal { padding: 20px 16px; max-height: calc(100dvh - 24px); }
+  .local-auth-tabs { gap: 5px; }
+  .local-auth-tabs b { font-size: 11px; }
+  .local-auth-send { min-width: 100px !important; padding: 0 9px !important; }
+}
+
+.local-auth-tabs small.expired, .local-auth-health.expired { color: #ff9ba8; }
+.local-auth-account-actions { flex-wrap: wrap; }
+.local-auth-account-actions button { min-width: 90px; }
+.local-auth-modal.remote-verification-active .dual-login-modal { width:min(1080px,96vw); max-height:94dvh; overflow-y:auto; }
+.local-auth-verification { padding:12px; border:1px solid #ffffff25; border-radius:16px; }
+.local-auth-verification img { display:block; width:auto; max-width:100%; height:auto; max-height:65dvh; margin:auto; touch-action:none; user-select:none; }
+.local-auth-verification-tools { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.local-auth-verification-tools input { flex:1 1 260px; min-width:0; }
+.local-auth-verification-tools button { min-height:42px; padding:8px 14px; }

@@ -1,0 +1,91 @@
+<svg id="control-glass-svg" class="control-glass-filter-svg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+      focusable="false">
+      <defs>
+        <filter id="mineradio-control-glass-filter" color-interpolation-filters="sRGB" x="-12%" y="-28%" width="124%"
+          height="156%">
+          <feImage id="control-glass-map" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none"
+            result="map"></feImage>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="180" xChannelSelector="R" yChannelSelector="B"
+            result="dispRed"></feDisplacementMap>
+          <feOffset in="dispRed" dx="-90" dy="0" result="dispRedShifted"></feOffset>
+          <feMerge result="dispRedAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispRedShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispRedAligned" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+            result="red"></feColorMatrix>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="170" xChannelSelector="R" yChannelSelector="B"
+            result="dispGreen"></feDisplacementMap>
+          <feOffset in="dispGreen" dx="-90" dy="0" result="dispGreenShifted"></feOffset>
+          <feMerge result="dispGreenAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispGreenShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispGreenAligned" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
+            result="green"></feColorMatrix>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="160" xChannelSelector="R" yChannelSelector="B"
+            result="dispBlue"></feDisplacementMap>
+          <feOffset in="dispBlue" dx="-90" dy="0" result="dispBlueShifted"></feOffset>
+          <feMerge result="dispBlueAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispBlueShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispBlueAligned" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
+            result="blue"></feColorMatrix>
+          <feBlend in="red" in2="green" mode="screen" result="rg"></feBlend>
+          <feBlend in="rg" in2="blue" mode="screen" result="output"></feBlend>
+          <feGaussianBlur in="output" stdDeviation="0.5"></feGaussianBlur>
+        </filter>
+        <filter id="mineradio-search-box-glass-filter" color-interpolation-filters="sRGB" x="-24%" y="-34%" width="158%"
+          height="168%">
+          <feImage id="search-box-glass-map" x="-10%" y="-4%" width="120%" height="108%" preserveAspectRatio="none"
+            result="map"></feImage>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="180" xChannelSelector="R" yChannelSelector="B"
+            result="dispRed"></feDisplacementMap>
+          <feOffset in="dispRed" dx="-90" dy="0" result="dispRedShifted"></feOffset>
+          <feMerge result="dispRedAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispRedShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispRedAligned" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+            result="red"></feColorMatrix>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="170" xChannelSelector="R" yChannelSelector="B"
+            result="dispGreen"></feDisplacementMap>
+          <feOffset in="dispGreen" dx="-90" dy="0" result="dispGreenShifted"></feOffset>
+          <feMerge result="dispGreenAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispGreenShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispGreenAligned" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
+            result="green"></feColorMatrix>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="160" xChannelSelector="R" yChannelSelector="B"
+            result="dispBlue"></feDisplacementMap>
+          <feOffset in="dispBlue" dx="-90" dy="0" result="dispBlueShifted"></feOffset>
+          <feMerge result="dispBlueAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispBlueShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispBlueAligned" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
+            result="blue"></feColorMatrix>
+          <feBlend in="red" in2="green" mode="screen" result="rg"></feBlend>
+          <feBlend in="rg" in2="blue" mode="screen" result="output"></feBlend>
+          <feGaussianBlur in="output" stdDeviation="0.5"></feGaussianBlur>
+        </filter>
+        <filter id="mineradio-search-pill-glass-filter" color-interpolation-filters="sRGB" x="-48%" y="-68%"
+          width="210%" height="236%">
+          <feImage id="search-pill-glass-map" x="-24%" y="-14%" width="148%" height="128%" preserveAspectRatio="none"
+            result="map"></feImage>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="118" xChannelSelector="R" yChannelSelector="B"
+            result="dispRed"></feDisplacementMap>
+          <feOffset in="dispRed" dx="-34" dy="0" result="dispRedShifted"></feOffset>
+          <feMerge result="dispRedAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispRedShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispRedAligned" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+            result="red"></feColorMatrix>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="108" xChannelSelector="R" yChannelSelector="B"
+            result="dispGreen"></feDisplacementMap>
+          <feOffset in="dispGreen" dx="-34" dy="0" result="dispGreenShifted"></feOffset>
+          <feMerge result="dispGreenAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispGreenShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispGreenAligned" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
+            result="green"></feColorMatrix>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="100" xChannelSelector="R" yChannelSelector="B"
+            result="dispBlue"></feDisplacementMap>
+          <feOffset in="dispBlue" dx="-34" dy="0" result="dispBlueShifted"></feOffset>
+          <feMerge result="dispBlueAligned"><feMergeNode in="SourceGraphic"></feMergeNode><feMergeNode in="dispBlueShifted"></feMergeNode></feMerge>
+          <feColorMatrix in="dispBlueAligned" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
+            result="blue"></feColorMatrix>
+          <feBlend in="red" in2="green" mode="screen" result="rg"></feBlend>
+          <feBlend in="rg" in2="blue" mode="screen" result="output"></feBlend>
+          <feGaussianBlur in="output" stdDeviation="0.35"></feGaussianBlur>
+        </filter>
+        <filter id="mineradio-account-pill-glass-filter" color-interpolation-filters="sRGB" x="-72%" y="-70%"
+          width="260%" height="240%">
+          <feImage id="account-pill-glass-map" x="-32%" y="-14%" width="164%" height="128%" preserveAspectRatio="none"
+            result="map"></feImage>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="28" xChannelSelector="R" yChannelSelector="G"
+            result="refracted"></feDisplacementMap>
+          <feGaussianBlur in="refracted" stdDeviation="0.16"></feGaussianBlur>
+        </filter>
+      </defs>
+    </svg>

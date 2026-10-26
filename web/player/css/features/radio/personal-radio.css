@@ -1,0 +1,6 @@
+#personal-radio-toggle.active { color: rgba(var(--surface-accent,255,255,255), 1); }
+#personal-radio-toggle svg { fill: none; }
+#personal-radio-toggle[aria-pressed="true"] svg { fill: currentColor; }
+@media (max-width: 900px) {
+  body.web-mobile-active:not([data-mobile-page="player"]) #personal-radio-toggle { display: none !important; }
+}

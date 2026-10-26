@@ -1,0 +1,129 @@
+<div class="fx-fold" id="fx-stage-fold">
+        <div class="fx-fold-head" onclick="document.getElementById('fx-stage-fold').classList.toggle('open')">
+          <span class="fx-fold-title"><strong>3D / 手势</strong><small>歌单架 / 摄像头交互</small></span><span
+            class="arrow">▶</span>
+        </div>
+        <div class="fx-fold-body">
+          <div class="fx-section-label">3D 歌单架</div>
+          <div class="fx-seg" id="shelf-seg">
+            <button data-shelf="off">关闭</button>
+            <button data-shelf="side" class="active">侧栏</button>
+            <button data-shelf="stage">舞台</button>
+          </div>
+
+          <div class="fx-section-label">歌单架镜头</div>
+          <div class="fx-seg" id="shelf-camera-seg">
+            <button data-shelf-camera="dynamic" class="active">动态镜头</button>
+            <button data-shelf-camera="static">静态镜头</button>
+          </div>
+          <div class="fx-section-label">歌单架显示</div>
+          <div class="fx-seg" id="shelf-presence-seg">
+            <button data-shelf-presence="auto" class="active">自动隐藏</button>
+            <button data-shelf-presence="always">常驻</button>
+          </div>
+          <div class="fx-section-label">歌单架内容</div>
+          <div class="fx-toggle-grid">
+            <div class="fx-toggle" id="t-shelfShowPodcasts" onclick="toggleFx('shelfShowPodcasts')"
+              title="关闭后 3D 歌单架不显示播客收藏"><span>显示播客歌单</span><span class="dot"></span></div>
+            <div class="fx-toggle" id="t-shelfMergeCollections" onclick="toggleFx('shelfMergeCollections')"
+              title="开启后我的歌单与收藏歌单按一条线连续滚动"><span>合并收藏歌单</span><span class="dot"></span></div>
+          </div>
+          <div class="fx-section-label">歌单架外观</div>
+          <div class="lyric-color-row">
+            <input id="shelf-accent-picker" class="lyric-color-picker" type="color" value="#f4d28a" title="歌单架颜色">
+            <div class="fx-color-row-label">歌单架颜色<small id="shelf-accent-value">#F4D28A</small></div>
+            <button class="fx-mini-btn ghost" type="button" onclick="resetShelfAccentColor()">默认</button>
+          </div>
+          <div class="fx-slider"><label>歌单架大小</label><input id="fx-shelfsize" type="range" min="0.65" max="1.45"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>左右位置</label><input id="fx-shelfx" type="range" min="-1.2" max="1.2"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>上下位置</label><input id="fx-shelfy" type="range" min="-0.9" max="0.9"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>前后景深</label><input id="fx-shelfz" type="range" min="-0.9" max="0.9"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>侧向角度</label><input id="fx-shelfangle" type="range" min="-30" max="30"
+              step="1"><output></output></div>
+          <div class="fx-slider"><label>整体透明度</label><input id="fx-shelfopacity" type="range" min="0.25" max="1"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>背景透明度</label><input id="fx-shelfbgalpha" type="range" min="0.25" max="0.98"
+              step="0.01"><output></output></div>
+          <div class="fx-section-label">歌单详情页位置</div>
+          <div class="fx-slider"><label>详情左右</label><input id="fx-shelfdetailx" type="range" min="-4.8" max="4.8"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>详情上下</label><input id="fx-shelfdetaily" type="range" min="-3.6" max="3.6"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>详情前后</label><input id="fx-shelfdetailz" type="range" min="-3.6" max="3.6"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>详情大小</label><input id="fx-shelfdetailscale" type="range" min="0.72" max="1.35"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>详情俯仰</label><input id="fx-shelfdetailanglex" type="range" min="-24" max="24"
+              step="1"><output></output></div>
+          <div class="fx-slider"><label>详情侧旋</label><input id="fx-shelfdetailangley" type="range" min="-28" max="28"
+              step="1"><output></output></div>
+          <div class="fx-slider"><label>详情行间距</label><input id="fx-shelfdetailrowgap" type="range" min="0.72" max="1.32"
+              step="0.01"><output></output></div>
+          <div class="fx-section-label">歌单详情页动画</div>
+          <div class="fx-slider"><label>展开秒数</label><input id="fx-shelfdetailopen" type="range" min="0.12" max="1.2"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>关闭秒数</label><input id="fx-shelfdetailclose" type="range" min="0.08" max="0.8"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>行入场秒数</label><input id="fx-shelfdetailrowtime" type="range" min="0.16" max="1.6"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>展开位移</label><input id="fx-shelfdetailintro" type="range" min="0" max="1.8"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>悬浮视差</label><input id="fx-shelfdetailparallax" type="range" min="0" max="1.8"
+              step="0.01"><output></output></div>
+          <div class="fx-section-label">歌单架唤出动画</div>
+          <div class="fx-slider"><label>唤出秒数</label><input id="fx-shelfsummonopen" type="range" min="0.08" max="2"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>收起秒数</label><input id="fx-shelfsummonclose" type="range" min="0.08" max="1.6"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>唤出位移</label><input id="fx-shelfsummonslide" type="range" min="0" max="4"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>卡片错层</label><input id="fx-shelfsummonstagger" type="range" min="0" max="3"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>唤出缩放</label><input id="fx-shelfsummonscale" type="range" min="0" max="3"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>唤出视差</label><input id="fx-shelfsummonparallax" type="range" min="0" max="2.5"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>镜头进入速度</label><input id="fx-shelfcamenter" type="range" min="0.2" max="1.5"
+              step="0.01"><output></output></div>
+          <div class="fx-slider"><label>镜头离开速度</label><input id="fx-shelfcamexit" type="range" min="0.2" max="1.5"
+              step="0.01"><output></output></div>
+
+          <div class="fx-section-label">摄像头交互</div>
+          <div class="fx-seg" id="cam-seg">
+            <button data-cam="off" class="active">关闭</button>
+            <button data-cam="gesture">手势触碰</button>
+          </div>
+          <div class="gesture-settings-card" id="gesture-settings-card">
+            <div class="gesture-settings-head">
+              <div><strong>播放手势</strong><span>稳定保持才执行，降低误触</span></div>
+              <span class="gesture-live-mark">CAM</span>
+            </div>
+            <div class="fx-toggle-grid gesture-toggle-grid">
+              <div class="fx-toggle on" id="t-gesturePlayerActions" onclick="toggleGesturePlayerActions()">
+                <span>播放器动作</span><span class="dot"></span>
+              </div>
+              <div class="fx-toggle on" id="t-gestureHandOverlay" onclick="toggleGestureHandOverlay()">
+                <span>手部光迹</span><span class="dot"></span>
+              </div>
+            </div>
+            <div class="gesture-settings-subtitle">识别灵敏度</div>
+            <div class="fx-seg gesture-sensitivity-seg" id="gesture-sensitivity-seg">
+              <button data-gesture-sensitivity="steady" onclick="setGestureSensitivity('steady')">稳健</button>
+              <button data-gesture-sensitivity="balanced" class="active" onclick="setGestureSensitivity('balanced')">均衡</button>
+              <button data-gesture-sensitivity="quick" onclick="setGestureSensitivity('quick')">灵敏</button>
+            </div>
+            <div class="gesture-command-grid">
+              <div><b>✌</b><span>保持</span><strong>播放 / 暂停</strong></div>
+              <div><b>↔</b><span>快速滑动</span><strong>上一首 / 下一首</strong></div>
+              <div><b>☝</b><span>保持并上下</span><strong>音量</strong></div>
+              <div><b>👍</b><span>保持</span><strong>喜欢歌曲</strong></div>
+              <div><b>Ⅲ</b><span>三指保持</span><strong>歌词显隐</strong></div>
+              <div><b>◌</b><span>张掌 / 捏合 / 握拳</span><strong>粒子交互</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>

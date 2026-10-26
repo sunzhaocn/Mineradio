@@ -1,0 +1,31 @@
+<div id="user-modal" class="modal-mask">
+      <div class="modal dual-user-modal">
+        <h2>账号信息</h2>
+        <div id="account-provider-chip" class="account-provider-chip netease"><span
+            class="account-source-dot netease"></span><span>网易云音乐</span></div>
+        <img id="user-modal-avatar" src=""
+          style="width:72px;height:72px;border-radius:50%;margin:0 auto 12px;object-fit:cover;background:rgba(255,255,255,0.1);display:block">
+        <div id="user-modal-name" style="font-size:15px;margin-bottom:4px"></div>
+        <div id="user-modal-vip"
+          style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:20px;letter-spacing:.5px"></div>
+        <div class="user-platform-tabs" id="user-platform-tabs">
+          <button id="user-provider-netease" class="netease active" type="button"
+            onclick="setActiveAccountProvider('netease')">网易云</button>
+          <button id="user-provider-qq" class="qq" type="button" onclick="setActiveAccountProvider('qq')">QQ 音乐</button>
+          <button id="user-provider-kugou" class="kugou" type="button" onclick="setActiveAccountProvider('kugou')">酷狗音乐</button>
+          <button id="user-provider-qishui" class="qishui" type="button" onclick="setActiveAccountProvider('qishui')">汽水音乐</button>
+          <button id="user-provider-both" class="both" type="button" onclick="enableDualAccountView()">我两个都要</button>
+        </div>
+        <div class="account-modal-actions">
+          <button id="account-add-netease" class="modal-btn" onclick="openProviderLogin('netease')">补登网易云</button>
+          <button id="account-add-qq" class="modal-btn" onclick="openProviderLogin('qq')">补登 QQ 音乐</button>
+          <button id="account-add-kugou" class="modal-btn" onclick="openProviderLogin('kugou')">补登酷狗音乐</button>
+          <button id="account-add-qishui" class="modal-btn" onclick="openProviderLogin('qishui')">登录汽水音乐</button>
+        </div>
+        <div id="account-hint" class="account-hint">QQ 音乐真实登录暂未接入，当前先预览双平台账号交互。</div>
+        <div class="btn-row">
+          <button class="modal-btn" onclick="closeUserModal()">关闭</button>
+          <button id="account-logout-btn" class="modal-btn primary" onclick="logoutActiveAccount()">退出当前平台</button>
+        </div>
+      </div>
+    </div>

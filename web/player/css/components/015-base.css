@@ -1,0 +1,429 @@
+.audio-flow-source .route-node-kicker {
+  grid-column: 1 / -1;
+  align-self: end;
+  color: rgba(var(--fc-accent-rgb), .78);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em
+}
+
+.audio-source-meter {
+  grid-column: 2 / 3;
+  height: 4px;
+  display: grid;
+  grid-template-columns: 1.3fr .7fr 1fr .5fr;
+  gap: 4px;
+  align-self: start;
+  margin-top: -4px;
+  opacity: .82
+}
+
+.audio-source-meter i {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(var(--fc-accent-rgb), .82), rgba(244, 210, 138, .62));
+  box-shadow: 0 0 10px rgba(var(--fc-accent-rgb), .24)
+}
+
+.audio-source-meter i:nth-child(2) {
+  opacity: .54
+}
+
+.audio-source-meter i:nth-child(3) {
+  opacity: .72
+}
+
+.audio-source-meter i:nth-child(4) {
+  opacity: .38
+}
+
+.audio-route-status {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px auto 1fr;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  padding: 0 2px;
+  font-size: 10px;
+  letter-spacing: .2px;
+  color: rgba(255, 255, 255, .54)
+}
+
+.audio-route-status b {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, .82)
+}
+
+.audio-route-status small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.audio-route-board {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 17px;
+  border: 1px solid rgba(255, 255, 255, .072);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .035), transparent 1px) 0 0 / 42px 42px,
+    linear-gradient(180deg, rgba(255, 255, 255, .027), transparent 1px) 0 0 / 42px 42px,
+    rgba(4, 6, 10, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .055), 0 18px 54px rgba(0, 0, 0, .16)
+}
+
+.audio-route-board-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 0 2px
+}
+
+.route-board-title {
+  min-width: 0;
+  display: grid;
+  gap: 2px
+}
+
+.route-board-title b {
+  font-size: 11px;
+  color: rgba(255, 255, 255, .78);
+  letter-spacing: .08em
+}
+
+.route-board-title small {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, .38)
+}
+
+.route-board-badges {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px
+}
+
+.audio-route-chip {
+  max-width: 100%;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  background: rgba(255, 255, 255, .038);
+  color: rgba(255, 255, 255, .50);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+
+.audio-route-chip.active {
+  border-color: rgba(var(--fc-accent-rgb), .34);
+  background: rgba(var(--fc-accent-rgb), .105);
+  color: rgba(255, 255, 255, .86)
+}
+
+.route-energy-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(var(--fc-accent-rgb), .78);
+  box-shadow: 0 0 16px rgba(var(--fc-accent-rgb), .45);
+  animation: routeNodePulse 1.8s ease-in-out infinite
+}
+
+.audio-route-lanes {
+  display: grid;
+  gap: 10px
+}
+
+.route-lane {
+  position: relative;
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 11px;
+  padding: 11px 12px 11px 14px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, .062);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .042), rgba(255, 255, 255, .016));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
+  overflow: visible
+}
+
+.route-lane::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(180deg, rgba(var(--fc-accent-rgb), .72), rgba(244, 210, 138, .42));
+  box-shadow: 0 0 12px rgba(var(--fc-accent-rgb), .22)
+}
+
+.route-lane-head {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  align-content: center;
+  gap: 7px 8px;
+  padding-right: 10px;
+  border-right: 1px solid rgba(255, 255, 255, .06)
+}
+
+.route-lane-head b,
+.route-lane-head small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.route-lane-head b {
+  font-size: 11px;
+  color: rgba(255, 255, 255, .78)
+}
+
+.route-lane-head small {
+  margin-top: 1px;
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, .36)
+}
+
+.route-lane-index {
+  width: 26px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--fc-accent-rgb), .20);
+  background: rgba(var(--fc-accent-rgb), .07);
+  color: rgba(255, 255, 255, .62);
+  font-size: 9px;
+  font-weight: 900
+}
+
+.route-lane-state {
+  grid-column: 2 / 3;
+  justify-self: start;
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  background: rgba(255, 255, 255, .035);
+  color: rgba(255, 255, 255, .56);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+  padding: 0 8px;
+  white-space: nowrap
+}
+
+.route-lane-title {
+  font-size: 10px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, .40);
+  letter-spacing: .08em
+}
+
+.route-node-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  align-content: start;
+  gap: 8px
+}
+
+.route-node-grid::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(var(--fc-accent-rgb), .22), rgba(126, 211, 255, .13), transparent);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0
+}
+
+.route-node-grid > * {
+  position: relative;
+  z-index: 1
+}
+
+.bridge-grid {
+  grid-template-columns: minmax(0, 1fr)
+}
+
+.audio-route-node {
+  position: relative;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 10px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, .075);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .026));
+  color: rgba(255, 255, 255, .70);
+  font-family: inherit;
+  text-align: left;
+  padding: 6px 8px 6px 7px;
+  cursor: pointer;
+  overflow: visible;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, color .18s ease
+}
+
+.audio-route-node::before {
+  content: "";
+  position: absolute;
+  left: -38%;
+  top: 0;
+  width: 38%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--fc-accent-rgb), .18), transparent);
+  transform: skewX(-16deg);
+  opacity: 0;
+  pointer-events: none
+}
+
+.audio-route-node:hover,
+.audio-flow-source:hover {
+  transform: translateY(-1px);
+  color: rgba(255, 255, 255, .92);
+  border-color: rgba(var(--fc-accent-rgb), .32);
+  background: linear-gradient(135deg, rgba(var(--fc-accent-rgb), .105), rgba(255, 255, 255, .035))
+}
+
+.audio-route-node.connected {
+  border-color: rgba(var(--fc-accent-rgb), .46);
+  background: linear-gradient(135deg, rgba(var(--fc-accent-rgb), .14), rgba(255, 255, 255, .040));
+  box-shadow: 0 0 0 1px rgba(var(--fc-accent-rgb), .08), 0 12px 26px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .08)
+}
+
+.audio-route-node.pending {
+  border-style: dashed;
+  border-color: rgba(244, 210, 138, .42);
+  background: linear-gradient(135deg, rgba(244, 210, 138, .075), rgba(255, 255, 255, .026))
+}
+
+.audio-route-node.warning {
+  border-style: solid;
+  border-color: rgba(255, 83, 103, .50);
+  background: linear-gradient(135deg, rgba(255, 83, 103, .10), rgba(255, 255, 255, .026))
+}
+
+.audio-route-node.connected::before {
+  opacity: 1;
+  animation: routeEnergySweep 1.95s ease-in-out infinite
+}
+
+.audio-route-node.disabled {
+  opacity: .56
+}
+
+.audio-route-node.disabled .flow-port {
+  cursor: not-allowed;
+  opacity: .26
+}
+
+.route-node-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--fc-accent-rgb), .13);
+  color: rgba(255, 255, 255, .88);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .065)
+}
+
+.route-node-text {
+  min-width: 0;
+  display: grid;
+  gap: 2px
+}
+
+.route-node-text b,
+.route-node-text small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.route-node-text b {
+  font-size: 11px;
+  color: rgba(255, 255, 255, .84)
+}
+
+.route-node-text small {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, .42)
+}
+
+.route-node-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .18)
+}
+
+.audio-route-node.connected .route-node-pulse {
+  background: rgba(var(--fc-accent-rgb), .9);
+  box-shadow: 0 0 14px rgba(var(--fc-accent-rgb), .45);
+  animation: routeNodePulse 1.55s ease-in-out infinite
+}
+
+.audio-route-node.pending .route-node-pulse {
+  background: rgba(244, 210, 138, .86);
+  box-shadow: 0 0 14px rgba(244, 210, 138, .32)
+}
+
+.audio-route-node.warning .route-node-pulse {
+  background: rgba(255, 83, 103, .90);
+  box-shadow: 0 0 14px rgba(255, 83, 103, .38)
+}
+
+.route-lane .audio-route-note {
+  grid-column: 2 / 3;
+  margin-top: -3px
+}
+
+.audio-route-note,
+.audio-route-empty {
+  font-size: 10px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, .34);
+  padding: 0 2px 2px
+}
+
+@keyframes routeEnergySweep {
+  0% { transform: translateX(0) skewX(-16deg); opacity: 0 }
+  24% { opacity: 1 }
+  100% { transform: translateX(360%) skewX(-16deg); opacity: 0 }
+}

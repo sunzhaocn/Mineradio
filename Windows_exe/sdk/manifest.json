@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "source_product": "Soda Music",
+  "source_version": "3.7.0",
+  "platform": "windows-x64",
+  "prepared_at_utc": "2026-10-24T00:19:22.345489+00:00",
+  "files": [
+    {
+      "name": "bdms.node",
+      "size": 164216,
+      "sha256": "73017455010b58aabae15b5560f82463f425acf1f4a813d91370abd1f35fac0f"
+    },
+    {
+      "name": "metasecml.dll",
+      "size": 8836368,
+      "sha256": "53f322a7731cf64e6187d2fde1bb07558c2ab0a64fa6db0ef7c95d618ea9a226"
+    },
+    {
+      "name": "qishui-emojis.json",
+      "size": 1164096,
+      "sha256": "a3503a190264b454786b9cac16664bc47129845850d85d789bb3e58ec8a0c240",
+      "emoji_count": 226
+    }
+  ],
+  "pe_import_tables": {
+    "bdms.node": {
+      "machine": "x64",
+      "imports": [
+        "KERNEL32.dll",
+        "metasecml.dll"
+      ],
+      "delay_imports": [
+        "node.exe"
+      ]
+    },
+    "metasecml.dll": {
+      "machine": "x64",
+      "imports": [
+        "WS2_32.dll",
+        "KERNEL32.dll",
+        "USER32.dll",
+        "ole32.dll",
+        "OLEAUT32.dll",
+        "ADVAPI32.dll",
+        "SHLWAPI.dll",
+        "VERSION.dll",
+        "IMM32.dll",
+        "WINHTTP.dll",
+        "KERNEL32.dll"
+      ],
+      "delay_imports": []
+    }
+  },
+  "independent_validation": {
+    "passed": true,
+    "two_signatures_nonempty": true,
+    "signature_values_saved": false,
+    "music_api_request_sent": false,
+    "signature_lengths": {
+      "X-Helios": 48,
+      "X-Medusa": 872
+    },
+    "device_identifier": "synthetic",
+    "node_version": "v24.21.0",
+    "node_sha256": "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32",
+    "copied_sdk_modules": [
+      "bdms.node",
+      "metasecml.dll"
+    ],
+    "module_count": 40,
+    "external_non_system_modules": [],
+    "original_client_path_in_search_path": false,
+    "limitation": "Validates SDK loading/signing only, not account entitlement or live music requests."
+  },
+  "rea": {
+    "binary_identity_confirmed": true,
+    "deep_native_analysis": "provider_unavailable",
+    "reason": "Ghidra/IDA not configured; PE import parsing and process module observation used instead."
+  },
+  "personal_data_included": false,
+  "notice": "SDK and emoji assets remain the property of their original rights holders."
+}

@@ -1,0 +1,418 @@
+/* Browser panels share the header/player space measured by the responsive shell. */
+.playlist-panel-close {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  body.web-adapter #playlist-panel,
+  body.web-adapter #fx-panel {
+    box-sizing: border-box;
+    top: var(--web-header-bottom, 122px) !important;
+    bottom: calc(var(--web-player-space, 190px) + 12px) !important;
+    max-height: max(96px, calc(var(--web-viewport-height, 100dvh) - var(--web-header-bottom, 122px) - var(--web-player-space, 190px) - 12px)) !important;
+    min-height: 0;
+    padding: 14px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-block: 14px;
+  }
+
+  body.web-adapter #playlist-panel {
+    left: max(12px, env(safe-area-inset-left, 0px)) !important;
+    width: min(420px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))) !important;
+  }
+
+  body.web-adapter #fx-panel {
+    width: min(444px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))) !important;
+  }
+
+  body.web-adapter #fx-panel.show,
+  body.web-adapter #fx-panel.peek {
+    right: max(12px, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  body.web-adapter #playlist-panel .playlist-panel-sticky {
+    top: -14px;
+    margin: -14px -14px 10px;
+    padding: 14px 14px 10px;
+  }
+
+  body.web-adapter #playlist-panel .playlist-panel-sticky .fx-sub {
+    display: none;
+  }
+
+  body.web-adapter #playlist-panel .playlist-panel-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    font-size: 22px;
+  }
+
+  body.web-adapter #playlist-panel .queue-toolbar {
+    position: static;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  body.web-adapter #playlist-panel .panel-tabs {
+    gap: 5px;
+  }
+
+  body.web-adapter #playlist-panel .panel-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 40px;
+    padding: 7px 5px;
+    white-space: normal;
+  }
+
+  body.web-adapter #playlist-panel .queue-chip {
+    max-width: 100%;
+    height: auto;
+    min-height: 26px;
+    padding-block: 5px;
+    overflow-wrap: anywhere;
+  }
+
+  body.web-adapter #playlist-panel .pl-detail-actions {
+    flex-wrap: wrap;
+  }
+
+  body.web-adapter #playlist-panel .pl-card > div,
+  body.web-adapter #playlist-panel .pl-detail-head > div,
+  body.web-adapter #playlist-panel .pl-detail-row > div {
+    min-width: 0;
+  }
+
+  body.web-adapter #fx-panel .fx-head {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  body.web-adapter #fx-panel .fx-head-actions {
+    margin-left: auto;
+    max-width: 100%;
+  }
+
+  body.web-adapter #fx-panel .fx-close {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  body.web-adapter #fx-panel .fx-panel-tabs {
+    top: -14px;
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  body.web-adapter #fx-panel .fx-panel-tabs button {
+    flex: 0 0 auto;
+    min-height: 42px;
+  }
+
+  body.web-adapter #fx-panel .fx-seg {
+    flex-wrap: wrap;
+  }
+
+  body.web-adapter #fx-panel .fx-seg button {
+    flex: 1 1 64px;
+    min-width: 0;
+    min-height: 40px;
+    overflow-wrap: anywhere;
+  }
+
+  body.web-adapter #fx-panel .image-pick-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  body.web-adapter #fx-panel .bg-media-actions,
+  body.web-adapter #fx-panel .wallpaper-engine-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.web-adapter #fx-panel .bg-media-actions .fx-mini-btn,
+  body.web-adapter #fx-panel .wallpaper-engine-actions .fx-mini-btn {
+    min-width: 0;
+    min-height: 40px;
+    height: auto;
+    padding-block: 8px;
+    white-space: normal;
+  }
+
+  body.web-adapter .modal-mask,
+  body.web-adapter .hotkey-modal,
+  body.web-adapter .web-library-mask {
+    box-sizing: border-box;
+    padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  body.web-adapter .modal,
+  body.web-adapter .hotkey-dialog,
+  body.web-adapter .web-library {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+    max-height: calc(100vh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    max-height: calc(var(--web-viewport-height, 100dvh) - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overscroll-behavior: contain;
+  }
+
+  body.web-adapter .modal,
+  body.web-adapter .hotkey-dialog {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.web-adapter .modal .btn-row {
+    flex-wrap: wrap;
+  }
+
+  body.web-adapter .modal .modal-btn {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  body.web-adapter .cover-crop-stage,
+  body.web-adapter .background-crop-stage {
+    max-width: 100%;
+  }
+
+  body.web-adapter .cover-color-pop,
+  body.web-adapter .color-lab-pop {
+    box-sizing: border-box;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body.web-adapter .web-library {
+    width: min(1080px, 100%);
+  }
+
+  body.web-adapter .web-library-content {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-x: hidden;
+  }
+
+  body.web-adapter .web-library-head,
+  body.web-adapter .web-library-toolbar,
+  body.web-adapter .web-library-foot {
+    flex: 0 0 auto;
+  }
+
+  body.web-adapter .web-library-icon,
+  body.web-adapter .web-library-hide,
+  body.web-adapter .web-library-platform-toggle,
+  body.web-adapter .web-library-tabs button,
+  body.web-adapter .web-library-actions button,
+  body.web-adapter .web-library-provider-notice button {
+    min-height: 40px;
+  }
+
+  body.web-adapter .web-library-icon {
+    min-width: 40px;
+  }
+
+  body.web-adapter .web-library-head > div,
+  body.web-adapter .web-library-platform-head > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 520px) {
+  body.web-adapter #fx-panel .fx-slider {
+    grid-template-columns: minmax(0, 1fr) 44px 32px;
+    gap: 2px 8px;
+    padding: 8px;
+  }
+
+  body.web-adapter #fx-panel .fx-slider label {
+    grid-column: 1;
+    grid-row: 1;
+    white-space: normal;
+  }
+
+  body.web-adapter #fx-panel .fx-slider output {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  body.web-adapter #fx-panel .fx-slider .fx-reset-one {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  body.web-adapter #fx-panel .fx-slider input[type="range"] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 32px;
+    margin: 0;
+  }
+
+  body.web-adapter #fx-panel .lyric-color-row.visual-tint-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  body.web-adapter #fx-panel .visual-tint-row > button {
+    min-height: 40px;
+    height: auto;
+  }
+
+  body.web-adapter #fx-panel .visual-tint-row > button:first-of-type {
+    grid-column: 1;
+  }
+
+  body.web-adapter #fx-panel .visual-tint-row > button:last-of-type {
+    grid-column: 2;
+  }
+
+  body.web-adapter #fx-panel .fx-font-grid,
+  body.web-adapter #fx-panel .fx-font-grid.expanded {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.web-adapter #fx-panel .color-lab-presets {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  body.web-adapter #fx-panel .user-archive-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.web-adapter .modal {
+    padding: 20px 16px;
+  }
+
+  body.web-adapter .modal h2 {
+    overflow-wrap: anywhere;
+  }
+
+  body.web-adapter .cover-crop-layout,
+  body.web-adapter .background-crop-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.web-adapter .cover-crop-stage,
+  body.web-adapter .background-crop-stage {
+    width: 100%;
+  }
+
+  body.web-adapter .cover-color-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.web-adapter .cover-color-art {
+    min-height: 140px;
+  }
+
+  body.web-adapter #login-modal.local-auth-modal .dual-login-modal {
+    max-width: 100%;
+    max-height: calc(var(--web-viewport-height, 100dvh) - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
+  body.web-adapter .local-auth-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 18px;
+  }
+
+  body.web-adapter .local-auth input,
+  body.web-adapter .local-auth select,
+  body.web-adapter .local-auth textarea {
+    font-size: 16px;
+  }
+
+  body.web-adapter .local-auth-account > div {
+    min-width: 0;
+  }
+
+  body.web-adapter .local-auth-qr-placeholder {
+    max-width: 100%;
+  }
+
+  body.web-adapter .web-library-head {
+    padding: 16px 14px 12px;
+    gap: 10px;
+  }
+
+  body.web-adapter .web-library-head h2 {
+    font-size: 21px;
+  }
+
+  body.web-adapter .web-library-toolbar,
+  body.web-adapter .web-library-content,
+  body.web-adapter .web-library-status,
+  body.web-adapter .web-library-foot {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  body.web-adapter .web-library-tabs,
+  body.web-adapter .web-library-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.web-adapter .web-library-hide {
+    margin: 0 3px;
+    padding-inline: 5px;
+    flex: 0 0 auto;
+  }
+}
+
+/* Keep the queue's 62px virtual row step while exposing actions to touch users. */
+@media (max-width: 900px) and (hover: none), (max-width: 900px) and (pointer: coarse) {
+  body.web-adapter #playlist-panel .qi-act {
+    opacity: 1;
+    flex: 0 0 auto;
+    gap: 2px;
+  }
+
+  body.web-adapter #playlist-panel .qi-act button {
+    width: 28px;
+    height: 38px;
+    padding: 0;
+  }
+
+  body.web-adapter #playlist-panel .queue-item {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 520px) {
+  body.web-adapter #playlist-panel,
+  body.web-adapter #fx-panel {
+    top: 12px !important;
+    bottom: 12px !important;
+    max-height: calc(var(--web-viewport-height, 100dvh) - 24px) !important;
+    z-index: 35;
+  }
+
+  body.web-adapter .web-library {
+    overflow-y: auto;
+  }
+
+  body.web-adapter .web-library-content {
+    flex: 0 0 auto;
+    overflow-y: visible;
+  }
+
+  body.web-adapter .web-library-foot {
+    display: none;
+  }
+}

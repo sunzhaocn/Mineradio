@@ -1,0 +1,27 @@
+<div id="home-platform-recommend-mask" class="modal-mask" role="dialog" aria-modal="true" aria-hidden="true"
+      aria-labelledby="home-platform-recommend-title">
+      <div class="modal home-platform-recommend-modal">
+        <div class="home-platform-recommend-head">
+          <div>
+            <h2 id="home-platform-recommend-title">音乐榜单</h2>
+            <p>浏览各平台的音乐榜单，发现正在流行的好音乐。</p>
+          </div>
+          <button id="home-platform-recommend-close" class="home-platform-recommend-close" type="button"
+            aria-label="关闭音乐榜单">×</button>
+        </div>
+        <div id="home-platform-recommend-tabs" class="home-platform-recommend-tabs" role="tablist"
+          aria-label="榜单平台">
+          <button type="button" role="tab" data-home-recommend-source="netease" aria-selected="true">网易云</button>
+          <button type="button" role="tab" data-home-recommend-source="qishui" aria-selected="false">汽水</button>
+          <button type="button" role="tab" data-home-recommend-source="qq" aria-selected="false">QQ</button>
+          <button type="button" role="tab" data-home-recommend-source="kugou" aria-selected="false">酷狗</button>
+        </div>
+        <div id="home-platform-recommend-status" class="home-platform-recommend-status" role="status"
+          aria-live="polite"></div>
+        <div id="home-platform-recommend-list" class="home-platform-recommend-list"></div>
+        <div class="home-platform-recommend-actions">
+          <button id="home-platform-recommend-refresh" type="button">刷新当前平台</button>
+          <button id="home-platform-recommend-done" type="button">完成</button>
+        </div>
+      </div>
+    </div>

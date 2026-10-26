@@ -1,0 +1,135 @@
+<div class="fx-head">
+        <div>
+          <div class="fx-title">视觉控制台</div>
+          <div class="fx-sub">MINERADIO VISUALS · 鼠标移开自动隐藏</div>
+        </div>
+      </div>
+
+      <div class="fx-section-label">视觉预设</div>
+      <div class="preset-grid" id="preset-grid"></div>
+      <div class="fx-section-label">用户存档</div>
+      <div class="user-archive-grid" id="user-archive-grid"></div>
+      <div class="fx-section-label">自定义颜色</div>
+      <div class="lyric-color-row">
+        <input id="ui-accent-picker" class="lyric-color-picker" type="color" value="#ffffff" title="界面高亮色">
+        <div class="fx-color-row-label">界面高亮<small id="ui-accent-value">#FFFFFF</small></div>
+        <button class="fx-mini-btn ghost" type="button" onclick="resetUiAccentColor()">默认</button>
+      </div>
+      <div class="lyric-color-row visual-tint-row">
+        <input id="visual-tint-picker" class="lyric-color-picker" type="color" value="#9db8cf" title="视觉主色">
+        <div class="fx-color-row-label">视觉主色<small id="visual-tint-value">封面取色</small></div>
+        <button class="fx-mini-btn ghost" id="visual-tint-auto-btn" type="button"
+          onclick="openCoverColorPicker('visualTint')">封面</button>
+        <button class="fx-mini-btn ghost" type="button" onclick="resetVisualTintColor()">默认</button>
+      </div>
+      <div class="cover-color-pop" id="cover-color-pop">
+        <div class="cover-color-head"><span>Cover Picker</span><button class="cover-color-close" type="button"
+            onclick="closeCoverColorPicker()">×</button></div>
+        <div class="cover-color-body">
+          <div class="cover-color-art" id="cover-color-art" onclick="pickCoverColorFromArt(event)"
+            onmousemove="moveCoverColorLoupe(event)" onmouseleave="hideCoverColorLoupe()"></div>
+          <div class="cover-color-side">
+            <div class="cover-color-preview" id="cover-color-preview"></div>
+            <div class="cover-color-hint" id="cover-color-hint">点击专辑封面任意位置取色，或使用下方推荐色。</div>
+            <div class="cover-color-swatches" id="cover-color-swatches"></div>
+          </div>
+        </div>
+      </div>
+      <div class="color-lab-pop" id="color-lab-pop">
+        <div class="color-lab-head"><span id="color-lab-title">Color</span><button class="color-lab-close" type="button"
+            onclick="closeColorLab()">×</button></div>
+        <div class="color-lab-sv" id="color-lab-sv">
+          <div class="color-lab-cursor" id="color-lab-cursor"></div>
+        </div>
+        <div class="color-lab-row">
+          <div class="color-lab-preview" id="color-lab-preview"></div>
+          <input class="color-lab-hue" id="color-lab-hue" type="range" min="0" max="360" step="1">
+          <input class="color-lab-hex" id="color-lab-hex" type="text" value="#F00000" maxlength="7">
+        </div>
+        <div class="color-lab-presets" id="color-lab-presets"></div>
+      </div>
+      <div class="cover-color-loupe" id="cover-color-loupe"></div>
+      <div class="lyric-color-row">
+        <input id="home-accent-picker" class="lyric-color-picker" type="color" value="#00f5d4" title="Home 填充色">
+        <div class="fx-color-row-label">Home 填充<small id="home-accent-value">#00F5D4</small></div>
+        <button class="fx-mini-btn ghost" type="button" onclick="resetHomeAccentColor()">默认</button>
+      </div>
+      <div class="lyric-color-row">
+        <input id="home-icon-picker" class="lyric-color-picker" type="color" value="#f4d28a" title="主页图标">
+        <div class="fx-color-row-label">主页图标<small id="home-icon-value">#F4D28A</small></div>
+        <button class="fx-mini-btn ghost" type="button" onclick="resetHomeIconColor()">默认</button>
+      </div>
+      <div class="lyric-color-row">
+        <input id="visual-icon-picker" class="lyric-color-picker" type="color" value="#7fd8ff" title="视觉图标">
+        <div class="fx-color-row-label">视觉图标<small id="visual-icon-value">#7FD8FF</small></div>
+        <button class="fx-mini-btn ghost" type="button" onclick="resetVisualIconColor()">默认</button>
+      </div>
+      <div class="lyric-color-row">
+        <input id="bg-color-picker" class="lyric-color-picker" type="color" value="#000000" title="背景颜色">
+        <div class="fx-color-row-label">背景颜色<small id="bg-color-value">#000000</small></div>
+        <button class="fx-mini-btn ghost" type="button" onclick="resetCustomBackgroundColor()">&#23553;&#38754;</button>
+      </div>
+      <div class="lyric-color-row image-pick-row bg-media-row">
+        <div class="bg-media-preview" id="bg-media-preview" aria-hidden="true"></div>
+        <div class="fx-color-row-label">背景媒体<small id="bg-image-value">未设置</small></div>
+        <div class="bg-media-actions">
+          <button class="fx-mini-btn ghost" id="bg-album-toggle-btn" type="button" title="使用当前封面原图"
+            onclick="toggleCustomBackgroundAlbumCover()">&#23553;&#38754;</button>
+          <button class="fx-mini-btn ghost" type="button"
+            onclick="document.getElementById('background-image-input').click()">选择</button>
+          <button class="fx-mini-btn ghost" id="bg-media-crop-btn" type="button"
+            onclick="openCustomBackgroundCropModal()">裁切</button>
+          <button class="fx-mini-btn ghost" type="button" onclick="clearCustomBackgroundImage()">清除</button>
+        </div>
+      </div>
+      <div class="lyric-color-row image-pick-row wallpaper-engine-row">
+        <div class="wallpaper-engine-mark" aria-hidden="true">WE</div>
+        <div class="fx-color-row-label">Wallpaper Engine<small id="wallpaper-engine-value">未启用 · 原背景保留</small></div>
+        <div class="wallpaper-engine-actions">
+          <button class="fx-mini-btn ghost" type="button" onclick="openWallpaperEngineLibrary()">识别 / 导入</button>
+          <button class="fx-mini-btn ghost" id="wallpaper-engine-restore-btn" type="button"
+            onclick="deactivateWallpaperEngineBackground()" disabled>恢复原背景</button>
+        </div>
+      </div>
+      <div class="wallpaper-engine-visual-controls">
+        <div class="fx-slider"><label>WE 壁纸透明度</label><input id="wallpaper-engine-opacity" type="range" min="0.15" max="1" step="0.01" oninput="setWallpaperEngineVisualSetting('opacity', this.value)"><output></output></div>
+        <div class="fx-slider"><label>WE 水平位置</label><input id="wallpaper-engine-position-x" type="range" min="-50" max="50" step="1" oninput="setWallpaperEngineVisualSetting('positionX', this.value)"><output></output></div>
+        <div class="fx-slider"><label>WE 垂直位置</label><input id="wallpaper-engine-position-y" type="range" min="-50" max="50" step="1" oninput="setWallpaperEngineVisualSetting('positionY', this.value)"><output></output></div>
+        <div class="fx-slider"><label>WE 壁纸缩放</label><input id="wallpaper-engine-scale" type="range" min="1" max="1.6" step="0.01" oninput="setWallpaperEngineVisualSetting('scale', this.value)"><output></output></div>
+      </div>
+      <div class="fx-slider"><label>背景透明度</label><input id="fx-bgopacity" type="range" min="0" max="1"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>&#35009;&#20999;&#24038;&#21491;</label><input id="fx-bgcropx" type="range" min="0" max="100"
+          step="1"><output></output></div>
+      <div class="fx-slider"><label>&#35009;&#20999;&#19978;&#19979;</label><input id="fx-bgcropy" type="range" min="0" max="100"
+          step="1"><output></output></div>
+      <div class="fx-slider"><label>&#35009;&#20999;&#32553;&#25918;</label><input id="fx-bgzoom" type="range" min="1" max="2.8"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>&#31383;&#21475;&#32972;&#26223;&#36879;&#26126;</label><input id="fx-windowbgopacity" type="range" min="0" max="1"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>&#27611;&#29627;&#29827;&#36879;&#26126;</label><input id="fx-bgglassopacity" type="range" min="0" max="1"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>控制台玻璃色差</label><input id="fx-glassaberration" type="range" min="30" max="140"
+          step="1"><output></output></div>
+      <div class="fx-slider"><label>左栏雾面</label><input id="fx-playlistblur" type="range" min="14" max="60"
+          step="1"><output></output></div>
+      <div class="fx-slider"><label>左栏遮挡</label><input id="fx-playlistdensity" type="range" min="0.55" max="1"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>左栏唤出</label><input id="fx-playlistopen" type="range" min="0.08" max="0.72"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>左栏收起</label><input id="fx-playlistclose" type="range" min="0.06" max="0.48"
+          step="0.01"><output></output></div>
+
+      <div class="fx-section-label">主控</div>
+      <div class="fx-slider"><label>律动强度</label><input id="fx-intensity" type="range" min="0.2" max="1.6"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>立体感</label><input id="fx-depth" type="range" min="0.2" max="1.8"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>封面清晰度</label><input id="fx-coverres" type="range" min="0.75" max="1.55"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>镜头晃动</label><input id="fx-cineshake" type="range" min="0" max="1.8"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>歌词溢光</label><input id="fx-lyricglow" type="range" min="0" max="0.85"
+          step="0.01"><output></output></div>
+      <div class="fx-slider" id="fx-lyricbgadapt-row"><label>亮底避光</label><input id="fx-lyricbgadapt" type="range" min="0" max="1"
+          step="0.01"><output></output></div>

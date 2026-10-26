@@ -1,0 +1,36 @@
+.home-recent-modal {
+  width: min(720px, calc(100vw - 32px));
+  max-width: 720px;
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  text-align: left;
+}
+.home-recent-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.home-recent-heading h2 { margin: 0; }
+#home-recent-history-count { color: rgba(255,255,255,.5); font-size: 12px; white-space: nowrap; }
+.home-recent-description { margin: 10px 0 18px; font-size: 12px; line-height: 1.7; color: rgba(255,255,255,.5); }
+.home-recent-list { min-height: 100px; max-height: 60dvh; overflow-y: auto; overscroll-behavior: contain; }
+.home-recent-row {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 11px 8px;
+  border: 0; border-bottom: 1px solid rgba(255,255,255,.06); border-radius: 8px;
+  background: transparent; color: inherit; cursor: pointer; text-align: left;
+}
+.home-recent-row:hover, .home-recent-row:focus-visible { background: rgba(255,255,255,.07); outline: none; }
+.home-recent-rank { flex: 0 0 24px; color: rgba(255,255,255,.4); font-size: 12px; text-align: center; }
+.home-recent-cover { flex: 0 0 42px; width: 42px; height: 42px; border-radius: 8px; object-fit: cover; background: rgba(255,255,255,.07); }
+.home-recent-cover-empty { display: grid; place-items: center; color: rgba(255,255,255,.4); }
+.home-recent-main { flex: 1; min-width: 0; }
+.home-recent-name, .home-recent-meta { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-recent-name { color: rgba(255,255,255,.92); font-size: 13px; line-height: 1.7; }
+.home-recent-meta { color: rgba(255,255,255,.45); font-size: 11px; line-height: 1.8; }
+.home-recent-time { flex: 0 0 auto; color: rgba(255,255,255,.4); font-size: 11px; white-space: nowrap; }
+.home-recent-empty { padding: 34px 16px; color: rgba(255,255,255,.5); font-size: 13px; line-height: 1.8; text-align: center; }
+.home-recent-modal .btn-row { flex-shrink: 0; justify-content: center; margin-top: 18px; }
+@media (max-width: 560px) {
+  .home-recent-modal { padding: 20px 12px; }
+  .home-recent-heading, .home-recent-description { margin-left: 8px; margin-right: 8px; }
+  .home-recent-row { gap: 8px; flex-wrap: wrap; }
+  .home-recent-time { margin-left: 82px; margin-top: -7px; width: calc(100% - 82px); }
+}

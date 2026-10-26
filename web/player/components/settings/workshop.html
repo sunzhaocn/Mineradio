@@ -1,0 +1,52 @@
+<div class="fx-section-label" id="fx-sonic-workshop-section">音域回响·WE</div>
+      <div class="fx-slider"><label>输入压制</label><input id="fx-sonicwegain" type="range" min="40" max="100"
+          step="1"><output></output></div>
+      <div class="fx-slider"><label>音频响应</label><input id="fx-sonicweaudio" type="range" min="0.3" max="2.5"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>响应范围</label><input id="fx-sonicwerange" type="range" min="0.3" max="2"
+          step="0.01"><output></output></div>
+      <div class="fx-slider"><label>中心高光</label><input id="fx-sonicwepeak" type="range" min="0" max="1.4"
+          step="0.01"><output></output></div>
+      <div class="lyric-color-row" id="sonic-workshop-color-row">
+        <input id="sonic-workshop-cover-picker" class="lyric-color-picker" type="color" value="#cb6c89" title="WE theme color">
+        <div class="fx-color-row-label">WE&#x4e3b;&#x9898;&#x57fa;&#x8272;<small id="sonic-workshop-theme-value">&#x5c01;&#x9762;&#x53d6;&#x8272;</small></div>
+        <button class="fx-mini-btn ghost" id="sonic-workshop-cover-btn" type="button"
+          onclick="setSonicWorkshopRegionColorMode('theme','cover')">&#x5c01;&#x9762;</button>
+      </div>
+      <div class="lyric-color-row" id="sonic-workshop-base-row">
+        <input id="sonic-workshop-base-picker" class="lyric-color-picker" type="color" value="#16060f" title="WE terrain base">
+        <div class="fx-color-row-label">&#x5730;&#x5f62;&#x5e95;&#x8272;<small id="sonic-workshop-base-value">&#x5c01;&#x9762;&#x53d6;&#x8272;</small></div>
+        <button class="fx-mini-btn ghost" id="sonic-workshop-base-btn" type="button"
+          onclick="setSonicWorkshopRegionColorMode('base','cover')">&#x5c01;&#x9762;</button>
+      </div>
+      <div class="lyric-color-row" id="sonic-workshop-warm-row">
+        <input id="sonic-workshop-warm-picker" class="lyric-color-picker" type="color" value="#cb6c89" title="WE warm body">
+        <div class="fx-color-row-label">&#x6696;&#x8272;&#x4e3b;&#x4f53;<small id="sonic-workshop-warm-value">&#x5c01;&#x9762;&#x53d6;&#x8272;</small></div>
+        <button class="fx-mini-btn ghost" id="sonic-workshop-warm-btn" type="button"
+          onclick="setSonicWorkshopRegionColorMode('warm','cover')">&#x5c01;&#x9762;</button>
+      </div>
+      <div class="lyric-color-row" id="sonic-workshop-cool-row">
+        <input id="sonic-workshop-cool-picker" class="lyric-color-picker" type="color" value="#99c4ff" title="WE upper highlight">
+        <div class="fx-color-row-label">&#x4e0a;&#x5c42;&#x9ad8;&#x5149;<small id="sonic-workshop-cool-value">&#x5c01;&#x9762;&#x53d6;&#x8272;</small></div>
+        <button class="fx-mini-btn ghost" id="sonic-workshop-cool-btn" type="button"
+          onclick="setSonicWorkshopRegionColorMode('cool','cover')">&#x5c01;&#x9762;</button>
+      </div>
+      <div class="lyric-color-row" id="sonic-workshop-ripple-row">
+        <input id="sonic-workshop-ripple-picker" class="lyric-color-picker" type="color" value="#f8d8ff" title="WE ripple light">
+        <div class="fx-color-row-label">&#x6ce2;&#x7eb9;&#x4eae;&#x533a;<small id="sonic-workshop-ripple-value">&#x5c01;&#x9762;&#x53d6;&#x8272;</small></div>
+        <button class="fx-mini-btn ghost" id="sonic-workshop-ripple-btn" type="button"
+          onclick="setSonicWorkshopRegionColorMode('ripple','cover')">&#x5c01;&#x9762;</button>
+      </div>
+      <div class="lyric-color-row" id="sonic-workshop-peak-row">
+        <input id="sonic-workshop-peak-picker" class="lyric-color-picker" type="color" value="#99c4ff" title="WE peak highlight">
+        <div class="fx-color-row-label">&#x5cf0;&#x503c;&#x9ad8;&#x5149;<small id="sonic-workshop-peak-value">&#x5c01;&#x9762;&#x53d6;&#x8272;</small></div>
+        <button class="fx-mini-btn ghost" id="sonic-workshop-peak-btn" type="button"
+          onclick="setSonicWorkshopRegionColorMode('peak','cover')">&#x5c01;&#x9762;</button>
+      </div>
+      <div class="fx-seg sonic-workshop-theme-seg" id="sonic-workshop-theme-seg">
+        <button data-sonic-workshop-theme="coral-mirage" onclick="setSonicWorkshopTheme('coral-mirage')">珊瑚</button>
+        <button data-sonic-workshop-theme="ocean-deep" onclick="setSonicWorkshopTheme('ocean-deep')">深海</button>
+        <button data-sonic-workshop-theme="arctic-aurora" onclick="setSonicWorkshopTheme('arctic-aurora')">冰蓝</button>
+        <button data-sonic-workshop-theme="cyber-forest" onclick="setSonicWorkshopTheme('cyber-forest')">翠绿</button>
+        <button data-sonic-workshop-theme="minimal-monochrome" onclick="setSonicWorkshopTheme('minimal-monochrome')">极简</button>
+      </div>

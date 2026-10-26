@@ -1,0 +1,10 @@
+.gradle/
+app/build/
+app/src/main/assets/bundle/
+app/src/main/assets/sdk-config.json
+app/src/main/jniLibs/
+app/src/main/python/music_app/
+local.properties
+*.keystore
+dist/
+.local/

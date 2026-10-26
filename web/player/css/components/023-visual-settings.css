@@ -1,0 +1,439 @@
+.spotify-setup-card-actions button.wide {
+  min-width: 150px
+}
+
+.spotify-setup-card-actions button:disabled {
+  opacity: .40;
+  cursor: not-allowed
+}
+
+.spotify-setup-card-state {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  max-width: 78px;
+  overflow: hidden;
+  color: rgba(255, 255, 255, .38);
+  font-size: 9px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.spotify-setup-card.is-complete .spotify-setup-card-state {
+  color: rgba(77, 236, 133, .84)
+}
+
+.spotify-setup-card.is-error .spotify-setup-card-state {
+  color: rgba(255, 140, 150, .88)
+}
+
+.spotify-setup-check-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 8px
+}
+
+.spotify-setup-check {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .027);
+  color: rgba(255, 255, 255, .46);
+  font-size: 9.5px
+}
+
+.spotify-setup-check::before {
+  content: '·';
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .07)
+}
+
+.spotify-setup-check.ok {
+  color: rgba(213, 255, 226, .76)
+}
+
+.spotify-setup-check.ok::before {
+  content: '✓';
+  background: rgba(30, 215, 96, .18);
+  color: #6df19b
+}
+
+.spotify-setup-check.fail {
+  color: rgba(255, 186, 192, .78)
+}
+
+.spotify-setup-check.fail::before {
+  content: '!';
+  background: rgba(255, 95, 112, .14);
+  color: #ff9ca6
+}
+
+.spotify-setup-overall {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, .065);
+  background: rgba(0, 0, 0, .14);
+  color: rgba(255, 255, 255, .54);
+  font-size: 10.5px;
+  line-height: 1.45
+}
+
+.spotify-setup-overall.success {
+  border-color: rgba(30, 215, 96, .22);
+  color: rgba(219, 255, 230, .82)
+}
+
+.spotify-setup-overall.fail {
+  border-color: rgba(255, 103, 117, .22);
+  color: rgba(255, 190, 196, .82)
+}
+
+@media (max-width: 780px) {
+  .dual-login-modal.spotify-setup-open {
+    width: min(620px, calc(100vw - 28px));
+    min-width: 0;
+    max-width: min(620px, calc(100vw - 28px))
+  }
+  .spotify-setup-progress {
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+  }
+  .spotify-setup-steps {
+    grid-template-columns: minmax(0, 1fr)
+  }
+  .spotify-setup-head {
+    align-items: start;
+    flex-direction: column;
+    gap: 5px
+  }
+  .spotify-setup-head small { text-align: left }
+}
+
+.qq-cookie-panel .modal-btn {
+  padding: 8px 12px;
+  white-space: nowrap
+}
+
+#qq-cookie-toggle-btn {
+  display: none;
+  padding: 8px 13px
+}
+
+#qq-cookie-toggle-btn.show {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center
+}
+
+#qr-status {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  min-height: 18px;
+  margin-bottom: 14px;
+  letter-spacing: .3px
+}
+
+#qr-status.scan {
+  color: #7ee2a8
+}
+
+#qr-status.fail {
+  color: #f08080
+}
+
+#qr-status.preview {
+  color: rgba(191, 214, 107, .86)
+}
+
+.account-provider-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .035);
+  font-size: 10.5px;
+  letter-spacing: .5px;
+  color: rgba(255, 255, 255, .58)
+}
+
+.account-provider-chip.netease {
+  border-color: rgba(217, 91, 103, .26);
+  color: #ffd7dc;
+  background: rgba(217, 91, 103, .08)
+}
+
+.account-provider-chip.qq {
+  border-color: rgba(191, 214, 107, .26);
+  color: #f3ffd1;
+  background: rgba(191, 214, 107, .08)
+}
+
+.account-provider-chip.kugou {
+  border-color: rgba(86, 224, 255, .26);
+  color: #c9f5ff;
+  background: rgba(86, 224, 255, .08)
+}
+
+.account-provider-chip.qishui {
+  border-color: rgba(69, 214, 143, .26);
+  color: #d7ffe5;
+  background: rgba(69, 214, 143, .08)
+}
+
+.account-provider-chip.spotify {
+  border-color: rgba(30, 215, 96, .26);
+  color: #d8ffe2;
+  background: rgba(30, 215, 96, .08)
+}
+
+.account-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px
+}
+
+.account-modal-actions .modal-btn {
+  padding: 8px 10px
+}
+
+.account-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, .38)
+}
+
+.modal .btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px
+}
+
+.dual-login-modal .btn-row {
+  flex-wrap: wrap
+}
+
+.modal-btn {
+  padding: 8px 20px;
+  font-size: 12.5px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: .5px;
+  transition: all .2s;
+  font-family: inherit
+}
+
+.modal-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3)
+}
+
+.modal-btn.primary {
+  background: rgba(244, 210, 138, 0.14);
+  border-color: rgba(244, 210, 138, 0.50);
+  color: var(--champagne)
+}
+
+.modal-btn.primary:hover {
+  background: rgba(244, 210, 138, 0.24)
+}
+
+.cover-crop-modal {
+  width: min(720px, 92vw);
+  max-width: min(720px, 92vw);
+  padding: 28px;
+  text-align: left
+}
+
+.cover-crop-modal h2 {
+  text-align: center;
+  margin-bottom: 22px
+}
+
+.cover-crop-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 312px) 1fr;
+  gap: 24px;
+  align-items: center
+}
+
+.cover-crop-stage {
+  position: relative;
+  width: min(312px, 72vw);
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #07070a;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .44), inset 0 0 0 1px rgba(255, 255, 255, .08);
+  cursor: grab;
+  touch-action: none
+}
+
+.cover-crop-stage.dragging {
+  cursor: grabbing
+}
+
+.cover-crop-stage img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: none;
+  max-height: none;
+  user-select: none;
+  pointer-events: none;
+  will-change: transform
+}
+
+.cover-crop-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 33.333% 0/1px 100% no-repeat, linear-gradient(rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 66.666% 0/1px 100% no-repeat, linear-gradient(90deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 0 33.333%/100% 1px no-repeat, linear-gradient(90deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 0 66.666%/100% 1px no-repeat
+}
+
+.cover-crop-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1.5px rgba(244, 210, 138, .52), inset 0 0 42px rgba(244, 210, 138, .08)
+}
+
+.cover-crop-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px
+}
+
+#cover-crop-preview {
+  width: 124px;
+  height: 124px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .05);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .34), 0 0 0 1px rgba(244, 210, 138, .20)
+}
+
+.cover-zoom-control {
+  width: min(240px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, .58);
+  font-size: 12px;
+  letter-spacing: .3px
+}
+
+.cover-zoom-control input {
+  flex: 1;
+  accent-color: #f4d28a
+}
+
+.cover-crop-modal .btn-row {
+  margin-top: 24px
+}
+
+.background-crop-modal {
+  width: min(820px, 92vw);
+  max-width: min(820px, 92vw)
+}
+
+.background-crop-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 520px) 1fr;
+  gap: 24px;
+  align-items: center
+}
+
+.background-crop-stage {
+  position: relative;
+  width: min(520px, 58vw);
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #07070a;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .44), inset 0 0 0 1px rgba(255, 255, 255, .08);
+  cursor: grab;
+  touch-action: none
+}
+
+.background-crop-stage.dragging {
+  cursor: grabbing
+}
+
+.background-crop-stage img,
+.background-crop-stage video,
+.background-crop-preview img,
+.background-crop-preview video {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  object-fit: cover;
+  object-position: var(--bg-crop-modal-x, 50%) var(--bg-crop-modal-y, 50%);
+  transform: scale(calc(1.002 * var(--bg-crop-modal-zoom, 1)));
+  transform-origin: var(--bg-crop-modal-x, 50%) var(--bg-crop-modal-y, 50%);
+  user-select: none;
+  pointer-events: none;
+  display: none
+}
+
+.background-crop-stage.media-image img,
+.background-crop-preview.media-image img,
+.background-crop-stage.media-video video,
+.background-crop-preview.media-video video {
+  display: block
+}
+
+.background-crop-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 33.333% 0/1px 100% no-repeat, linear-gradient(rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 66.666% 0/1px 100% no-repeat, linear-gradient(90deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 0 33.333%/100% 1px no-repeat, linear-gradient(90deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)) 0 66.666%/100% 1px no-repeat
+}
+
+.background-crop-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1.5px rgba(244, 210, 138, .48), inset 0 0 42px rgba(244, 210, 138, .08)
+}
+
+.background-crop-preview {
+  width: 160px;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .05);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .34), 0 0 0 1px rgba(244, 210, 138, .20)
+}

@@ -1,0 +1,18 @@
+.browser-runtime .browser-native-only {
+  opacity: .48;
+  cursor: not-allowed;
+}
+.browser-runtime .browser-capability-note {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: inherit;
+  opacity: .75;
+  border: 1px solid currentColor;
+  border-radius: 9px;
+}
+.browser-runtime [data-hotkey-scope="global"]:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}

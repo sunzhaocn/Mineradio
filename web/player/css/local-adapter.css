@@ -1,0 +1,67 @@
+/* 仅补齐浏览器适配；视觉系统、动效和播放器布局均来自 Mineradio。 */
+[hidden] { display: none !important; }
+.web-adapter #diy-mode-btn { width:44px; height:44px; border-radius:50%; position:relative; }
+.web-adapter #home-platform-recommend-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; overflow:auto; min-height:0; }
+.web-adapter #home-platform-recommend-list .home-platform-recommend-card { min-height:108px; }
+.web-adapter #search-mode-tabs button { min-width:44px; }
+/* Keep result positions stable when a title click moves focus out of the input. */
+body.web-adapter.simple-mode #search-area:focus-within #search-mode-tabs,
+body.web-adapter.simple-mode #search-area.has-results #search-mode-tabs { display:flex !important; }
+/* 首页与播放舞台共用页面：隐藏上首歌曲残留的 WebGL 封面/歌词，回到播放时自动恢复。 */
+body.web-adapter.empty-home-active #canvas-container { visibility:hidden; pointer-events:none; }
+.web-adapter .home-platform-recommend-card { text-align:left; }
+/* 音质与下载复用音源切换器的小菜单；定位由触发按钮决定，不遮住整个页面。 */
+.web-adapter .web-anchored-menu { box-sizing:border-box; position:fixed; top:0; left:0; bottom:auto; width:276px; max-width:calc(100vw - 24px); max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px); padding:10px; display:block; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; background:linear-gradient(145deg,#101720fa,#080d14fa) !important; color:#fff; z-index:20000; border:1px solid #71849355; border-radius:14px; box-shadow:0 20px 58px #0007,inset 0 1px 0 #ffffff12; opacity:0; pointer-events:none; transform:translateY(8px) scale(.985); transition:opacity .18s,transform .18s; }
+.web-adapter .web-anchored-menu.open { opacity:1; pointer-events:auto; transform:translateY(0) scale(1); }
+body.web-adapter.simple-mode #quality-control { display:inline-flex !important; }
+/* 与原作平台小标共用尺寸：列表 16px / 8.5px，播放器 15px / 8px；宽度随文字适应。 */
+.web-adapter { --web-tag-height:16px; --web-tag-font-size:8.5px; --web-tag-padding:6px; --web-tag-radius:999px; --web-tag-spacing:.55px; }
+.web-adapter .control-title { --web-tag-height:15px; --web-tag-font-size:8px; --web-tag-padding:5px; --web-tag-radius:4px; --web-tag-spacing:0; }
+.web-adapter .tag-source,
+.web-adapter .web-song-badge,
+.web-adapter .web-quality-badge,
+.web-adapter #quality-btn.quality-pill { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; height:var(--web-tag-height); min-height:var(--web-tag-height); padding:0 var(--web-tag-padding); border-width:1px; border-style:solid; border-radius:var(--web-tag-radius); font-family:inherit; font-size:var(--web-tag-font-size); font-weight:800; line-height:1; letter-spacing:var(--web-tag-spacing); white-space:nowrap; vertical-align:middle; flex-shrink:0; }
+.web-adapter #quality-btn.quality-pill { width:auto; min-width:0; max-width:140px; border-color:rgba(86,224,255,.30); }
+.web-adapter #quality-btn-label { max-width:120px; }
+.web-adapter .control-quality-chip { height:var(--web-tag-height); }
+.web-adapter .quality-option { min-height:40px; padding:7px 9px; flex-direction:column; align-items:stretch; justify-content:center; gap:2px; text-align:left; white-space:normal; color:#fff; }
+.web-adapter .quality-option > span { font-size:13px; line-height:1.4; white-space:normal; overflow:visible; overflow-wrap:anywhere; }
+.web-adapter .quality-option > small { display:block; font-size:11px; line-height:1.5; color:#d7e2ed; white-space:normal; }
+.web-adapter .quality-option:disabled { opacity:.65; cursor:not-allowed; }
+.web-adapter .quality-option.active { border-color:#82e5c1 !important; background:#183b35 !important; }
+.web-quality-head { font-size:12px; font-weight:850; padding:2px 2px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.web-quality-message { font-size:12px; line-height:1.6; color:#e3edf6; padding:6px 2px; }
+.web-adapter .web-song-quality-button { display:inline-flex; align-items:center; justify-content:center; width:44px; min-width:44px; min-height:44px; padding:0; color:#e7f6ff; background:transparent !important; border:0 !important; box-shadow:none; }
+.web-adapter .web-quality-badge { color:#c9f5ff; background:rgba(86,224,255,.075); border-color:rgba(86,224,255,.30); }
+.web-adapter .web-song-badge { margin-left:0; color:#ffe2a1; background:#443014; border-color:#b89755; }
+.web-adapter .web-origin-badge { color:#bdf8de; background:#163e32; border-color:#62947e; }
+.web-adapter .search-result-title { white-space:normal; }
+.web-adapter .web-song-download-button { min-width:36px; min-height:44px; color:#c9f5ff; }
+.web-action-menu-head { font-size:12px; font-weight:850; padding:2px 2px 8px; }
+.web-action-song { margin:0 2px 5px; font-size:12px; line-height:1.5; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.web-download-status { margin:4px 2px 8px; color:#d5e3ec; font-size:11px; line-height:1.5; }
+.web-download-options { display:grid; gap:6px; }
+.web-adapter .web-download-option { display:flex; flex-direction:column; align-items:stretch; width:100%; min-height:40px; padding:7px 9px; gap:2px; border:1px solid #ffffff12; border-radius:9px; background:#ffffff0a; color:#fff; font:inherit; text-align:left; cursor:pointer; }
+.web-download-option > span { font-size:13px; font-weight:800; line-height:1.4; }
+.web-download-option small { display:block; font-size:11px; line-height:1.5; color:#d5e3ec; overflow-wrap:anywhere; }
+.web-download-option:hover { background:#ffffff14; border-color:#82e5c166; }
+.web-download-option:disabled { opacity:.55; cursor:not-allowed; }
+.web-action-option:focus-visible { outline:2px solid #82e5c1; outline-offset:-2px; }
+@media(hover:none),(pointer:coarse) {
+  .web-adapter .web-action-option { min-height:44px; }
+  .web-adapter .web-action-option > span { font-size:14px; }
+  .web-adapter .web-action-option > small { font-size:12px; }
+}
+@media(prefers-reduced-motion:reduce) { .web-adapter .web-anchored-menu { transition:none; } }
+@media(max-width:720px) {
+  .web-adapter #home-platform-recommend-list { grid-template-columns:1fr; }
+  .web-adapter #top-right { gap:6px; }
+  .web-adapter #search-mode-tabs { flex-wrap:wrap; }
+  .web-adapter #search-mode-tabs button { min-height:44px; padding:6px 9px; }
+  .web-adapter .search-result { gap:3px; }
+  .web-adapter .search-result > div { gap:8px !important; }
+}
+@media(max-width:520px) {
+  .web-adapter .search-result { flex-wrap:wrap; }
+  .web-adapter .search-result > div:first-child { flex-basis:100%; }
+}

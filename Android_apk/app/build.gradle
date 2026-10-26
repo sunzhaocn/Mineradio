@@ -1,0 +1,31 @@
+plugins { id 'com.android.application'; id 'com.chaquo.python' }
+android {
+    namespace 'dev.mineradio.android'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'dev.mineradio.android'
+        minSdk 26
+        targetSdk 36
+        versionCode 10109
+        versionName '1.1.9'
+        ndk { abiFilters 'arm64-v8a' }
+    }
+    buildFeatures { buildConfig true }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+    packaging {
+        jniLibs { useLegacyPackaging false }
+        resources { excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE*', 'META-INF/NOTICE*'] }
+    }
+}
+chaquopy {
+    defaultConfig {
+        version '3.12'
+        buildPython System.getenv('MINERADIO_BUILD_PYTHON') ?: 'C:/Users/Administrator/AppData/Roaming/uv/python/cpython-3.12.15-windows-x86_64-none/python.exe'
+        pip {
+            install 'pycryptodome==3.21.0'
+            install 'Pillow==11.0.0'
+            install 'qrcode==8.2'
+            install 'paho-mqtt==2.1.0'
+        }
+    }
+}
