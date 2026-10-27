@@ -1,6 +1,6 @@
 # Mineradio Android
 
-当前版本：**1.1.10**（versionCode `10110`）。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.12) · [更新说明](../docs/releases/v2.3.12.md)。
+当前版本：**1.1.11**（versionCode `10111`）。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.14) · [更新说明](../docs/releases/v2.3.14.md)。
 
 同一个 APK 支持 Android 8.0 及以上的 ARM64 手机和平板，需要可用的 Android System WebView。小于 600dp 使用手机播放器，600dp 及以上使用桌面布局与视觉效果。APK 内置 Python 3.12、本地服务、播放器和汽水签名桥；使用时不需要 Windows 电脑或云端后端。
 
@@ -44,13 +44,15 @@ python Android_apk/extract_sdk.py `
 
 工具不在默认位置时，可传入 `-JavaHome`、`-Python312`、`-AndroidSdk`、`-Workspace`；也可使用 `JAVA_HOME`、`MINERADIO_BUILD_PYTHON`、`ANDROID_HOME`、`MINERADIO_ANDROID_WORKSPACE`。`MINERADIO_ANDROID_SDK_BUNDLE` 可替代 `-SdkBundle`。构建在 `%LOCALAPPDATA%/MineradioAndroidBuild/source-project` 的独立 ASCII 目录进行，不覆盖旧的 `project` 目录。脚本拒绝清理未标记为本项目生成目录的路径。
 
-每次准备会替换生成的 Java、Python、网页和 SDK 资源，清除旧构建残留；网页离线缓存版本随实际内容改变。SDK 配置同时放在 Java 与 Python 各自需要的位置，打包前再次核验 SDK 摘要。完成后追加原始 DEX，执行 16KiB ZIP 对齐和签名检查。产物在 `Android_apk/dist/`，文件名包含源码中的版本号和构建类型。
+每次准备会替换生成的 Java、Python、网页和 SDK 资源，清除旧构建残留，并剔除离线页面初始化脚本、Worker 和资源清单。SDK 配置同时放在 Java 与 Python 各自需要的位置，打包前再次核验 SDK 摘要。完成后追加原始 DEX，执行 16KiB ZIP 对齐和签名检查。产物在 `Android_apk/dist/`，文件名包含源码中的版本号和构建类型。
 
 正式覆盖升级必须保留 `.local/mineradio.keystore` 和 `.local/signing-password.txt`。新项目首次签名会生成本机密钥；已有安装必须使用原密钥，不能用新密钥替代。可用 `-Unsigned` 只验证未签名构建。不要公开这些签名资料。
 
 汽水签名在应用的 `:sdk` 私有进程中运行；请求有超时，原生异常与播放器主进程隔离。release 禁用 WebView 调试、调试媒体接口及测试布局参数。本地服务只绑定设备自己的回环地址。
 
 ## 后台播放与性能
+
+页面直接读取 APK 内置资源，无须另存一份离线界面。启动时先通过固定本地入口注销旧页面 Worker，只清理 `mineradio-shell-*`、`mineradio-offline-v1`，保留账号、歌单、Cookie、IndexedDB 本地曲库及其他缓存。升级时同时删除应用私有网页目录中已移除的三份页面缓存脚本。断网仍可打开界面并播放已有的本地音乐；不再显示“正在保存离线界面”。详见 [迁移验证](../docs/EMBEDDED_UI_CACHE_REMOVAL.md)。
 
 - 播放时使用媒体前台服务和有超时、按需续期的唤醒锁。耳机拔出、暂停或停止时立即释放唤醒锁。
 - 暂停一分钟后退出前台服务，保留可继续播放的通知入口，避免闲置占用。WebView 仍由应用持有，Activity 销毁不直接丢失音频。

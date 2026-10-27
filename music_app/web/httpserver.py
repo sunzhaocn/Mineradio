@@ -63,6 +63,16 @@ class Handler(_web_media.MediaMixin, SimpleHTTPRequestHandler):
 
     def _get(self):
         parsed = urllib.parse.urlsplit(self.path)
+        if parsed.path == '/__embedded_bootstrap':
+            from .embedded import BOOTSTRAP_HTML
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(BOOTSTRAP_HTML)))
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'")
+            self.end_headers()
+            self.wfile.write(BOOTSTRAP_HTML)
+            return
         if parsed.path in ('/', '/index.html'):
             return self.player_page()
         if parsed.path == '/__health':

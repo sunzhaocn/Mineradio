@@ -72,7 +72,9 @@ QQ 三种登录入口共用 `auth/qqmusic/credentials.py` 校验账号标识与�
 
 Android 的 `MineradioApp` 持有音频 WebView 和最新播放快照，`PlayerService` 管理前台优先级、系统媒体控制、按播放状态持有的唤醒锁与暂停后的服务退出。WebView 桥仅在变化时传递封面，Application 合并待处理快照，服务恢复时请求完整状态；原生元数据/通知避免按秒重复重建。Activity 回调使用静态类和弱引用，减少长时间后台播放时对已销毁界面的持有。进程回收后展示中断提示，不宣称恢复已销毁的音频实例。
 
-`Android_apk/extract_sdk.py` 将明确指定的兼容 APK 导入本地材料包，记录来源、原文件摘要和必需类位置；`prepare.py` 只接受显式材料包，在标记过的构建目录更新生成资源，并在打包前复核摘要。Android 复用 `iOS_ipa/web_release.py` 的内容摘要逻辑，为自己的桥脚本生成离线缓存版本；iOS 默认资源集合保持原有行为。
+`Android_apk/extract_sdk.py` 将明确指定的兼容 APK 导入本地材料包，记录来源、原文件摘要和必需类位置；`prepare.py` 只接受显式材料包，在标记过的构建目录更新生成资源，并在打包前复核摘要。
+
+Windows 的 `scripts/prepare-web.py` 与 Android 的准备脚本均剔除 `service-worker.js`、`offline-assets.js` 和 `js/features/shell/offline-shell.js`。共享 `standalone.js` 只对其他客户端加载独立离线实现，原生 Windows/Android 提前返回。两端先加载不在旧 Worker 资源名单中的 `/__embedded_bootstrap`：`web/embedded.py` 仅注销当前回环来源根作用域的旧 `/service-worker.js`，删除 `mineradio-shell-*` 和 `mineradio-offline-v1`，完成后进入内置页面。此路径返回 `no-store`，目标跳转仅允许同源根页面。localStorage、IndexedDB、Cookie、下载目录及其他命名缓存不参与清理。iOS 的资源版本机制继续由其工程维护。
 
 听歌结束仅保存本地最近播放、歌曲/歌手统计及日汇总，不请求不存在的 `/api/listen/report`。组件源文件与兼容 bundle 同步更新。
 

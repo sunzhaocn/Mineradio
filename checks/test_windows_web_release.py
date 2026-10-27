@@ -10,29 +10,32 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('windows_web_preparation', ROOT / 'Windows_exe/scripts/prepare-web.py')
 preparation = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(preparation)
-from iOS_ipa.web_release import verify
 
 
 class WindowsWebRelease(unittest.TestCase):
-    def test_changed_script_gets_new_offline_cache_and_removes_stale_files(self):
+    def test_embedded_ui_omits_offline_shell_and_replaces_stale_files(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             player = root / 'source/player'
             player.mkdir(parents=True)
             manifest = 'self.MINERADIO_OFFLINE = ' + json.dumps({'revision': 'legacy', 'paths': ['/', '/app.js']}) + ';\n'
             (player / 'offline-assets.js').write_text(manifest, encoding='utf-8')
+            (player / 'service-worker.js').write_text('old worker', encoding='utf-8')
+            (player / 'js/features/shell').mkdir(parents=True)
+            (player / 'js/features/shell/offline-shell.js').write_text('old offline loader')
             (player / 'app.js').write_text('window.version=1;', encoding='utf-8')
             with patch.object(preparation, 'BUILD', root / 'build'):
                 staged = preparation.prepare(root / 'source')
-                revision1 = verify(staged / 'player', paths=())
+                self.assertFalse((staged / 'player/offline-assets.js').exists())
+                self.assertFalse((staged / 'player/service-worker.js').exists())
+                self.assertFalse((staged / 'player/js/features/shell/offline-shell.js').exists())
                 (staged / 'player/obsolete.js').write_text('old', encoding='utf-8')
                 (player / 'app.js').write_text('window.version=2;', encoding='utf-8')
                 staged = preparation.prepare(root / 'source')
-                revision2 = verify(staged / 'player', paths=())
-                self.assertNotEqual(revision1, revision2)
+                self.assertEqual((staged / 'player/app.js').read_text(), 'window.version=2;')
                 self.assertFalse((staged / 'player/obsolete.js').exists())
-                data = json.loads((staged / 'player/offline-assets.js').read_text().split(' = ', 1)[1].rstrip(';\n'))
-                self.assertEqual(data['paths'], ['/', '/app.js'])
+                self.assertFalse((staged / 'player/offline-assets.js').exists())
+                self.assertFalse((staged / 'player/service-worker.js').exists())
                 self.assertEqual((player / 'offline-assets.js').read_text(), manifest)
 
     def test_unmanaged_staging_is_preserved(self):

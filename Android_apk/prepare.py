@@ -12,8 +12,6 @@ import zipfile
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parent
-sys.path.insert(0, str(ROOT))
-from iOS_ipa.web_release import refresh as refresh_web_release
 
 MARKER = '.mineradio-source-workspace'
 CONFIG_FIELDS = ('appId', 'license', 'clientType', 'collectMode', 'channel')
@@ -164,7 +162,8 @@ def prepare(target=None, sdk_bundle=None, android_sdk=None):
     web_source = Path(os.environ.get('MINERADIO_BUILD_WEB_SNAPSHOT') or ROOT / 'web').resolve(strict=True)
     replace_tree(web_source, target, bundle + '/web', ignore=('*.map', '*.bak', '*.log', '.DS_Store'))
     shutil.copy2(SOURCE / 'app/src/main/assets/android-bridge.js', target / bundle / 'web/player/android-bridge.js')
-    web_revision = refresh_web_release(target / bundle / 'web/player', paths=('/android-bridge.js',))
+    for name in ('service-worker.js', 'offline-assets.js', 'js/features/shell/offline-shell.js'):
+        (target / bundle / 'web/player' / name).unlink(missing_ok=True)
     replace_tree(ROOT / 'third_party', target, bundle + '/third_party')
     passport = target / 'app/src/main/assets/passport'
     passport.mkdir(parents=True, exist_ok=True)
@@ -183,7 +182,7 @@ def prepare(target=None, sdk_bundle=None, android_sdk=None):
     elif local_properties.exists():
         local_properties.unlink()
     info = {'workspace': str(target), 'qishuiSdkConfigured': True,
-            'accountFilesIncluded': False, 'sdkArtifactsVerified': True, 'webRevision': web_revision}
+            'accountFilesIncluded': False, 'sdkArtifactsVerified': True, 'offlineShellCacheEnabled': False}
     print(json.dumps(info))
     return info
 

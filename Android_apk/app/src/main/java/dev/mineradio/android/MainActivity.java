@@ -92,7 +92,7 @@ public final class MainActivity extends Activity {
                 return true;
             }
             @Override public void onPageFinished(WebView view, String url) {
-                if (BuildConfig.DEBUG) android.util.Log.i("Mineradio", "UI_READY");
+                if (BuildConfig.DEBUG && "/".equals(Uri.parse(url).getPath())) android.util.Log.i("Mineradio", "UI_READY");
             }
     }
     private static final class PlayerChrome extends WebChromeClient {
@@ -141,7 +141,8 @@ public final class MainActivity extends Activity {
         int actual = getResources().getConfiguration().screenWidthDp;
         int width = Math.max(320, Math.min(880, actual));
         double scale = Math.max(1.0, (double) actual / width);
-        web.loadUrl(MineradioApp.app.origin + "/?android_layout=" + profile + "&width=" + width + "&scale=" + scale);
+        String next = "/?android_layout=" + profile + "&width=" + width + "&scale=" + scale;
+        web.loadUrl(MineradioApp.app.origin + "/__embedded_bootstrap?next=" + Uri.encode(next));
     }
     @Override public void onConfigurationChanged(Configuration config) {
         super.onConfigurationChanged(config);

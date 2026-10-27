@@ -1,14 +1,10 @@
-"""Stage a content-versioned Windows web release without changing source files."""
+"""Stage the embedded Windows UI without obsolete offline shell assets."""
 from pathlib import Path
 import shutil
-import sys
 import tempfile
 
 PROJECT = Path(__file__).resolve().parents[1]
-ROOT = PROJECT.parent
 BUILD = PROJECT / 'build'
-sys.path.insert(0, str(ROOT))
-from iOS_ipa.web_release import refresh
 
 
 def prepare(source):
@@ -25,7 +21,8 @@ def prepare(source):
     with tempfile.TemporaryDirectory(prefix='web-release-', dir=BUILD) as directory:
         staged = Path(directory) / 'web'
         shutil.copytree(source, staged, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-        refresh(staged / 'player', paths=())
+        for name in ('service-worker.js', 'offline-assets.js', 'js/features/shell/offline-shell.js'):
+            (staged / 'player' / name).unlink(missing_ok=True)
         if target.exists():
             shutil.rmtree(target)
         staged.replace(target)

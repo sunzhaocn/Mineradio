@@ -5525,6 +5525,11 @@ async function loadMainWindowWithRetry(win) {
         injected.code = 'MINERADIO_STARTUP_QA_INJECTED';
         throw injected;
       }
+      // This uncached route cannot be supplied by the former UI shell worker.
+      // It unregisters only that worker and removes only its named caches.
+      await win.loadURL(`${baseUrl}/__embedded_bootstrap`);
+      const migration = await win.webContents.executeJavaScript('window.mineradioEmbeddedCleanup');
+      if (!migration || migration.embedded !== true) throw new Error('Embedded UI preparation failed');
       if (!win.isDestroyed()) win.__mineradioTrustedMainDocumentReady = null;
       const loadPromise = win.loadURL(targetUrl);
       const stallObservedLoadPromise = process.env.MINERADIO_STARTUP_TEST_STALL_LOAD_PROMISE === '1';

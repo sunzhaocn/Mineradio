@@ -44,6 +44,12 @@ public final class MineradioApp extends Application {
                 // hundreds of AssetManager listings/stat calls on warm starts.
                 if (replaceAssets || !new File(root, "web/player/index.html").isFile()) {
                     copyAssets("bundle", root);
+                    // Remove only obsolete, app-owned UI assets from older APKs.
+                    // WebView databases, accounts and downloaded music live elsewhere.
+                    for (String name : new String[]{"service-worker.js", "offline-assets.js", "js/features/shell/offline-shell.js"}) {
+                        File legacy = new File(root, "web/player/" + name);
+                        if (legacy.isFile() && !legacy.delete()) throw new IOException("Cannot retire legacy UI asset");
+                    }
                     prefs.edit().putLong("update", update).apply();
                 }
                 if (!Python.isStarted()) Python.start(new AndroidPlatform(this));

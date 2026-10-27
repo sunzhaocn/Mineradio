@@ -127,6 +127,10 @@ class WorkspaceSafety(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text('fixture')
             (source_root / 'web/player/offline-assets.js').write_text('self.MINERADIO_OFFLINE = {"paths":[],"revision":"old"};')
+            (source_root / 'web/player/service-worker.js').write_text('legacy worker')
+            offline_loader = source_root / 'web/player/js/features/shell/offline-shell.js'
+            offline_loader.parent.mkdir(parents=True)
+            offline_loader.write_text('legacy offline loader')
             target = root / 'build'
             with patch.object(prepare, 'SOURCE', source), patch.object(prepare, 'ROOT', source_root), \
                     patch.object(prepare, 'passport_assets', return_value={'security_seed.html': b'fixture'}):
@@ -141,10 +145,12 @@ class WorkspaceSafety(unittest.TestCase):
                              'app/src/debug/old-debug.java', 'app/src/main/python/music_app/old.py'):
                 self.assertFalse((target / relative).exists())
             self.assertTrue(json.loads((target / 'app/src/main/assets/bundle/sdk-config.json').read_text())['configured'])
-            self.assertNotEqual(first['webRevision'], second['webRevision'])
-            manifest = (target / 'app/src/main/assets/bundle/web/player/offline-assets.js').read_text()
-            self.assertIn('/android-bridge.js', manifest)
-            self.assertNotIn('/ios-bridge.js', manifest)
+            self.assertFalse(first['offlineShellCacheEnabled'])
+            self.assertFalse(second['offlineShellCacheEnabled'])
+            self.assertEqual((target / 'app/src/main/assets/bundle/web/player/android-bridge.js').read_text(), 'new bridge')
+            self.assertFalse((target / 'app/src/main/assets/bundle/web/player/offline-assets.js').exists())
+            self.assertFalse((target / 'app/src/main/assets/bundle/web/player/service-worker.js').exists())
+            self.assertFalse((target / 'app/src/main/assets/bundle/web/player/js/features/shell/offline-shell.js').exists())
 
     def test_packaging_uses_max_dex_index_and_rejects_changed_staged_artifacts(self):
         with tempfile.TemporaryDirectory() as directory:
