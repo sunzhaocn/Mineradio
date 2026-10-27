@@ -25063,83 +25063,6 @@ function createListenSessionId() {
   return 'mr-' + Date.now().toString(36) + '-' + listenSessionSerial.toString(36) + '-' + Math.random().toString(36).slice(2, 12);
 }
 
-function listenSnapshotDurationMs(snapshot) {
-  var rawDuration = Math.max(0, Number(snapshot && snapshot.duration) || 0);
-  if (!rawDuration) return 0;
-  return Math.round(rawDuration > 10000 ? rawDuration : rawDuration * 1000);
-}
-
-function listenReportProvider(snapshot) {
-  var provider = String(
-    (snapshot && (snapshot.provider || snapshot.sourceKey || snapshot.resolvedPlaybackProvider)) || ''
-  ).trim().toLowerCase();
-  if (provider === 'song' || provider === 'music') provider = 'netease';
-  if (/^(netease|qq|kugou|qishui|spotify)$/.test(provider) && typeof normalizePlaybackProvider === 'function') {
-    provider = normalizePlaybackProvider(provider);
-  }
-  return provider;
-}
-
-function reportListenSession(record, session, durationMs) {
-  if (typeof fetch !== 'function' || !record || !session) return;
-  var snapshot = session.song || {};
-  var payload = {
-    sessionId: session.sessionId || '',
-    provider: listenReportProvider(snapshot),
-    song: {
-      key: snapshot.key || record.key || '',
-      id: snapshot.id || '',
-      mid: snapshot.mid || '',
-      mediaMid: snapshot.mediaMid || '',
-      hash: snapshot.hash || '',
-      mixSongId: snapshot.mixSongId || '',
-      albumId: snapshot.albumId || '',
-      providerSongId: snapshot.providerSongId || '',
-      spotifyId: snapshot.spotifyId || '',
-      uri: snapshot.uri || '',
-      type: snapshot.type || 'song',
-      sourceKey: snapshot.sourceKey || '',
-      name: snapshot.name || record.name || '未知歌曲',
-      artist: snapshot.artist || record.artist || '',
-      resolvedPlaybackProvider: snapshot.resolvedPlaybackProvider || '',
-    },
-    listenMs: record.listenMs,
-    durationMs: Math.max(0, Math.round(Number(durationMs) || 0)),
-    completed: !!record.completed,
-    context: record.context || null,
-  };
-  var body = '';
-  try {
-    body = JSON.stringify(payload);
-  } catch (e) {
-    payload.context = null;
-    try {
-      body = JSON.stringify(payload);
-    } catch (serializeError) {
-      return;
-    }
-  }
-  var controller = typeof AbortController === 'function' ? new AbortController() : null;
-  var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 3500) : null;
-  var options = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: body,
-    keepalive: true,
-  };
-  if (controller) options.signal = controller.signal;
-  try {
-    Promise.resolve(fetch('/api/listen/report', options)).then(function () {
-      if (timeoutId) clearTimeout(timeoutId);
-    }, function () {
-      if (timeoutId) clearTimeout(timeoutId);
-    });
-  } catch (e) {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-}
-
-
 function listenSessionMatchesSong(session, song) {
   if (!session || !song) return false;
   var snapshot = session.song || session;
@@ -25324,9 +25247,6 @@ function finalizeListenSession(completed) {
   if (!listenSession) return;
   var session = listenSession;
   tickListenSessionSnapshot(session, true);
-  var actualDurationMs = audio && isFinite(audio.duration) && audio.duration > 0
-    ? Math.round(audio.duration * 1000)
-    : listenSnapshotDurationMs(session.song);
   listenSession = null;
   var effective = completed || session.listenMs >= 45000 || session.maxProgress >= 0.5 || (!audio || !audio.duration ? session.listenMs >= 30000 : false);
   if (!effective) {
@@ -25357,7 +25277,6 @@ function finalizeListenSession(completed) {
   });
   recordListenRollupV2(record);
   saveListenStatsState();
-  reportListenSession(record, session, actualDurationMs);
   if (emptyHomeActive) renderHomeDiscover();
 }
 

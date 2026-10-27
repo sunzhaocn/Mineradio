@@ -13,6 +13,7 @@ import org.json.JSONObject;
 public final class MainActivity extends Activity {
     public static java.lang.ref.WeakReference<MainActivity> current = new java.lang.ref.WeakReference<>(null);
     private WebView web;
+    private FrameLayout frame;
     private static ValueCallback<Uri[]> fileCallback;
     private String profile;
     private String override;
@@ -26,14 +27,13 @@ public final class MainActivity extends Activity {
         getWindow().setNavigationBarColor(0xff101720);
         if (Build.VERSION.SDK_INT >= 35) getWindow().setDecorFitsSystemWindows(true);
         if (BuildConfig.DEBUG) override = getIntent().getStringExtra("layout");
-        startService(new Intent(this, PlayerService.class));
         TextView loading = new TextView(this); loading.setText("Mineradio\n正在启动设备内的音乐服务…");
         loading.setTextColor(0xffdce8ef); loading.setTextSize(19); loading.setGravity(Gravity.CENTER);
         loading.setBackgroundColor(0xff101720); setContentView(loading);
         MineradioApp.app.startEngine(() -> {
-            if (isFinishing() || isDestroyed()) return;
+            if (isFinishing() || isDestroyed() || current.get() != this) return;
             if (MineradioApp.app.origin == null) { loading.setText(MineradioApp.app.startupError + "\n请重新打开应用"); return; }
-            attachWeb();
+            if (web == null || web.getParent() != frame) attachWeb();
         });
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 90);
@@ -58,53 +58,11 @@ public final class MainActivity extends Activity {
             web.addJavascriptInterface(new NativeBridge(), "MineradioAndroid");
         }
         web.setBackgroundColor(0xff101720);
-        web.setWebViewClient(new WebViewClient() {
-            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                if (uri.toString().startsWith(MineradioApp.app.origin + "/")) return false;
-                if (request.isForMainFrame() && ("https".equals(uri.getScheme()) || "http".equals(uri.getScheme()))) {
-                    try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
-                }
-                return true;
-            }
-            @Override public void onPageFinished(WebView view, String url) {
-                if (BuildConfig.DEBUG) android.util.Log.i("Mineradio", "UI_READY " + profile);
-            }
-        });
-        web.setWebChromeClient(new WebChromeClient() {
-            @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
-                if (fileCallback != null) fileCallback.onReceiveValue(null);
-                fileCallback = callback;
-                Intent choose = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                choose.setType("*/*"); choose.addCategory(Intent.CATEGORY_OPENABLE);
-                choose.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
-                java.util.Set<String> types = new java.util.LinkedHashSet<>();
-                for (String group : params.getAcceptTypes()) for (String item : group.split(",")) {
-                    item = item.trim();
-                    if (item.startsWith(".")) {
-                        String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(item.substring(1).toLowerCase());
-                        types.add(mime == null ? "application/octet-stream" : mime);
-                        if (item.equalsIgnoreCase(".lrc")) types.add("text/plain");
-                    } else if (item.contains("/")) types.add(item);
-                }
-                if (!types.isEmpty()) choose.putExtra(Intent.EXTRA_MIME_TYPES, types.toArray(new String[0]));
-                try { startActivityForResult(choose, OPEN_AUDIO); return true; }
-                catch (Exception error) { fileCallback.onReceiveValue(null); fileCallback = null; return false; }
-            }
-        });
-        web.setDownloadListener((url, agent, disposition, mime, length) -> {
-            if (url.startsWith("blob:")) {
-                web.evaluateJavascript("window.mineradioAndroidSaveBlob&&mineradioAndroidSaveBlob("+JSONObject.quote(url)+","+JSONObject.quote(URLUtil.guessFileName(url,disposition,mime))+")",null);
-                return;
-            }
-            if (!url.startsWith(MineradioApp.app.origin + "/api/download")) return;
-            downloadUrl = url;
-            Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(mime == null ? "audio/*" : mime);
-            save.putExtra(Intent.EXTRA_TITLE, URLUtil.guessFileName(url, disposition, mime));
-            startActivityForResult(save, SAVE_AUDIO);
-        });
+        web.setWebViewClient(new PlayerNavigation());
+        web.setWebChromeClient(new PlayerChrome());
+        web.setDownloadListener(new PlayerDownloads());
         if (web.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) web.getParent()).removeView(web);
-        FrameLayout frame = new FrameLayout(this);
+        frame = new FrameLayout(this);
         frame.setBackgroundColor(0xff101720);
         frame.setOnApplyWindowInsetsListener((view, insets) -> {
             if (Build.VERSION.SDK_INT >= 30) {
@@ -119,6 +77,65 @@ public final class MainActivity extends Activity {
         String loaded = web.getUrl() == null ? null : Uri.parse(web.getUrl()).getQueryParameter("android_layout");
         profile = next;
         if (web.getUrl() == null || !next.equals(loaded)) loadProfile();
+    }
+    // The Application retains its audio WebView after Activity destruction.
+    // These callbacks must not retain the Activity or its entire view tree.
+    private static final class PlayerNavigation extends WebViewClient {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (uri.toString().startsWith(MineradioApp.app.origin + "/")) return false;
+                if (request.isForMainFrame() && ("https".equals(uri.getScheme()) || "http".equals(uri.getScheme()))) {
+                    MainActivity activity = current.get();
+                    if (activity != null && !activity.isDestroyed())
+                        try { activity.startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
+                }
+                return true;
+            }
+            @Override public void onPageFinished(WebView view, String url) {
+                if (BuildConfig.DEBUG) android.util.Log.i("Mineradio", "UI_READY");
+            }
+    }
+    private static final class PlayerChrome extends WebChromeClient {
+            @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                MainActivity activity = current.get();
+                return activity != null && !activity.isDestroyed() && activity.chooseFiles(callback, params);
+            }
+    }
+    private boolean chooseFiles(ValueCallback<Uri[]> callback, WebChromeClient.FileChooserParams params) {
+                if (fileCallback != null) fileCallback.onReceiveValue(null);
+                fileCallback = callback;
+                Intent choose = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                choose.setType("*/*"); choose.addCategory(Intent.CATEGORY_OPENABLE);
+                choose.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE);
+                java.util.Set<String> types = new java.util.LinkedHashSet<>();
+                for (String group : params.getAcceptTypes()) for (String item : group.split(",")) {
+                    item = item.trim();
+                    if (item.startsWith(".")) {
+                        String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(item.substring(1).toLowerCase());
+                        types.add(mime == null ? "application/octet-stream" : mime);
+                        if (item.equalsIgnoreCase(".lrc")) types.add("text/plain");
+                    } else if (item.contains("/")) types.add(item);
+                }
+                if (!types.isEmpty()) choose.putExtra(Intent.EXTRA_MIME_TYPES, types.toArray(new String[0]));
+                try { startActivityForResult(choose, OPEN_AUDIO); return true; }
+                catch (Exception error) { fileCallback.onReceiveValue(null); fileCallback = null; return false; }
+    }
+    private static final class PlayerDownloads implements DownloadListener {
+        @Override public void onDownloadStart(String url, String agent, String disposition, String mime, long length) {
+            MainActivity activity = current.get();
+            if (activity != null && !activity.isDestroyed()) activity.saveDownload(url, disposition, mime);
+        }
+    }
+    private void saveDownload(String url, String disposition, String mime) {
+            if (url.startsWith("blob:")) {
+                web.evaluateJavascript("window.mineradioAndroidSaveBlob&&mineradioAndroidSaveBlob("+JSONObject.quote(url)+","+JSONObject.quote(URLUtil.guessFileName(url,disposition,mime))+")",null);
+                return;
+            }
+            if (!url.startsWith(MineradioApp.app.origin + "/api/download")) return;
+            downloadUrl = url;
+            Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(mime == null ? "audio/*" : mime);
+            save.putExtra(Intent.EXTRA_TITLE, URLUtil.guessFileName(url, disposition, mime));
+            startActivityForResult(save, SAVE_AUDIO);
     }
     private void loadProfile() {
         int actual = getResources().getConfiguration().screenWidthDp;
@@ -141,8 +158,27 @@ public final class MainActivity extends Activity {
         MineradioApp.app.activityForeground = active;
         if (web != null) web.evaluateJavascript("window.mineradioAndroidSetForeground&&mineradioAndroidSetForeground(" + active + ")", null);
     }
-    @Override protected void onResume() { super.onResume(); foreground(true); }
-    @Override protected void onPause() { foreground(false); super.onPause(); }
+    @Override protected void onResume() {
+        super.onResume();
+        current = new java.lang.ref.WeakReference<>(this);
+        // A notification can bring another Activity instance to the front.
+        // Reclaim the shared player when this instance becomes visible again.
+        if (MineradioApp.app.origin != null && (web == null || web.getParent() != frame)) attachWeb();
+        foreground(true);
+    }
+    @Override protected void onPause() {
+        if (current.get() == this) foreground(false);
+        super.onPause();
+    }
+    @Override protected void onDestroy() {
+        if (current.get() == this) {
+            current.clear();
+            if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
+        }
+        // An older Activity must never detach the new owner's shared WebView.
+        if (web != null && frame != null && web.getParent() == frame) frame.removeView(web);
+        super.onDestroy();
+    }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (request == OPEN_AUDIO && fileCallback != null) {
@@ -195,20 +231,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void finishSave(String id) { ExportStore.finish(id); }
         @JavascriptInterface public void cancelSave(String id) { ExportStore.release(id); }
         @JavascriptInterface public void playback(String value) {
-            try { JSONObject state = new JSONObject(value); MineradioApp.app.main.post(() -> {
-                if (PlayerService.instance != null) { PlayerService.instance.update(state); return; }
-                // Android may reclaim an idle service while the retained
-                // WebView stays alive. Restore it on real playback instead of
-                // silently dropping all subsequent system metadata/controls.
-                if (state.optBoolean("playing")) {
-                    Intent intent = new Intent(MineradioApp.app, PlayerService.class).putExtra("playback", value);
-                    try {
-                        if (Build.VERSION.SDK_INT >= 26) MineradioApp.app.startForegroundService(intent);
-                        else MineradioApp.app.startService(intent);
-                    } catch (RuntimeException ignored) {}
-                }
-            }); }
-            catch (Exception ignored) {}
+            MineradioApp.app.reportPlayback(value);
         }
     }
 }

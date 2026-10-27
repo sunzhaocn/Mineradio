@@ -17,7 +17,7 @@ def revision(player):
     return digest.hexdigest()[:20]
 
 
-def refresh(player):
+def refresh(player, paths=IOS_PATHS):
     player = Path(player)
     path = player / 'offline-assets.js'
     source = path.read_text(encoding='utf-8').strip()
@@ -26,16 +26,16 @@ def refresh(player):
     data = json.loads(source[len(PREFIX):-1])
     if not isinstance(data.get('paths'), list):
         raise ValueError('Missing public offline paths')
-    data['paths'] = list(dict.fromkeys(data['paths'] + list(IOS_PATHS)))
+    data['paths'] = list(dict.fromkeys(data['paths'] + list(paths)))
     data['revision'] = revision(player)
     path.write_text(PREFIX + json.dumps(data, ensure_ascii=False) + ';\n', encoding='utf-8', newline='\n')
     return data['revision']
 
 
-def verify(player):
+def verify(player, paths=IOS_PATHS):
     player = Path(player)
     source = (player / 'offline-assets.js').read_text(encoding='utf-8').strip()
     data = json.loads(source[len(PREFIX):-1])
-    if data.get('revision') != revision(player) or not set(IOS_PATHS).issubset(data['paths']):
+    if data.get('revision') != revision(player) or not set(paths).issubset(data['paths']):
         raise ValueError('The embedded offline cache does not match this release')
     return data['revision']

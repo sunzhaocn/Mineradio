@@ -1,99 +1,225 @@
-"""Prepare an ASCII build workspace, excluding all desktop/user credentials."""
-from pathlib import Path
+"""Stage Android sources with an explicitly supplied, verified SDK bundle."""
+import argparse
 import hashlib
 import json
 import os
+from pathlib import Path
+import re
 import shutil
 import sys
+import tempfile
 import zipfile
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parent
-PROBE = ROOT / 'runtime/android-portability/com.luna.music-21.3.0'
-TARGET = Path(os.environ['LOCALAPPDATA']) / 'MineradioAndroidBuild/project'
+sys.path.insert(0, str(ROOT))
+from iOS_ipa.web_release import refresh as refresh_web_release
+
+MARKER = '.mineradio-source-workspace'
+CONFIG_FIELDS = ('appId', 'license', 'clientType', 'collectMode', 'channel')
 
 
-def prepare():
-    for name in ('settings.gradle', 'build.gradle', 'gradle.properties'):
-        TARGET.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(SOURCE / name, TARGET / name)
+def default_workspace():
+    return Path(os.environ.get('MINERADIO_ANDROID_WORKSPACE') or
+                Path(os.environ.get('LOCALAPPDATA') or tempfile.gettempdir()) /
+                'MineradioAndroidBuild/source-project')
+
+
+def sha256(path):
+    with path.open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def workspace(value):
+    target = Path(value).resolve()
+    if not str(target).isascii():
+        raise ValueError('Android build workspace must use an ASCII path; pass --workspace')
+    if target == ROOT or ROOT.is_relative_to(target) or target.is_relative_to(SOURCE):
+        raise ValueError('Build workspace must be separate from the Android source tree')
+    if target.exists() and any(target.iterdir()) and not (target / MARKER).is_file():
+        raise ValueError('Refusing to overwrite an unmanaged build directory')
+    target.mkdir(parents=True, exist_ok=True)
+    (target / MARKER).write_text('Mineradio generated Android sources\n', encoding='utf-8')
+    return target
+
+
+def remove_generated(target, relative):
+    path = target / relative
+    resolved = path.resolve()
+    if not resolved.is_relative_to(target.resolve()) or resolved == target.resolve() or path.is_symlink():
+        raise ValueError('Generated path escaped its managed workspace')
+    if path.is_dir():
+        shutil.rmtree(path)
+    elif path.exists():
+        path.unlink()
+
+
+def replace_tree(source, target, relative, *, ignore=()):
+    remove_generated(target, relative)
+    if source.is_dir():
+        shutil.copytree(source, target / relative,
+                        ignore=shutil.ignore_patterns('__pycache__', '*.pyc', *ignore))
+
+
+def _bundle_file(root, value):
+    if not isinstance(value, str) or not value or Path(value).is_absolute():
+        raise ValueError('SDK artifact must be a relative file path')
+    path = (root / value).resolve(strict=True)
+    if not path.is_relative_to(root) or not path.is_file():
+        raise ValueError('SDK artifact escaped the supplied bundle')
+    return path
+
+
+def load_sdk(value=None):
+    """Only explicit, hashed artifacts are accepted; no private runtime discovery."""
+    if not value:
+        raise ValueError('Full Qishui support requires --sdk-bundle or MINERADIO_ANDROID_SDK_BUNDLE; use extract_sdk.py with your installed app first')
+    root = Path(value).resolve(strict=True)
+    manifest = json.loads((root / 'sdk-manifest.json').read_text(encoding='utf-8-sig'))
+    if not isinstance(manifest, dict) or manifest.get('schemaVersion') != 1:
+        raise ValueError('SDK manifest schemaVersion must be 1')
+    config = manifest.get('config')
+    if not isinstance(config, dict) or set(config) != set(CONFIG_FIELDS):
+        raise ValueError('SDK config must contain only appId, license, clientType, collectMode and channel')
+    for name in ('appId', 'license', 'channel'):
+        if not isinstance(config[name], str) or not config[name] or len(config[name]) > 8192 or any(ord(c) < 32 for c in config[name]):
+            raise ValueError('SDK config text is invalid')
+    for name in ('clientType', 'collectMode'):
+        if type(config[name]) is not int or not 0 <= config[name] <= 2147483647:
+            raise ValueError('SDK config numeric field is invalid')
+    source = manifest.get('source', '')
+    if not isinstance(source, str) or not source or len(source) > 2048:
+        raise ValueError('SDK manifest must identify its source')
+    result = {'config': {'configured': True, **config}, 'source': source}
+    seen = set()
+    for kind in ('native', 'dex'):
+        items = manifest.get(kind)
+        if not isinstance(items, list) or not 1 <= len(items) <= 64:
+            raise ValueError('SDK bundle needs bounded native and ordered dex artifact lists')
+        artifacts = []
+        names = set()
+        for item in items:
+            if not isinstance(item, dict) or set(item) != {'path', 'sha256'}:
+                raise ValueError('Each SDK artifact needs path and sha256')
+            digest = item['sha256']
+            if not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest):
+                raise ValueError('Invalid SDK artifact digest')
+            path = _bundle_file(root, item['path'])
+            if path in seen or path.name in names or not 1 <= path.stat().st_size <= 128 * 1024 * 1024:
+                raise ValueError('SDK artifact is duplicated, empty or oversized')
+            seen.add(path)
+            names.add(path.name)
+            if sha256(path) != digest:
+                raise ValueError('SDK artifact SHA-256 mismatch: ' + path.name)
+            with path.open('rb') as stream:
+                header = stream.read(24)
+            if kind == 'dex' and not re.fullmatch(rb'dex\n[0-9]{3}\x00', header[:8]):
+                raise ValueError('SDK dex artifact has an invalid header')
+            if kind == 'native' and (not path.name.endswith('.so') or header[:6] != b'\x7fELF\x02\x01' or header[18:20] != b'\xb7\x00'):
+                raise ValueError('SDK native artifact must be an ARM64 little-endian ELF library')
+            artifacts.append({'path': path, 'sha256': digest})
+        result[kind] = artifacts
+    if not any(item['path'].name == 'libmetasec_ml.so' for item in result['native']):
+        raise ValueError('SDK bundle must include libmetasec_ml.so for the existing adapter')
+    return result
+
+
+def _stage_sdk(sdk, target):
+    remove_generated(target, 'app/src/main/jniLibs')
+    remove_generated(target, 'sdk-artifacts')
+    provenance = {'configured': True, 'source': sdk['source'], 'native': [], 'dex': []}
+    for kind in ('native', 'dex'):
+        for index, artifact in enumerate(sdk[kind], 1):
+            relative = ('app/src/main/jniLibs/arm64-v8a/' + artifact['path'].name if kind == 'native'
+                        else 'sdk-artifacts/%03d.dex' % index)
+            output = target / relative
+            output.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(artifact['path'], output)
+            provenance[kind].append({'path': relative, 'sha256': artifact['sha256']})
+    for relative in ('app/src/main/assets/sdk-config.json', 'app/src/main/assets/bundle/sdk-config.json'):
+        (target / relative).write_text(json.dumps(sdk['config'], ensure_ascii=True), encoding='utf-8')
+    (target / 'sdk-provenance.json').write_text(json.dumps(provenance, indent=2), encoding='utf-8')
+
+
+def passport_assets():
+    sys.path.insert(0, str(ROOT))
+    from music_app.auth.qishui.browser import _security_assets
+    return _security_assets()
+
+
+def prepare(target=None, sdk_bundle=None, android_sdk=None):
+    sdk = load_sdk(sdk_bundle or os.environ.get('MINERADIO_ANDROID_SDK_BUNDLE'))
+    target = workspace(target or default_workspace())
+    for name in ('settings.gradle', 'build.gradle', 'gradle.properties', 'gradlew', 'gradlew.bat'):
+        shutil.copy2(SOURCE / name, target / name)
+    replace_tree(SOURCE / 'gradle', target, 'gradle')
     for folder in ('java', 'res', 'python', 'assets'):
-        if folder == 'java':
-            # A removed source must not survive the incremental staging copy
-            # and silently remain in the next APK's DEX.
-            staged_java = (TARGET / 'app/src/main/java').resolve()
-            if not staged_java.is_relative_to(TARGET.resolve()):
-                raise RuntimeError('Java staging directory escaped the Android build workspace')
-            for old in staged_java.rglob('*.java'):
-                resolved = old.resolve()
-                if not resolved.is_relative_to(staged_java):
-                    raise RuntimeError('Java staging file escaped its managed directory')
-                if not (SOURCE / 'app/src/main/java' / old.relative_to(staged_java)).is_file():
-                    old.unlink()
-        shutil.copytree(SOURCE / 'app/src/main' / folder, TARGET / 'app/src/main' / folder,
-                        dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', 'bundle', 'sdk-config.json'))
-    if (SOURCE / 'app/src/debug').is_dir():
-        shutil.copytree(SOURCE / 'app/src/debug', TARGET / 'app/src/debug', dirs_exist_ok=True)
-    shutil.copy2(SOURCE / 'app/build.gradle', TARGET / 'app/build.gradle')
-    shutil.copy2(SOURCE / 'app/src/main/AndroidManifest.xml', TARGET / 'app/src/main/AndroidManifest.xml')
-    staged_python = (TARGET / 'app/src/main/python/music_app').resolve()
-    if not staged_python.is_relative_to(TARGET.resolve()):
-        raise RuntimeError('Python staging directory escaped the Android build workspace')
-    if staged_python.is_dir():
-        shutil.rmtree(staged_python)
-    shutil.copytree(ROOT / 'music_app', TARGET / 'app/src/main/python/music_app', dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
-    bundle = TARGET / 'app/src/main/assets/bundle'
-    # A release may consume the already verified desktop web snapshot so
-    # concurrent workspace edits cannot split the two shipped frontends.
+        replace_tree(SOURCE / 'app/src/main' / folder, target, 'app/src/main/' + folder,
+                     ignore=('bundle', 'sdk-config.json'))
+    replace_tree(SOURCE / 'app/src/debug', target, 'app/src/debug')
+    shutil.copy2(SOURCE / 'app/build.gradle', target / 'app/build.gradle')
+    shutil.copy2(SOURCE / 'app/src/main/AndroidManifest.xml', target / 'app/src/main/AndroidManifest.xml')
+    replace_tree(ROOT / 'music_app', target, 'app/src/main/python/music_app')
+    bundle = 'app/src/main/assets/bundle'
     web_source = Path(os.environ.get('MINERADIO_BUILD_WEB_SNAPSHOT') or ROOT / 'web').resolve(strict=True)
-    staged_web = (bundle / 'web').resolve()
-    if not staged_web.is_relative_to(TARGET.resolve()):
-        raise RuntimeError('Web staging directory escaped the Android build workspace')
-    if staged_web.is_dir():
-        shutil.rmtree(staged_web)
-    shutil.copytree(web_source, bundle / 'web', dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns('*.map', '*.bak', '*.log', '__pycache__', '.DS_Store'))
-    shutil.copy2(SOURCE / 'app/src/main/assets/android-bridge.js', bundle / 'web/player/android-bridge.js')
-    shutil.copytree(ROOT / 'third_party', bundle / 'third_party', dirs_exist_ok=True)
-    passport = SOURCE / '.local/passport'
-    required = ('security_seed.html', 'security_host.html', 'bdms.js', 'sdk-glue.js', 'react.js', 'react-dom.js')
-    if not all((passport / name).is_file() for name in required):
-        sys.path.insert(0, str(ROOT))
-        from music_app.auth.qishui.browser import _security_assets
-        data = _security_assets()  # Existing pinned archive hash is checked before use.
-        passport.mkdir(parents=True, exist_ok=True)
-        for name in required:
-            (passport / name).write_bytes(data[name])
-    shutil.copytree(passport, TARGET / 'app/src/main/assets/passport', dirs_exist_ok=True)
-    assets = TARGET / 'app/src/main/assets'
-    config = json.loads((PROBE / 'full-verification/probe-runtime-config.json').read_text(encoding='utf-8-sig'))
-    config = {key: config[key] for key in ('appId', 'license', 'clientType', 'collectMode', 'channel')}
-    (assets / 'sdk-config.json').write_text(json.dumps(config), encoding='utf-8')
-    native = TARGET / 'app/src/main/jniLibs/arm64-v8a'
-    native.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(PROBE / 'native-analysis/libmetasec_ml.so', native / 'libmetasec_ml.so')
-    sdk = Path(os.environ['LOCALAPPDATA']) / 'Android/Sdk'
-    (TARGET / 'local.properties').write_text('sdk.dir=' + sdk.as_posix() + '\n', encoding='utf-8')
-    print(json.dumps({'workspace': str(TARGET), 'sdkSourceVerified': True, 'accountFilesIncluded': False}))
+    replace_tree(web_source, target, bundle + '/web', ignore=('*.map', '*.bak', '*.log', '.DS_Store'))
+    shutil.copy2(SOURCE / 'app/src/main/assets/android-bridge.js', target / bundle / 'web/player/android-bridge.js')
+    web_revision = refresh_web_release(target / bundle / 'web/player', paths=('/android-bridge.js',))
+    replace_tree(ROOT / 'third_party', target, bundle + '/third_party')
+    passport = target / 'app/src/main/assets/passport'
+    passport.mkdir(parents=True, exist_ok=True)
+    for name, data in passport_assets().items():
+        if name in ('security_seed.html', 'security_host.html', 'bdms.js', 'sdk-glue.js', 'react.js', 'react-dom.js'):
+            (passport / name).write_bytes(data)
+    _stage_sdk(sdk, target)
+    android_sdk = android_sdk or os.environ.get('ANDROID_HOME') or os.environ.get('ANDROID_SDK_ROOT')
+    if not android_sdk and os.environ.get('LOCALAPPDATA'):
+        candidate = Path(os.environ['LOCALAPPDATA']) / 'Android/Sdk'
+        if candidate.is_dir():
+            android_sdk = candidate
+    local_properties = target / 'local.properties'
+    if android_sdk:
+        local_properties.write_text('sdk.dir=' + Path(android_sdk).resolve().as_posix() + '\n', encoding='utf-8')
+    elif local_properties.exists():
+        local_properties.unlink()
+    info = {'workspace': str(target), 'qishuiSdkConfigured': True,
+            'accountFilesIncluded': False, 'sdkArtifactsVerified': True, 'webRevision': web_revision}
+    print(json.dumps(info))
+    return info
 
 
-def package(variant):
-    input_apk = TARGET / ('app/build/outputs/apk/' + variant + '/app-' + variant + ('-unsigned' if variant == 'release' else '') + '.apk')
-    output = TARGET / 'mineradio-with-sdk.apk'
-    shutil.copy2(input_apk, output)
-    hashes = []
-    with zipfile.ZipFile(PROBE / 'base.apk') as source, zipfile.ZipFile(output, 'a') as dest:
-        count = sum(1 for name in dest.namelist() if name.startswith('classes') and name.endswith('.dex') and '/' not in name)
-        for index in range(1, 22):
-            name = 'classes' + (str(index) if index > 1 else '') + '.dex'
-            data = source.read(name)
-            dest.writestr('classes' + str(count + index) + '.dex', data, compress_type=zipfile.ZIP_DEFLATED)
-            hashes.append({'original': name, 'packaged': 'classes' + str(count + index) + '.dex', 'sha256': hashlib.sha256(data).hexdigest()})
-    (TARGET / 'sdk-provenance.json').write_text(json.dumps({'originalDexFiles': hashes, 'originalNativeModified': False}, indent=2), encoding='utf-8')
-    print(json.dumps({'baseDexCount': count, 'originalDexCount': len(hashes), 'unsignedApk': str(output)}))
+def package(variant, target=None):
+    target = Path(target or default_workspace()).resolve(strict=True)
+    if not (target / MARKER).is_file() or variant not in ('debug', 'release'):
+        raise ValueError('Run preparation in a managed workspace before packaging')
+    source = target / ('app/build/outputs/apk/' + variant + '/app-' + variant + ('-unsigned' if variant == 'release' else '') + '.apk')
+    provenance = json.loads((target / 'sdk-provenance.json').read_text(encoding='utf-8'))
+    for kind in ('native', 'dex'):
+        for artifact in provenance[kind]:
+            path = _bundle_file(target, artifact['path'])
+            if sha256(path) != artifact['sha256']:
+                raise ValueError('Staged SDK changed since preparation')
+    output = target / 'mineradio-unsigned.apk'
+    shutil.copy2(source, output)
+    with zipfile.ZipFile(output, 'a') as archive:
+        indexes = [int(match.group(1) or 1) for name in archive.namelist()
+                   if (match := re.fullmatch(r'classes([0-9]*)\.dex', name))]
+        count = max(indexes, default=0)
+        for index, artifact in enumerate(provenance['dex'], count + 1):
+            archive.write(target / artifact['path'], 'classes%d.dex' % index, compress_type=zipfile.ZIP_DEFLATED)
+    result = {'baseDexCount': len(indexes), 'sdkDexCount': len(provenance['dex']), 'unsignedApk': str(output)}
+    print(json.dumps(result))
+    return result
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1: package(sys.argv[1])
-    else: prepare()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('variant', nargs='?', choices=('debug', 'release'), help='Package an already built APK')
+    parser.add_argument('--workspace', type=Path, default=default_workspace())
+    parser.add_argument('--sdk-bundle', type=Path, help='Explicit SDK directory produced by extract_sdk.py')
+    parser.add_argument('--android-sdk', type=Path)
+    args = parser.parse_args()
+    if args.variant:
+        package(args.variant, args.workspace)
+    else:
+        prepare(args.workspace, args.sdk_bundle, args.android_sdk)

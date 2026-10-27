@@ -20,7 +20,8 @@ android {
 chaquopy {
     defaultConfig {
         version '3.12'
-        buildPython System.getenv('MINERADIO_BUILD_PYTHON') ?: 'C:/Users/Administrator/AppData/Roaming/uv/python/cpython-3.12.15-windows-x86_64-none/python.exe'
+        // Chaquopy discovers a matching Python when no explicit path is given.
+        if (System.getenv('MINERADIO_BUILD_PYTHON')) buildPython System.getenv('MINERADIO_BUILD_PYTHON')
         pip {
             install 'pycryptodome==3.21.0'
             install 'Pillow==11.0.0'
