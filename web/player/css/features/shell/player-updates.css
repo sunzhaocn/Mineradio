@@ -1,4 +1,5 @@
 /* Keep search outside the account/window action area at every desktop width. */
+.android-update-notes { white-space: pre-wrap; max-height: min(180px, 25dvh); overflow-y: auto; overscroll-behavior: contain; }
 @media (min-width: 901px) {
   body #search-area, body.simple-mode #search-area {
     left: 24px; transform: none; width: min(620px, calc(100vw - var(--header-actions-width, 340px) - 60px));
@@ -131,9 +132,11 @@ html.player-controls-shell body:is(.web-adapter,.desktop-shell) #diy-mode-btn {
 html.player-controls-shell #diy-mode-btn::before,
 html.player-controls-shell #diy-mode-btn::after { display: none !important; }
 @media (max-width: 900px) {
-  html.player-controls-shell body:is(.web-adapter,.desktop-shell) #top-right { width: 148px; height: 44px; }
-  html.player-controls-shell body:is(.web-adapter,.desktop-shell) #search-area,
-  html.player-controls-shell body:is(.web-adapter,.desktop-shell) #search-area.peek {
+  /* Phone routes place search below the header; only desktop/tablet search
+     shares a row with the account and visual controls. */
+  html.player-controls-shell body:is(.web-adapter,.desktop-shell):not(.web-mobile-active) #top-right { width: 148px; height: 44px; }
+  html.player-controls-shell body:is(.web-adapter,.desktop-shell):not(.web-mobile-active) #search-area,
+  html.player-controls-shell body:is(.web-adapter,.desktop-shell):not(.web-mobile-active) #search-area.peek {
     width: calc(100% - var(--web-safe-left) - var(--web-safe-right) - 164px);
   }
 }

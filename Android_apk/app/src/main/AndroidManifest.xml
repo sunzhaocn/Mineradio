@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <application android:name=".MineradioApp" android:label="Mineradio" android:icon="@drawable/ic_app"
         android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="false"
@@ -16,5 +17,7 @@
         </activity>
         <service android:name=".PlayerService" android:exported="false" android:foregroundServiceType="mediaPlayback" android:stopWithTask="false" />
         <service android:name=".SdkService" android:exported="false" android:process=":sdk" />
+        <provider android:name=".UpdateApkProvider" android:authorities="${applicationId}.updates"
+            android:exported="false" android:grantUriPermissions="true" />
     </application>
 </manifest>

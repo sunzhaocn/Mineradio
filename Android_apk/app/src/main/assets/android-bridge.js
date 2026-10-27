@@ -2,6 +2,23 @@
 (function () {
   if (!window.MineradioAndroid) return;
   window.__mineradioAndroid = true;
+  if (typeof MineradioAndroid.getUpdateState === 'function') {
+    var updateListeners = new Set();
+    window.mineradioAndroidAcceptUpdate = function (state) {
+      updateListeners.forEach(function (listener) { listener(state); });
+    };
+    function updateCall(name) {
+      try { return Promise.resolve(JSON.parse(MineradioAndroid[name]())); }
+      catch (error) { return Promise.reject(error); }
+    }
+    window.mineradioAndroidUpdater = {
+      platform: 'android',
+      getUpdateState: function () { return updateCall('getUpdateState'); },
+      checkForUpdates: function () { return updateCall('checkForUpdates'); },
+      downloadUpdate: function () { return updateCall('downloadUpdate'); },
+      onUpdateState: function (listener) { updateListeners.add(listener); }
+    };
+  }
   var blobs = new Map();
   var createBlobUrl = URL.createObjectURL.bind(URL), revokeBlobUrl = URL.revokeObjectURL.bind(URL);
   URL.createObjectURL = function (blob) { var url=createBlobUrl(blob);blobs.set(url,blob);return url; };

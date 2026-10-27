@@ -50816,8 +50816,8 @@ function initFxConsoleSearchAndHistory() {
 'use strict';
 
 // ============================================================
-// Update preview: external download page only.
-// Mineradio no longer downloads installers or applies resource patches.
+// Native clients handle installer downloads through their update bridge.
+// Other clients open the configured external download page.
 // ============================================================
 function isSafeUpdatePageUrl(value) {
   var raw = String(value || '').trim();
@@ -51094,7 +51094,8 @@ function openUpdatePanel() {
   var mask = document.getElementById('update-modal');
   var entry = document.getElementById('update-entry');
   if (!mask) return;
-  renderUpdatePreviewPanel();
+  if (window.mineradioNativeUpdater) window.mineradioNativeUpdater.render();
+  else renderUpdatePreviewPanel();
   if (entry && window.gsap) {
     window.gsap.fromTo(entry, { scale: 0.93 }, { scale: 1, duration: 0.42, ease: 'back.out(1.7)', overwrite: 'auto' });
   }

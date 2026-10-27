@@ -166,6 +166,7 @@ public final class MainActivity extends Activity {
         // Reclaim the shared player when this instance becomes visible again.
         if (MineradioApp.app.origin != null && (web == null || web.getParent() != frame)) attachWeb();
         foreground(true);
+        AppUpdater.get().onResume(this);
     }
     @Override protected void onPause() {
         if (current.get() == this) foreground(false);
@@ -225,6 +226,9 @@ public final class MainActivity extends Activity {
         else super.onBackPressed();
     }
     private static final class NativeBridge {
+        @JavascriptInterface public String getUpdateState() { return AppUpdater.get().state(); }
+        @JavascriptInterface public String checkForUpdates() { return AppUpdater.get().check(); }
+        @JavascriptInterface public String downloadUpdate() { return AppUpdater.get().download(); }
         @JavascriptInterface public boolean hasArtwork() { return BuildConfig.DEBUG && PlayerService.instance != null && PlayerService.instance.hasArtwork(); }
         @JavascriptInterface public boolean isForeground() { return MineradioApp.app.activityForeground; }
         @JavascriptInterface public String beginSave(String name,String mime) { return ExportStore.begin(name,mime); }

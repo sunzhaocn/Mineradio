@@ -1,10 +1,16 @@
 # Mineradio Android
 
-当前版本：**1.1.11**（versionCode `10111`）。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.14) · [更新说明](../docs/releases/v2.3.14.md)。
+当前版本：**1.1.12**（versionCode `10112`）。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.15) · [更新说明](../docs/releases/v2.3.15.md)。
 
 同一个 APK 支持 Android 8.0 及以上的 ARM64 手机和平板，需要可用的 Android System WebView。小于 600dp 使用手机播放器，600dp 及以上使用桌面布局与视觉效果。APK 内置 Python 3.12、本地服务、播放器和汽水签名桥；使用时不需要 Windows 电脑或云端后端。
 
 支持网易云、QQ、酷狗、汽水以及本地音频/歌词、播放队列、下载和系统媒体控制；平台结果受账号状态、会员权益和上游接口影响。手机使用轻量封面/歌词界面，平板保留 MV 与视觉效果。账号及主动下载的本地曲库保存在设备内，清除应用数据会删除它们。
+
+## 软件更新
+
+1.1.12 起可在“音乐库 → 检查更新”查看 GitHub 正式发行版，点击“立即更新”下载 APK，显示百分比和已下载大小。面板可收起，重新打开会继续显示当前进度。下载完成并校验 SHA-256、应用标识、版本号及原签名后，打开系统安装界面；首次需要允许 Mineradio 安装应用，返回后继续安装，取消后也可再次点击“安装更新”。请保持应用运行直到下载完成。
+
+更新安装包仅保存在应用私有缓存目录，不读取或清空账号、歌单及本地音乐。1.1.11 及更早版本需先从发布页下载新版覆盖安装一次。详细流程与测试范围见 [更新说明](../docs/AUTO_UPDATE.md) 和 [手机布局及安卓更新验收](../docs/MOBILE_LAYOUT_AND_ANDROID_UPDATES.md)。
 
 ## 完整汽水构建材料
 

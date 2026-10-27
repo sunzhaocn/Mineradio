@@ -89,7 +89,7 @@ def run():
           const song=await new Promise(resolve=>{const r=db.transaction('tracks').objectStore('tracks').get('song');r.onsuccess=()=>resolve(r.result)});db.close();
           return {version:(await desktopWindow.getUpdateState()).currentVersion,account:localStorage.getItem('migration-test-account'),playlist:localStorage.getItem('migration-test-playlist'),audio:await song.audio.text(),lyric:song.lyric,caches:await caches.keys(),registrations:(await navigator.serviceWorker.getRegistrations()).length,banner:!!document.getElementById('offline-status'),updater:typeof mineradioNativeUpdater,media:await(await(await caches.open('music-downloads')).match('/saved-music')).text()};
         }''')
-        assert state['version'] == '2.3.14'
+        assert state['version'] == json.loads((ROOT / 'Windows_exe/package.json').read_text())['version']
         assert state['account'] == 'synthetic-retain' and state['playlist'] == '["saved-playlist"]'
         assert state['audio'] == 'saved-local-audio' and state['lyric'] == '[00:00]keep lyrics'
         assert state['caches'] == ['music-downloads'] and state['media'] == 'keep music cache'
