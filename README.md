@@ -4,11 +4,13 @@
 
 [下载安装包](https://github.com/sunzhaocn/Mineradio/releases/latest) · [公开源代码](https://github.com/sunzhaocn/Mineradio)
 
-Windows 最新版为 **2.3.12**，Android 最新版为 **1.1.10**，更新内容见 [v2.3.12 发布说明](docs/releases/v2.3.12.md)。支持网易云、QQ、酷狗、汽水音乐、本地曲库、歌词、歌单、MV 和桌面视觉效果；平台可用性与会员权益以对应平台实际返回为准。
+Windows 最新版为 **2.3.13**，Android 最新版为 **1.1.10**，更新内容见 [v2.3.13 发布说明](docs/releases/v2.3.13.md)。支持网易云、QQ、酷狗、汽水音乐、本地曲库、歌词、歌单、MV 和桌面视觉效果；平台可用性与会员权益以对应平台实际返回为准。
 
 ## 使用与更新
 
 Windows 下载 Release 中的 Setup 安装包安装，随后从桌面或开始菜单打开。运行环境已内置，无需启动独立网页服务。右上角更新入口可检查新版本；点击“立即更新”后下载并校验，完成后自动退出并覆盖安装，保留账号、歌单和设置。安装完成后可重新打开。2.3.10 及更早版本需先手动安装一次新版。
+
+如果旧版右上角没有更新入口，请下载安装包覆盖一次，无须卸载或清除应用数据。2.3.13 修复了旧离线缓存遮住更新入口的问题；本机实际升级结果见 [Windows 升级验收](docs/WINDOWS_UPGRADE_VERIFICATION.md)。
 
 Android 构建与安装见 [Android_apk/README.md](Android_apk/README.md)。iPhone/iPad 工程与个人签名说明见 [iOS_ipa/README.md](iOS_ipa/README.md)；iOS 仍有平台功能和真机验证限制。
 

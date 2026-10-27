@@ -9,6 +9,9 @@ project = Path(SPECPATH).resolve()
 source = project.parent
 sys.path.insert(0, str(source))
 web_source = Path(os.environ.get("MINERADIO_BUILD_WEB_SNAPSHOT") or source / "web").resolve(strict=True)
+sys.path.insert(0, str(project / 'scripts'))
+from importlib import import_module
+web_source = import_module('prepare-web').prepare(web_source)
 datas = [(str(web_source), "web"),
          (str(source / "third_party"), "third_party")]
 binaries = []
