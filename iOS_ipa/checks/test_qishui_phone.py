@@ -1,5 +1,6 @@
 """Qishui phone boundaries; all upstream requests are synthetic and isolated."""
 from pathlib import Path
+import http.cookiejar
 import os
 import sys
 from types import SimpleNamespace
@@ -22,6 +23,10 @@ ENCODED_CAPTCHA = '343736313033'
 class PhoneLoginBoundaries(unittest.TestCase):
     def setUp(self):
         self.clock = self.enterContext(patch.object(phone.time, 'time', return_value=1000.0))
+        self.blank_state_factory = phone._new_state
+        # Most protocol tests start after anonymous preparation. Dedicated
+        # tests below clear this synthetic cookie to exercise the first call.
+        self.enterContext(patch.object(phone, '_new_state', side_effect=self.seeded_state))
         self.request = self.enterContext(patch.object(phone, '_request'))
         # Keep any adapter helper reads on the same fake transport, never the
         # real urllib/browser, including future changes to authorization.
@@ -33,6 +38,20 @@ class PhoneLoginBoundaries(unittest.TestCase):
 
     def new_state(self):
         return phone.create_session()['state']
+
+    def seeded_state(self):
+        state = self.blank_state_factory()
+        self.add_csrf(state)
+        return state
+
+    @staticmethod
+    def add_csrf(state, name='passport_csrf_token'):
+        state['jar'].set_cookie(http.cookiejar.Cookie(
+            version=0, name=name, value='synthetic-csrf-only',
+            port=None, port_specified=False, domain='.qishui.com',
+            domain_specified=True, domain_initial_dot=True,
+            path='/', path_specified=True, secure=True,
+            expires=None, discard=True, comment=None, comment_url=None, rest={}))
 
     def assert_rejected(self, action, code=None):
         with self.assertRaises(AuthError) as caught:
@@ -72,14 +91,116 @@ class PhoneLoginBoundaries(unittest.TestCase):
         self.request.side_effect = respond
 
     def test_creating_session_is_offline_and_has_an_isolated_ten_minute_lifetime(self):
-        first, second = phone.create_session(), phone.create_session()
+        with patch.object(phone, '_new_state', self.blank_state_factory):
+            first, second = phone.create_session(), phone.create_session()
         self.assertTrue(first['phone_login'])
         self.assertFalse(first.get('manual_login', False))
         self.assertEqual(first['expires_in'], 600)
         self.assertEqual(first['state']['expires_at'], 1600)
         self.assertIsNot(first['state']['jar'], second['state']['jar'])
+        self.assertEqual(list(first['state']['jar']), [])
         self.assertNotIn('signed_runtime', first['state'])
+        self.assertEqual(phone.check_session(first['state'])['status'], 'waiting')
         self.request.assert_not_called()
+
+    def test_first_sms_prepares_csrf_in_the_same_session_without_exposing_or_polling_qr(self):
+        state = self.new_state()
+        state['jar'].clear()
+        runtime = state['signed_runtime'] = Mock()
+        qr_token, qr_url = 'discard-this-synthetic-qr-token', 'https://www.qishui.com/synthetic-qr'
+
+        def respond(current, route, **options):
+            self.assertIs(current, state)
+            self.assertIs(current['signed_runtime'], runtime)
+            if route == '/passport/web/get_qrcode/':
+                self.assertNotIn('form', options)
+                self.assertEqual(options['query']['next'], HOST)
+                self.add_csrf(current)
+                return self.ok({'token': qr_token, 'qrcode_index_url': qr_url,
+                                'user_info': {'user_id': '777000777', 'nickname': 'discard-qr-account'}})
+            if route == '/passport/web/send_code/':
+                self.assertTrue(any(c.name == 'passport_csrf_token' for c in current['jar']))
+                return self.ok()
+            self.fail('Unexpected upstream route: ' + route)
+        self.request.side_effect = respond
+
+        self.assertTrue(phone.send_sms(state, MOBILE)['sms_sent'])
+        self.assertEqual([call.args[1] for call in self.request.call_args_list],
+                         ['/passport/web/get_qrcode/', '/passport/web/send_code/'])
+        self.assertEqual(phone.check_session(state)['status'], 'waiting')
+        self.assertFalse(phone.send_sms(state, MOBILE)['sms_sent'])
+        self.assertEqual(self.request.call_count, 2)
+        self.assertNotIn('token', state)
+        self.assertNotIn('account', state)
+        for value in (qr_token, qr_url, '777000777', 'discard-qr-account'):
+            self.assert_secret_absent(state, value)
+        self.assertFalse(any(c.name in ('sessionid', 'sessionid_ss', 'sid_tt', 'sid_guard')
+                             for c in state['jar']))
+        runtime.close.assert_not_called()
+
+    def test_first_login_prepares_csrf_before_submitting_code_without_sending_sms(self):
+        state = self.new_state()
+        state['jar'].clear()
+        self.successful_transport()
+        submit = self.request.side_effect
+
+        def respond(current, route, **options):
+            if route == '/passport/web/get_qrcode/':
+                self.add_csrf(current)
+                return self.ok({'token': 'discard-login-preparation-token'})
+            return submit(current, route, **options)
+        self.request.side_effect = respond
+        result = phone.login_phone(state, MOBILE, captcha=CAPTCHA)
+        self.assertEqual(result['status'], 'authorized')
+        self.assertEqual([call.args[1] for call in self.request.call_args_list],
+            ['/passport/web/get_qrcode/', '/passport/web/sms_login/', '/passport/account/info/v2/'])
+        self.assertTrue(all(call.args[0] is state for call in self.request.call_args_list))
+        self.assert_secret_absent(state, 'discard-login-preparation-token')
+        self.assert_secret_absent(state, CAPTCHA)
+
+    def test_default_csrf_cookie_also_skips_anonymous_preparation(self):
+        for action in ('sms', 'login'):
+            with self.subTest(action=action):
+                self.request.reset_mock(side_effect=True)
+                state = self.new_state()
+                state['jar'].clear()
+                self.add_csrf(state, 'passport_csrf_token_default')
+                self.successful_transport()
+                if action == 'sms':
+                    self.assertTrue(phone.send_sms(state, MOBILE)['sms_sent'])
+                else:
+                    self.assertEqual(phone.login_phone(state, MOBILE, captcha=CAPTCHA)['status'], 'authorized')
+                self.assertNotIn('/passport/web/get_qrcode/',
+                                 [call.args[1] for call in self.request.call_args_list])
+
+    def test_missing_csrf_stops_before_sending_sms_or_submitting_login(self):
+        for action in ('sms', 'login'):
+            with self.subTest(action=action):
+                self.request.reset_mock(side_effect=True)
+                state = self.new_state()
+                state['jar'].clear()
+                self.request.return_value = self.ok({'token': 'discard-unprepared-token'})
+                if action == 'sms':
+                    submit = lambda: phone.send_sms(state, MOBILE)
+                else:
+                    submit = lambda: phone.login_phone(state, MOBILE, captcha=CAPTCHA)
+                self.assert_rejected(submit, 'qishui_phone_csrf_missing')
+                self.assertEqual(self.request.call_count, 1)
+                self.assertEqual(self.request.call_args.args[1], '/passport/web/get_qrcode/')
+                self.assertNotIn('sms_next_at', state)
+                self.assert_secret_absent(state, 'discard-unprepared-token')
+                self.assert_secret_absent(state, CAPTCHA)
+
+    def test_default_csrf_cookie_is_used_in_the_passport_request_header(self):
+        from music_app.auth.qishui import transport
+        state = self.new_state()
+        state['jar'].clear()
+        self.add_csrf(state, 'passport_csrf_token_default')
+        with patch.object(transport, '_browser_request', return_value=self.ok()) as browser:
+            transport._request(state, '/passport/web/send_code/', query=state['query'],
+                               form={'mobile': ENCODED_MOBILE, 'type': '3731'})
+        self.assertEqual(browser.call_count, 1)
+        self.assertEqual(browser.call_args.args[2]['X-Tt-Passport-Csrf-Token'], 'synthetic-csrf-only')
 
     def test_sms_request_uses_pc_client_and_protocol_field_goldens(self):
         state = self.new_state()

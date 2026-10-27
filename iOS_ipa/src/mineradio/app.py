@@ -186,8 +186,14 @@ class Mineradio(toga.App):
         try:
             from . import passport
             result = await passport.diagnostic()
+            if result.get('ready'):
+                from music_app.auth.qishui import phone
+                result['anonymousRequest'] = await asyncio.to_thread(phone.diagnostic)
+                result['ready'] = result['anonymousRequest'].get('ready') is True
         except Exception as error:
-            result = dict(ready=False, error=type(error).__name__)
+            import traceback
+            result = dict(ready=False, error=type(error).__name__,
+                          traceback=traceback.format_exc(), code=getattr(error, 'code', ''))
         (self.paths.cache / 'ios-phone-security-diagnostic.json').write_text(
             json.dumps(result), encoding='utf-8')
 

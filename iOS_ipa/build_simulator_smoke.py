@@ -122,7 +122,7 @@ def main():
                 raise RuntimeError('The native WebView has an unexpected content offset: ' + dimension)
         print('Player readiness: ' + json.dumps(status), flush=True)
         phone_security = None
-        phone_deadline = time.monotonic() + 90
+        phone_deadline = time.monotonic() + 120
         while phone_security is None and time.monotonic() < phone_deadline:
             for path in data.rglob('ios-phone-security-diagnostic.json'):
                 try:
@@ -155,9 +155,17 @@ def main():
         report.update(error=type(error).__name__, message=str(error)[:1000])
         raise
     finally:
-        (DIST / 'simulator-result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         if simulator:
-            subprocess.run(['xcrun', 'simctl', 'shutdown', simulator], capture_output=True, timeout=30)
+            try:
+                stopped = subprocess.run(['xcrun', 'simctl', 'shutdown', simulator],
+                                         capture_output=True, timeout=30)
+                if stopped.returncode:
+                    report['cleanupWarning'] = 'Simulator shutdown returned ' + str(stopped.returncode)
+            except subprocess.TimeoutExpired:
+                # Cleanup must not replace a player failure or turn completed
+                # readiness/geometry/Passport checks into an app test failure.
+                report['cleanupWarning'] = 'Simulator shutdown exceeded 30 seconds'
+        (DIST / 'simulator-result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
 
 
 if __name__ == '__main__':

@@ -456,7 +456,10 @@ class _Flow:
             token = json.dumps(self.token)
             path = json.dumps(target.path)
             expression = '''(async()=>{
-              const since=performance.now(), result=await window.__qishuiRequest(PAYLOAD);
+              const spec=PAYLOAD, requestURL=new URL(spec.url);
+              requestURL.searchParams.set('request_host',encodeURIComponent(location.origin));
+              spec.url=requestURL.href;
+              const since=performance.now(), result=await window.__qishuiRequest(spec);
               const names=[result.responseURL,...performance.getEntriesByType('resource').filter(e=>e.startTime>=since).map(e=>e.name)];
               let length=0,matches=false;
               for(const name of names){try{const u=new URL(name);if(u.hostname==='api.qishui.com'&&u.pathname===PATH){

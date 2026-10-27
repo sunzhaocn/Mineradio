@@ -35,6 +35,10 @@
     else if (state.state === 'ready') {
       badge.textContent = '离线初始化完成 · 断网也可打开';
       hideTimer = setTimeout(function () { badge.hidden = true; }, 5000);
+    } else if (state.state === 'embedded') {
+      // The iOS app ships its complete UI on-device. WKWebView may not expose
+      // Service Workers; it still opens offline from the embedded HTTP server.
+      badge.hidden = true;
     } else if (state.state === 'failed') badge.textContent = '离线资源未保存完整 · 联网后点击重试';
     else if (state.state === 'unsupported') badge.textContent = '此客户端无法保存离线界面，请更新 App';
     else badge.textContent = '正在保存离线界面和视觉预设' + (state.total ? ' · ' + state.done + '/' + state.total : '…');
@@ -51,7 +55,9 @@
   async function start() {
     if (!(location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) return;
     render(); connectivity();
-    if (!('serviceWorker' in navigator)) { state.state = 'unsupported'; render(); return; }
+    if (!('serviceWorker' in navigator)) {
+      state.state = window.__mineradioIOS ? 'embedded' : 'unsupported'; render(); return;
+    }
     var hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('message', function (event) {
       if (!event.data || event.data.type !== 'mineradio:offline') return;

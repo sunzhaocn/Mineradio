@@ -40,7 +40,8 @@ def _request(state, route, *, query=None, form=None, json_response=True):
     if form is not None:
         data = urllib.parse.urlencode(form).encode("utf-8")
         headers["Content-Type"] = "application/x-www-form-urlencoded"
-        csrf = next((c.value for c in state["jar"] if c.name == "passport_csrf_token"), "")
+        cookies = {c.name: c.value for c in state['jar']}
+        csrf = cookies.get('passport_csrf_token') or cookies.get('passport_csrf_token_default', '')
         if csrf:
             headers["X-Tt-Passport-Csrf-Token"] = csrf
     try:

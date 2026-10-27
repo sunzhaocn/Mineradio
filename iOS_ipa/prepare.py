@@ -12,6 +12,7 @@ import zipfile
 import io
 import tomllib
 from qishui_config import load_config
+from web_release import refresh as refresh_web_release
 
 PROJECT = Path(__file__).resolve().parent
 ROOT = PROJECT.parent
@@ -104,6 +105,7 @@ def prepare(skip_deps=False, qishui_config=None):
         shutil.copy2(PROJECT / 'native/vendor/provenance.json', sdk_notice / 'provenance.json')
         for name in ('ios-bridge.js', 'ios-layout.js', 'ios.css'):
             shutil.copy2(PROJECT / 'assets' / name, bundle / 'web/player' / name)
+        web_revision = refresh_web_release(bundle / 'web/player')
         # A clean checkout must build without the original developer's runtime/.
         # Missing optional Qishui settings must not prevent local music or the
         # other platforms from starting. Never invent an app license.
@@ -123,6 +125,7 @@ def prepare(skip_deps=False, qishui_config=None):
         (bundle / 'source-manifest.json').write_text(json.dumps(
             {'version': VERSION, 'platform': 'ios', 'files': hashes,
              'runtime': 'embedded-local', 'remoteBackendRequired': False,
+             'webRevision': web_revision,
              'qishuiConfigured': public['configured'],
              'qishuiPhoneLoginImplemented': True,
              'validationPending': ['qishuiNativeSigning', 'qishuiAccountFlow', 'physicalDevice'],

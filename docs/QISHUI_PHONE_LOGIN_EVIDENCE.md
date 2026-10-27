@@ -116,6 +116,24 @@ not by a resolved return value from rendering.
 
 ## Challenge selection and session limits
 
+First-request CSRF initialization was checked separately. The official panel
+lists QR first; source 69 `hooks/use-scan-code-login.js`, lines 337-354 starts
+`getQrCode()` on that initial tab. An anonymous GET to the official
+`/passport/web/get_qrcode/` returned HTTP 200 and set both
+`passport_csrf_token` and `passport_csrf_token_default`. By comparison, an
+anonymous `/passport/account/info/v2/` GET returned HTTP 200 with error 13 and
+no Set-Cookie headers, so it cannot supply the bootstrap cookies. No SMS or
+account login was performed by these reads; cookie values were not retained
+in this report.
+
+The iPad SMS adapter therefore acquires the server-issued cookies with that
+same anonymous request only after an explicit send/login action. It discards
+the QR token, image and account fields, never displays a QR and never polls it.
+Subsequent requests reuse the same isolated WebKit and CookieJar. The official
+request interceptor selects `passport_csrf_token || passport_csrf_token_default`.
+No local CSRF token is invented. On iOS, `request_host` is taken from the actual
+WebKit page's origin, matching the official interceptor's dynamic source.
+
 Source 41, `@byted/uc-request-sec/es/middleware/response/show-sec-sdk.js`, lines
 5-18 checks `verify_center_decision_conf` and
 `verify_center_secondary_decision_conf` under both `data` and the root. It does

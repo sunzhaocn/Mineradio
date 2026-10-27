@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import zipfile
 import tomllib
+from web_release import verify as verify_web_release
 
 PROJECT = Path(__file__).resolve().parent
 VERSION = tomllib.loads((PROJECT / 'pyproject.toml').read_text(encoding='utf-8'))['tool']['briefcase']['version']
@@ -14,11 +15,12 @@ def export():
     if not (app / 'bundle/source-manifest.json').is_file() or not (app / 'vendor/pyaes/__init__.py').is_file():
         raise SystemExit('Run prepare.py first')
     manifest = json.loads((app / 'bundle/source-manifest.json').read_text(encoding='utf-8'))
+    verify_web_release(app / 'bundle/web/player')
     for relative, expected in manifest['files'].items():
         source = None
         if relative.startswith('python/music_app/'):
             source = PROJECT.parent / relative.removeprefix('python/')
-        elif relative.startswith('web/'):
+        elif relative.startswith('web/') and relative != 'web/player/offline-assets.js':
             source = PROJECT.parent / relative
         elif relative.startswith('third_party/') and not relative.startswith('third_party/VolMetaSecML/'):
             source = PROJECT.parent / relative

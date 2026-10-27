@@ -43,6 +43,24 @@ def _ready(state):
         raise AuthError(409, 'qishui_phone_verification', '请先完成汽水安全验证，再手动重试')
 
 
+def _prepare_passport(state):
+    """Acquire the server-issued CSRF cookies in this exact browser session.
+
+    The official music panel initializes its QR tab before its SMS tab. That
+    anonymous GET provisions the cookies shared by both methods. We discard
+    its response/token, never display an image, and never poll or authorize QR.
+    This initialization only runs after an explicit SMS/login submission.
+    """
+    state['jar'].clear_expired_cookies()
+    if any(c.name in ('passport_csrf_token', 'passport_csrf_token_default') and c.value for c in state['jar']):
+        return
+    _request(state, '/passport/web/get_qrcode/', query={**state['query'],
+        'next': HOST, 'need_logo': 'false', 'need_short_url': 'false'})
+    if not any(c.name in ('passport_csrf_token', 'passport_csrf_token_default') and c.value for c in state['jar']):
+        raise AuthError(502, 'qishui_phone_csrf_missing', '汽水登录会话初始化未完成，请稍后重试')
+    _ready(state)
+
+
 def _data(result):
     if not isinstance(result, dict) or not isinstance(result.get('data'), dict):
         raise AuthError(502, 'qishui_phone_response', '汽水登录响应异常，请稍后重试')
@@ -91,6 +109,7 @@ def send_sms(state, phone, countrycode='86'):
     if remaining > 0:
         return dict(status='cooldown', sms_sent=False, retry_after=max(1, int(remaining)),
                     message='请稍后再获取验证码')
+    _prepare_passport(state)
     # Also retain the cooldown after a timeout: delivery may have succeeded.
     state['sms_next_at'] = time.time() + 60
     result = _request(state, '/passport/web/send_code/', query=state['query'],
@@ -112,6 +131,7 @@ def login_phone(state, phone, countrycode='86', password='', captcha=''):
         raise AuthError(400, 'qishui_password_unavailable', '请使用短信验证码登录汽水音乐')
     if not re.fullmatch(r'[0-9]{6}', str(captcha)):
         raise AuthError(400, 'qishui_code_invalid', '请输入短信验证码')
+    _prepare_passport(state)
     result = _request(state, '/passport/web/sms_login/', query=state['query'],
                       form={**_form(), **state.get('mfa_business', {}), 'service': HOST,
                             'mobile': _xor5(mobile), 'code': _xor5(captcha), 'login_only': 'true'})
@@ -175,6 +195,16 @@ def show_session(state):
 
 def close_session(state):
     adapter.close_session(state)
+
+
+def diagnostic():
+    """Anonymous native request check; no phone, SMS, login or account data."""
+    state = create_session()['state']
+    try:
+        _prepare_passport(state)
+        return dict(ready=True, anonymousPassportReady=True, smsSent=False, accountAuthorized=False)
+    finally:
+        close_session(state)
 
 
 def verify_session(state, raw):
