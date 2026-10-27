@@ -21,6 +21,8 @@ def invalidate_login_cache(provider):
                     del cache[key]
         for url, owners in list(AUDIO_URL_OWNERS.items()):
             owners.discard(provider)
+            if url in AUDIO_SCOPES:
+                AUDIO_SCOPES[url] = {entry for entry in AUDIO_SCOPES[url] if entry[0] != provider}
             if not owners:
                 AUDIO_URLS.discard(url)
                 del AUDIO_URL_OWNERS[url]

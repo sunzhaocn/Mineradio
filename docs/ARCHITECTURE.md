@@ -22,6 +22,7 @@ Windows 的 `Windows_exe/backend_entry.py` 调用 `music_app/launcher.py` 管理
 
 `auth/router.py` 管理隔离会话和统一返回值，按平台调用各自 adapter。
 网易云的扫码、手机号、浏览器和请求分开；QQ 的 QQ、微信、App 扫码分开；汽水的安全浏览器与传输分开。
+QQ 三种登录入口共用 `auth/qqmusic/credentials.py` 校验账号标识与密钥，再写入 Cookie，避免各入口规则不一致；微信公开 App ID 的用途见根目录 `SECURITY.md`。
 `web/authbridge.py` 只转发当前短期登录会话的结果，不读写磁盘账号。浏览器使用 `mineradio-local-accounts-v1` 本地存储保存各平台 Cookie、账号摘要及汽水设备参数，并提供查看与复制。
 `core/request_credentials.py` 使用请求上下文隔离客户端 Cookie，网页通过请求头转发到音乐 API；线程池显式传递上下文，账号相关缓存按凭据摘要分开。服务端不回退读取旧共享账号配置。
 
@@ -68,6 +69,12 @@ Windows 的 `Windows_exe/backend_entry.py` 调用 `music_app/launcher.py` 管理
 云端喜欢读取失败时保留已成功平台结果与明确错误，但不标记完整缓存，下次打开可继续重试。
 
 ## 路径与测试
+
+Android 的 `MineradioApp` 持有音频 WebView 和最新播放快照，`PlayerService` 管理前台优先级、系统媒体控制、按播放状态持有的唤醒锁与暂停后的服务退出。WebView 桥仅在变化时传递封面，Application 合并待处理快照，服务恢复时请求完整状态；原生元数据/通知避免按秒重复重建。Activity 回调使用静态类和弱引用，减少长时间后台播放时对已销毁界面的持有。进程回收后展示中断提示，不宣称恢复已销毁的音频实例。
+
+`Android_apk/extract_sdk.py` 将明确指定的兼容 APK 导入本地材料包，记录来源、原文件摘要和必需类位置；`prepare.py` 只接受显式材料包，在标记过的构建目录更新生成资源，并在打包前复核摘要。Android 复用 `iOS_ipa/web_release.py` 的内容摘要逻辑，为自己的桥脚本生成离线缓存版本；iOS 默认资源集合保持原有行为。
+
+听歌结束仅保存本地最近播放、歌曲/歌手统计及日汇总，不请求不存在的 `/api/listen/report`。组件源文件与兼容 bundle 同步更新。
 
 所有路径定义在 `music_app/paths.py`；启动目录变化不会改变配置读取位置。
 本机配置放 `config/`，缓存和日志放根 `runtime/`，导出成品单独保存。

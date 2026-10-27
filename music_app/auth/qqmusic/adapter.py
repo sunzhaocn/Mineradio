@@ -23,6 +23,8 @@ import urllib.request
 import uuid
 from dataclasses import dataclass
 
+from .credentials import credential_fields, valid_cookie, validate_credentials
+
 
 TIMEOUT = 15
 EXPIRES_IN = 180
@@ -226,7 +228,8 @@ def _music_cookie_header(state, musicid, musickey):
         if "=" in part:
             key, value = part.strip().split("=", 1)
             # qrsig and ptlogin tickets are not needed for QQ Music requests.
-            if key not in ("qrsig", "pt_login_sig", "ptcz", "ptdrvs", "pt_local_token"):
+            if (key not in ("qrsig", "pt_login_sig", "ptcz", "ptdrvs", "pt_local_token")
+                    and valid_cookie(key, value)):
                 values[key] = value
     values.update({
         "uin": musicid, "qqmusic_uin": musicid,
@@ -280,19 +283,14 @@ def _authorize(state, redirect_url, nickname=""):
         data = req.get("data", {})
         if payload.get("code", 0) != 0 or req.get("code") != 0 or not isinstance(data, dict):
             raise ValueError
-        musicid = str(data.get("musicid") or data.get("str_musicid") or _cookie(state, "qqmusic_uin") or "")
-        musickey = str(data.get("musickey") or _cookie(state, "qqmusic_key") or _cookie(state, "qm_keyst") or "")
-        if not musicid.isdigit() or int(musicid) <= 0 or not musickey or re.search(r"[;\r\n]", musickey):
-            raise ValueError
+        musicid, musickey = validate_credentials(
+            data.get("musicid") or data.get("str_musicid") or _cookie(state, "qqmusic_uin") or "",
+            data.get("musickey") or _cookie(state, "qqmusic_key") or _cookie(state, "qm_keyst") or "",
+        )
     except (ValueError, TypeError, AttributeError):
         raise AuthError(502, "qqmusic_exchange_failed", "QQ 已确认，QQ 音乐凭据兑换失败，请重新扫码") from None
 
-    credentials = {"musicid": musicid, "musickey": musickey, "login_type": 2}
-    for key in ("openid", "refresh_token", "access_token", "expired_at", "unionid", "str_musicid", "refresh_key",
-                "musickeyCreateTime", "keyExpiresIn", "needRefreshKeyIn", "encryptUin"):
-        value = data.get(key)
-        if isinstance(value, (str, int)) and value != "":
-            credentials[key] = value
+    credentials = credential_fields(data, musicid, musickey, 2)
     from .profile import identity
     account = {"id": musicid, "uin": uin, **identity(data, known_qq_uin=uin, name=nickname)}
     result = {"status": "authorized", "message": "QQ 音乐登录成功",

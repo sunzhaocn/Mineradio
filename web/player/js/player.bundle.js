@@ -1448,7 +1448,6 @@ var mainFrameGates;
 var mainLoopBackgroundTimer;
 var mainLoopAnimationRequested;
 
-
 'use strict';
 
 function markAppPerf(name) {
@@ -1473,6 +1472,7 @@ function installStartupLongTaskObserver() {
     setTimeout(function () { try { observer.disconnect(); } catch (e) { } }, 16000);
   } catch (e) { }
 }
+
 'use strict';
 
 function readSavedVolume() {
@@ -1897,6 +1897,7 @@ function toggleDiyMode() {
     showVisualGuideStep(0);
   }
 }
+
 'use strict';
 
 
@@ -1970,6 +1971,7 @@ function maybeAnnounceDjMode() {
     showToast('DJ Mode · 离线锁拍');
   }
 }
+
 'use strict';
 
 function normalizeWallpaperFps(value) {
@@ -1993,6 +1995,7 @@ function foregroundFixedFpsForMode(mode) {
   if (mode === 'adaptive') return null;
   return Math.max(1, Number(mode) || 60);
 }
+
 'use strict';
 
 
@@ -2003,6 +2006,7 @@ function clonePackagedDefaultFxSnapshot() {
 function packagedDefaultLyricLayoutRaw() {
   return Object.assign({ desktopLyricsSchema: 'desktop-lyrics-v3' }, clonePackagedDefaultFxSnapshot());
 }
+
 'use strict';
 
 
@@ -2075,6 +2079,7 @@ function applyPlaylistPanelFxSettings() {
   setPlaylistPanelCssVar('--playlist-toolbar-a2', alphas.toolbar2.toFixed(3));
   setPlaylistPanelCssVar('--playlist-toolbar-a3', alphas.toolbar3.toFixed(3));
 }
+
 'use strict';
 
 function pulseObjectValue(target, key, amount, duration) {
@@ -2561,6 +2566,7 @@ function installRenderPowerHooks() {
     }
   }
 }
+
 'use strict';
 
 function createFrameGate(name, defaultFps) {
@@ -2890,6 +2896,7 @@ function bindSystemMemoryControls() {
   refreshMemorySnapshot(false);
   configureMemoryReductFromFx('bind', false);
 }
+
 'use strict';
 
 
@@ -3048,6 +3055,7 @@ function getRenderLoadTier() {
   if (cssPixels >= 3200000 || renderPixels >= 3600000) return 1;
   return 0;
 }
+
 'use strict';
 
 
@@ -3410,6 +3418,7 @@ function updateFreeCameraHint() {
   var el = document.getElementById('free-camera-hint');
   if (el) el.classList.toggle('show', !!(freeCamera && freeCamera.active));
 }
+
 'use strict';
 
 
@@ -3529,6 +3538,7 @@ function updateFreeCamera(dt) {
   if (rollDir) freeCamera.roll = clampRange(freeCamera.roll + rollDir * dt * 0.9, -Math.PI, Math.PI);
   scheduleFreeCameraStateSave(720);
 }
+
 'use strict';
 
 function flushPersistentVisualState() {
@@ -3908,6 +3918,7 @@ function cancelBeatPrefetchTimer() {
     beatPrefetchTimer = null;
   }
 }
+
 'use strict';
 
 
@@ -4193,6 +4204,7 @@ function mergeRealtimeBeatCamera(time, amp, tone) {
   beatCam.stats.merged++;
   return true;
 }
+
 'use strict';
 
 
@@ -4575,6 +4587,7 @@ function updateBeatCamera(dt) {
   beatCam.radiusKick += (radiusKick - beatCam.radiusKick) * (radiusKick > beatCam.radiusKick ? (djEase ? 0.82 : 0.72) : (djEase ? 0.40 : 0.34));
   beatCam.rollKick += (rollKick - beatCam.rollKick) * (Math.abs(rollKick) > Math.abs(beatCam.rollKick) ? (djEase ? 0.82 : 0.72) : (djEase ? 0.44 : 0.38));
 }
+
 'use strict';
 
 function unlockCenteredView() {
@@ -6842,6 +6855,7 @@ function readSavedLyricLayoutCriticalFallback(raw, err) {
     controlGlassChromaticOffset: layoutNumber(raw.controlGlassChromaticOffset, fxDefaults.controlGlassChromaticOffset, 30, 140)
   };
 }
+
 'use strict';
 
 
@@ -7154,6 +7168,7 @@ function currentFxAutosaveSaveReason(opts, fallback) {
   if (opts.user === true && currentFxAutosaveLastUserReason) return String(currentFxAutosaveLastUserReason).slice(0, 80);
   return String(fallback || 'save').slice(0, 80);
 }
+
 'use strict';
 
 
@@ -7366,6 +7381,7 @@ function currentFxAutosaveCriticalPatch() {
     shelfAccentColor: normalizeHexColor(fx.shelfAccentColor || fxDefaults.shelfAccentColor, fxDefaults.shelfAccentColor)
   };
 }
+
 'use strict';
 
 
@@ -7743,6 +7759,7 @@ function shelfAccentRgba(alpha, fallback) {
   if (!rgb) return fallback || 'rgba(244,210,138,' + alpha + ')';
   return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + alpha + ')';
 }
+
 'use strict';
 
 
@@ -7752,6 +7769,7 @@ function rgbToHexColor(r, g, b) {
   }
   return '#' + part(r) + part(g) + part(b);
 }
+
 'use strict';
 
 function builtinLyricFontKeyPattern() {
@@ -8093,6 +8111,7 @@ function hexToRgb(hex) {
     b: parseInt(hex.slice(4, 6), 16)
   };
 }
+
 'use strict';
 
 function normalizeCustomBackgroundImage(value) {
@@ -8396,6 +8415,7 @@ function repositionFxFloatingPanels() {
     placeFxFloatingPanel(coverPop, document.getElementById('visual-tint-auto-btn') || document.getElementById('visual-tint-picker') || coverPop, { gap: 12, pad: 14 });
   }
 }
+
 'use strict';
 
 function uiAccentHex(fallback) {
@@ -9015,6 +9035,7 @@ function lyricThreeColor(css, fallback, minLum) {
   }
   return c;
 }
+
 'use strict';
 
 
@@ -9210,6 +9231,7 @@ function lyricMotionProfile() {
   profile.progressEase = clampRange(profile.progressEase / clampRange(soft, 0.35, 1.2), 0.08, 0.72);
   return profile;
 }
+
 'use strict';
 
 function normalizeStageLyricText(text) {
@@ -9787,6 +9809,7 @@ function lyricMaskStoneSeed(lines, entries, fontSize) {
   }
   return lyricStableHash(signature);
 }
+
 'use strict';
 
 
@@ -10131,6 +10154,7 @@ function drawLyricReadabilityStrokeLines(state, dx, dy) {
     ctx.globalAlpha = prevAlpha;
   }
 }
+
 'use strict';
 
 
@@ -10398,6 +10422,7 @@ function finishLyricGlowTextureBuild(state) {
 function makeLyricGlowTexture(text, fontSize, textWidth, lines, lineHeight, fitScaleX, entries, activeLine, sourceMask, rasterScale) {
   return finishLyricGlowTextureBuild(beginLyricGlowTextureBuild(text, fontSize, textWidth, lines, lineHeight, fitScaleX, entries, activeLine, sourceMask, rasterScale));
 }
+
 'use strict';
 
 
@@ -10543,6 +10568,7 @@ function makeLyricShaderMaterial(mask, pal, motionProfile) {
     transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide,
   });
 }
+
 'use strict';
 
 function lyricLineCenterWorldY(mask, entry, lineIndex, worldH) {
@@ -11295,6 +11321,7 @@ function makeLyricRowLayerGroup(payload, mask, worldW, worldH, pal, motionProfil
 function lyricQualityNowMs() {
   return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
 }
+
 'use strict';
 
 
@@ -11675,6 +11702,7 @@ function disposeLyricQualityOwner(data) {
   pruneLyricQualityQueue(lyricQualityNowMs());
   updateLyricQualityStats(lyricTextureClarityScale());
 }
+
 'use strict';
 
 
@@ -11918,6 +11946,7 @@ function consumeLyricRenderUploadFrameBudget() {
   }
   return true;
 }
+
 'use strict';
 
 
@@ -12386,6 +12415,7 @@ function updateLyricRowLayers(data, opts) {
     data.activeRowMesh = activeRow.mesh;
   }
 }
+
 'use strict';
 
 function primeLyricMeshOpacity(mesh, amount) {
@@ -12768,6 +12798,7 @@ function scheduleLyricTrackBoundaryPrewarm(data, targetLineIndex) {
     scheduleStageLyricFullTrackWarmup('lightweight-upgrade', 120);
   }
 }
+
 'use strict';
 
 
@@ -13278,6 +13309,7 @@ function stageLyricSingleLineIndexPrewarmReady(index) {
   if (!stageLyricPrewarm || stageLyricPrewarm.targetIndex !== index) return false;
   return !!(payload && stageLyricPrewarmCanServePayload(payload));
 }
+
 'use strict';
 
 
@@ -13653,6 +13685,7 @@ function updateStageLyricPersistentResidentBounds(data) {
   data.trackResidentEnd = isFinite(end) ? end : -1;
   data.trackResidentPrimaryCount = count;
 }
+
 'use strict';
 
 
@@ -14004,6 +14037,7 @@ function scheduleStageLyricResidentBuildWork(job, delay) {
   if (delay > 0) stageLyricResidentBuild.timer = setTimeout(queue, delay);
   else queue();
 }
+
 'use strict';
 
 
@@ -14357,6 +14391,7 @@ function trimStageLyricPersistentTrackRows(mesh, targetIndex, options) {
   updateStageLyricPersistentResidentBounds(data);
   return releasedEffects > 0;
 }
+
 'use strict';
 
 
@@ -14707,6 +14742,7 @@ function runStageLyricCooperativePrewarm(job) {
   }
   scheduleStageLyricCooperativeWork(job, stageLyricCooperativeNextDelay(job, chunkMs));
 }
+
 'use strict';
 
 
@@ -15983,6 +16019,7 @@ function buildStageLyricTrackEntries(index, mode) {
     lightweight: false
   };
 }
+
 'use strict';
 
 
@@ -18513,6 +18550,7 @@ async function analyzePodcastDjIntroBeats(audioUrl, token, durationSec) {
   }
   return null;
 }
+
 'use strict';
 
 
@@ -18885,6 +18923,7 @@ async function buildPodcastDjLowOnlyBeatMap(buffer, token) {
     analyzedAt: Date.now()
   };
 }
+
 'use strict';
 
 
@@ -19297,7 +19336,6 @@ function smoothPodcastDjIntroHandoff(songKey, map, token) {
   scheduleVisualApply(apply, 0, 240);
 }
 
-
 'use strict';
 
 function showBeatChip(text) {
@@ -19694,7 +19732,6 @@ async function startLocalBeatAnalysis(mode) {
   }
 }
 
-
 'use strict';
 
 function smoothBeatMapHandoff(songId, map, token, song) {
@@ -19825,6 +19862,7 @@ function triggerScheduledBeat(beat) {
   scheduledBeatPulse = Math.max(scheduledBeatPulse, pulse);
   scheduledBeatFlag = true;
 }
+
 'use strict';
 
 var pendingCoverLoad = null;
@@ -20654,6 +20692,7 @@ function sonicAudioStepBeatDetector(data, dt, settings, meta, bands) {
     kickHzEnd: activeWindow.endHz
   };
 }
+
 'use strict';
 
 
@@ -21288,6 +21327,7 @@ function suppressShelfPreviewForPlaybackSwitch() {
   if (shelfManager && shelfManager.clearSelected) shelfManager.clearSelected();
   if (typeof setFocusZone === 'function') setFocusZone(null, true);
 }
+
 'use strict';
 
 function makeShelfManager() {
@@ -22347,6 +22387,7 @@ function safeSwitchPlaylistTab(tab, reason) {
     return false;
   }
 }
+
 'use strict';
 
 function makeContentListManager() {
@@ -23725,6 +23766,7 @@ function isPlaybackSpaceKey(e) {
     !isTypingTarget(e.target)
   );
 }
+
 'use strict';
 
 // ============================================================
@@ -24436,6 +24478,7 @@ function audioOutputDeviceLabel(device, index) {
   if (!device || !device.deviceId) return '系统默认';
   return device.label || ('输出设备 ' + (index + 1));
 }
+
 'use strict';
 
 
@@ -24806,6 +24849,7 @@ function toggleAudioOutputMirrorDevice(deviceId) {
   renderAudioOutputDeviceUi();
   syncAudioOutputMirrors('mirror-toggle');
 }
+
 'use strict';
 
 
@@ -24837,6 +24881,7 @@ function setAudioInputBridgeDevice(deviceId, showNotice) {
   }
   renderAudioOutputDeviceUi();
 }
+
 'use strict';
 
 function isTypingTarget(target) {
@@ -25017,83 +25062,6 @@ function createListenSessionId() {
   listenSessionSerial += 1;
   return 'mr-' + Date.now().toString(36) + '-' + listenSessionSerial.toString(36) + '-' + Math.random().toString(36).slice(2, 12);
 }
-
-function listenSnapshotDurationMs(snapshot) {
-  var rawDuration = Math.max(0, Number(snapshot && snapshot.duration) || 0);
-  if (!rawDuration) return 0;
-  return Math.round(rawDuration > 10000 ? rawDuration : rawDuration * 1000);
-}
-
-function listenReportProvider(snapshot) {
-  var provider = String(
-    (snapshot && (snapshot.provider || snapshot.sourceKey || snapshot.resolvedPlaybackProvider)) || ''
-  ).trim().toLowerCase();
-  if (provider === 'song' || provider === 'music') provider = 'netease';
-  if (/^(netease|qq|kugou|qishui|spotify)$/.test(provider) && typeof normalizePlaybackProvider === 'function') {
-    provider = normalizePlaybackProvider(provider);
-  }
-  return provider;
-}
-
-function reportListenSession(record, session, durationMs) {
-  if (typeof fetch !== 'function' || !record || !session) return;
-  var snapshot = session.song || {};
-  var payload = {
-    sessionId: session.sessionId || '',
-    provider: listenReportProvider(snapshot),
-    song: {
-      key: snapshot.key || record.key || '',
-      id: snapshot.id || '',
-      mid: snapshot.mid || '',
-      mediaMid: snapshot.mediaMid || '',
-      hash: snapshot.hash || '',
-      mixSongId: snapshot.mixSongId || '',
-      albumId: snapshot.albumId || '',
-      providerSongId: snapshot.providerSongId || '',
-      spotifyId: snapshot.spotifyId || '',
-      uri: snapshot.uri || '',
-      type: snapshot.type || 'song',
-      sourceKey: snapshot.sourceKey || '',
-      name: snapshot.name || record.name || '未知歌曲',
-      artist: snapshot.artist || record.artist || '',
-      resolvedPlaybackProvider: snapshot.resolvedPlaybackProvider || '',
-    },
-    listenMs: record.listenMs,
-    durationMs: Math.max(0, Math.round(Number(durationMs) || 0)),
-    completed: !!record.completed,
-    context: record.context || null,
-  };
-  var body = '';
-  try {
-    body = JSON.stringify(payload);
-  } catch (e) {
-    payload.context = null;
-    try {
-      body = JSON.stringify(payload);
-    } catch (serializeError) {
-      return;
-    }
-  }
-  var controller = typeof AbortController === 'function' ? new AbortController() : null;
-  var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 3500) : null;
-  var options = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: body,
-    keepalive: true,
-  };
-  if (controller) options.signal = controller.signal;
-  try {
-    Promise.resolve(fetch('/api/listen/report', options)).then(function () {
-      if (timeoutId) clearTimeout(timeoutId);
-    }, function () {
-      if (timeoutId) clearTimeout(timeoutId);
-    });
-  } catch (e) {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-}
-
 
 function listenSessionMatchesSong(session, song) {
   if (!session || !song) return false;
@@ -25279,9 +25247,6 @@ function finalizeListenSession(completed) {
   if (!listenSession) return;
   var session = listenSession;
   tickListenSessionSnapshot(session, true);
-  var actualDurationMs = audio && isFinite(audio.duration) && audio.duration > 0
-    ? Math.round(audio.duration * 1000)
-    : listenSnapshotDurationMs(session.song);
   listenSession = null;
   var effective = completed || session.listenMs >= 45000 || session.maxProgress >= 0.5 || (!audio || !audio.duration ? session.listenMs >= 30000 : false);
   if (!effective) {
@@ -25312,7 +25277,6 @@ function finalizeListenSession(completed) {
   });
   recordListenRollupV2(record);
   saveListenStatsState();
-  reportListenSession(record, session, actualDurationMs);
   if (emptyHomeActive) renderHomeDiscover();
 }
 
@@ -26867,6 +26831,7 @@ function renderHomeDashboard() {
   renderHomeInsightDock();
   scheduleHomeDashboardRefresh();
 }
+
 'use strict';
 
 // Recommendation checks own their requests and temporary media. They never
@@ -27575,6 +27540,7 @@ function isHomeBlankDismissClick(e) {
   if (isPointNearHomeContent(x, y)) return false;
   return true;
 }
+
 'use strict';
 
 function songFromListenRecord(record) {
@@ -28337,7 +28303,6 @@ function queueAlbumDetailSongNext(i) {
   if (!song) return;
   queueDetailSongNext(song);
 }
-
 
 'use strict';
 
@@ -29503,6 +29468,7 @@ function toggleLikeSearchResult(i) { if (playlist[i]) toggleLikeSong(playlist[i]
 function toggleLikeQueueIndex(i) { if (playQueue[i]) toggleLikeSong(playQueue[i]); }
 
 function toggleLikeDetailSong(song) { toggleLikeSong(song); }
+
 'use strict';
 
 
@@ -30213,7 +30179,12 @@ function updateSearchModeTabs() {
       ? '搜索播客、电台...'
       : (searchMode === 'kugou' ? '搜索酷狗音乐...' : (searchMode === 'qq' ? '搜索 QQ 音乐...' : (searchMode === 'netease' ? '搜索网易云音乐...' : '搜索歌曲、歌手...')));
   }
-  if ($input && searchMode === 'qishui') $input.placeholder = '搜索汽水音乐…';
+  if (qishuiBtn && window.MINERADIO_QISHUI_PUBLIC_ONLY) {
+    qishuiBtn.title = '官方公开目录；可粘贴官方歌曲链接或歌曲 ID';
+    qishuiBtn.textContent = '汽水·公开';
+  }
+  if ($input && searchMode === 'qishui') $input.placeholder = window.MINERADIO_QISHUI_PUBLIC_ONLY
+    ? '筛选公开目录，或粘贴官方歌曲链接 / ID…' : '搜索汽水音乐…';
   requestAnimationFrame(updateSearchPillGlassDisplacementMap);
 }
 
@@ -30777,6 +30748,7 @@ function searchProviderIsLoggedIn(provider) {
   var st = searchProviderStatus(provider);
   return !!(st && st.loggedIn);
 }
+
 'use strict';
 
 
@@ -31135,6 +31107,7 @@ function mergeUniqueSearchSongPools(existing, incoming) {
   (incoming || []).forEach(push);
   return out;
 }
+
 'use strict';
 
 
@@ -31354,7 +31327,8 @@ function renderSongSearchResults(songs) {
   searchMusicRenderState.remoteHasMore = !!plan.hasMore;
   searchMusicRenderState.songs = playlist;
   searchMusicRenderState.visibleCount = Math.min(playlist.length, plan.visibleCount || MUSIC_SEARCH_INITIAL_VISIBLE);
-  var html = '';
+  var html = searchMode === 'qishui' && window.MINERADIO_QISHUI_PUBLIC_ONLY
+    ? '<div class="search-empty">官方公开目录 · 可按歌曲链接 / ID 导入；试听以实际片段播放。全站搜索及会员整曲需要平台接入授权。</div>' : '';
   for (var i = 0; i < searchMusicRenderState.visibleCount; i++) html += searchSongResultHtml(playlist[i], i);
   $results.innerHTML = html + searchLoadMoreSentinelHtml();
   $results.classList.add('show');
@@ -32244,6 +32218,7 @@ function bindVolumeControls() {
   updateAudioFadeUi();
   applyVolumeToAudio();
 }
+
 'use strict';
 
 // ============================================================
@@ -33079,6 +33054,7 @@ function beginSourceFallbackPlaybackInvocation(opts) {
   }
   return sourceFallbackRecoveryCanContinue(recovery);
 }
+
 'use strict';
 
 
@@ -35700,11 +35676,14 @@ try {
       }
       if (_invocationState.data.trial) {
         _invocationState.trialAccountStatus = playbackTrialAccountStatus(_invocationState.playbackProvider, _invocationState.data);
-        _invocationState.txt = playbackTrialMessage(_invocationState.trialAccountStatus);
+        var publicPreview = _invocationState.data.sourceScope === 'public_catalog';
+        _invocationState.txt = publicPreview
+          ? '汽水官方试听片段 · 完整曲库及会员整曲需要平台接入授权'
+          : playbackTrialMessage(_invocationState.trialAccountStatus);
         document.getElementById('trial-text').textContent = _invocationState.txt;
         _invocationState.trialLoginBtn = document.getElementById('trial-login-btn');
         if (_invocationState.trialLoginBtn) {
-          _invocationState.trialLoginBtn.style.display = _invocationState.trialAccountStatus.loggedIn ? 'none' : '';
+          _invocationState.trialLoginBtn.style.display = publicPreview || _invocationState.trialAccountStatus.loggedIn ? 'none' : '';
           _invocationState.trialLoginBtn.onclick = function () { openProviderLogin(_invocationState.playbackProvider); };
         }
         document.getElementById('trial-banner').classList.add('show');
@@ -37520,6 +37499,7 @@ function clearPlayerControlFocusState(reason) {
     console.warn('[ControlFocusClear]', reason || 'unknown', e);
   }
 }
+
 'use strict';
 
 
@@ -38284,6 +38264,7 @@ function cuefieldApplyGraphDuck(graph, action) {
     return true;
   } catch (_) { return false; }
 }
+
 'use strict';
 
 
@@ -40377,6 +40358,7 @@ async function refreshUserPlaylists(force) {
   if (userPlaylists.length) renderUserPlaylistsList({ animate: isPlaylistPanelVisibleForRender(), preserveScroll: true });
   if (playlistCatalogSyncState.loading) requestNextPlaylistCatalogPage('after-first-pages');
 }
+
 'use strict';
 
 
@@ -41180,6 +41162,7 @@ function renderMyPodcastCollections(opts) {
   }).join('');
   if (opts.animate) animateVisiblePanelList($pod, '.pl-card', document.getElementById('playlist-panel'));
 }
+
 'use strict';
 
 
@@ -41990,6 +41973,7 @@ function endProgressDrag(e, commit) {
     scheduleCuefieldAutoMixPrepare(trackSwitchToken, currentIdx, 900);
   }
 }
+
 'use strict';
 
 
@@ -42622,6 +42606,7 @@ function bindLyricTimingOffsetControls() {
   }, true);
   updateLyricTimingOffsetUi();
 }
+
 'use strict';
 
 
@@ -42992,6 +42977,7 @@ function captureCameraArchiveState() {
   }
   return out;
 }
+
 'use strict';
 
 
@@ -43809,6 +43795,7 @@ function bindUserFxArchiveDrop() {
     Array.prototype.forEach.call(e.dataTransfer.files, readUserFxArchiveImportFile);
   });
 }
+
 'use strict';
 
 function buildLyricColorControls() {
@@ -44292,6 +44279,7 @@ function applyCustomBackgroundCropSnapshot(snapshot) {
   updateCustomBackgroundControls();
   updateCustomBackgroundCropModalView();
 }
+
 'use strict';
 
 
@@ -44666,6 +44654,7 @@ function sonicHexRgb(hex, fallback) {
   var n = parseInt(hex, 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
+
 'use strict';
 
 
@@ -45041,6 +45030,7 @@ function currentSonicWorkshopTheme() {
   if (fx.sonicWorkshopColorMode === 'custom') return normalizeSonicWorkshopTheme(fx.sonicWorkshopTheme);
   return sonicWorkshopThemeForColor(sonicWorkshopCoverHex('primary'));
 }
+
 'use strict';
 
 
@@ -45139,6 +45129,7 @@ function setSonicWorkshopRegionColorFromPicker(id, color, silent) {
   pushSonicWorkshopColorChange(item.colorKey);
   if (!silent) showToast('\u97f3\u57df\u56de\u54cd\u00b7WE ' + item.label + ': ' + hex.toUpperCase());
 }
+
 'use strict';
 
 
@@ -45495,6 +45486,7 @@ function wallpaperEngineCaptureContentSize(runtime) {
   if (!(height > 0)) height = Number(runtime.sourceWindowVisibleHeight) || 0;
   return { width: width, height: height };
 }
+
 'use strict';
 
 
@@ -45786,6 +45778,7 @@ function stopWallpaperEngineNativeSession(sessionId) {
     return { ok: false };
   });
 }
+
 'use strict';
 
 
@@ -46106,6 +46099,7 @@ function scheduleWallpaperEngineGlassSamplerCapture(sessionId, layerToken, attem
   }, attempt === 0 ? 90 : Math.min(2400, 260 * Math.pow(1.8, attempt)));
   return true;
 }
+
 'use strict';
 
 
@@ -46479,6 +46473,7 @@ function wallpaperEngineLayerReady(kind, token) {
   updateWallpaperEngineEntryUi();
   renderWallpaperEngineLibrary();
 }
+
 'use strict';
 
 
@@ -46840,6 +46835,7 @@ function renderWallpaperEngineManualRoots() {
       '<button type="button" data-wallpaper-action="remove-root" data-root-id="' + escHtml(root.id || '') + '" title="移除此索引目录">×</button></span>';
   }).join('');
 }
+
 'use strict';
 
 
@@ -47203,6 +47199,7 @@ async function chooseWallpaperEngineProjectFile() {
     renderWallpaperEngineLibrary();
   }
 }
+
 'use strict';
 
 
@@ -47394,6 +47391,7 @@ function initializeWallpaperEngineLibrary() {
     });
   }, 120);
 }
+
 'use strict';
 
 
@@ -47744,6 +47742,7 @@ function setLyricHighlightCustom(color, silent) {
   pushDesktopLyricsState(true);
   if (!silent) showToast('高亮颜色: ' + fx.lyricHighlightColor.toUpperCase());
 }
+
 'use strict';
 
 function buildPresetGrid() {
@@ -48471,6 +48470,7 @@ function fxPanelTargetForNode(node, current) {
   if (/^fx-(intensity|depth|coverres|cineshake|shelf)/.test(inputId)) return 'motion';
   return current || 'presets';
 }
+
 'use strict';
 
 
@@ -48774,6 +48774,7 @@ function relabelFxPanelControls() {
   setFxSliderLabel('fx-scatter', '离散感');
   setFxSliderLabel('fx-bgfade', '背景压暗');
 }
+
 'use strict';
 
 function getHotkeyDefaults() {
@@ -49496,6 +49497,7 @@ function bindFxPanel() {
   updateFxInputs();
   if (typeof initFxConsoleSearchAndHistory === 'function') initFxConsoleSearchAndHistory();
 }
+
 'use strict';
 
 
@@ -49995,6 +49997,7 @@ function restartMineradioForCachePath() {
   if (!window.desktopWindow || typeof window.desktopWindow.restartApp !== 'function') return;
   window.desktopWindow.restartApp();
 }
+
 'use strict';
 
 
@@ -50370,6 +50373,7 @@ function renderFxConsoleSearchResults(query) {
   results.hidden = false;
   if (search) search.setAttribute('aria-expanded', 'true');
 }
+
 'use strict';
 
 
@@ -50705,6 +50709,7 @@ function fxConsoleRegisterHotkeySearchEntry() {
   hotkey.setAttribute('data-fx-console-history', 'off');
   fxConsoleRegistry.push(entry);
 }
+
 'use strict';
 
 
@@ -50807,6 +50812,7 @@ function initFxConsoleSearchAndHistory() {
   });
   renderFxConsoleHistory();
 }
+
 'use strict';
 
 // ============================================================
@@ -51193,6 +51199,7 @@ async function startUpdatePreviewDownload(preferredIndex) {
     showToast('无法打开更新页面');
   }
 }
+
 'use strict';
 
 
@@ -51586,6 +51593,7 @@ function resetLoginEasterEggUiForReplay() {
   setLoginEasterEggMode(true);
   bindLoginEasterEggGate();
 }
+
 'use strict';
 
 
@@ -51804,6 +51812,7 @@ function showLoginEasterEggAchievement() {
     loginEasterEggState.achievementTimer = null;
   }, 5200);
 }
+
 'use strict';
 
 // ============================================================
@@ -52302,6 +52311,7 @@ function bindTopAccountPillSorting() {
   btn.addEventListener('pointerup', finish);
   btn.addEventListener('pointercancel', finish);
 }
+
 'use strict';
 
 function readProviderVipAuditState() {
@@ -53234,6 +53244,7 @@ function handleLoginProviderExternalSwitchEvent(e, provider) {
   updateLoginProviderUi();
   scheduleLoginWorkflowEdges('external-switch');
 }
+
 'use strict';
 
 
@@ -53580,6 +53591,7 @@ function spotifyLoginStatusText(info) {
   var missing = info.oauthMissing && info.oauthMissing.length ? (' 缺少: ' + info.oauthMissing.join(', ')) : '';
   return '粘贴 Spotify Client ID，并在 Spotify Developer Dashboard 登记回调地址 http://127.0.0.1:43879/callback' + missing;
 }
+
 'use strict';
 
 
@@ -53857,6 +53869,7 @@ function openQishuiPublicSearch() {
   }
   showToast('汽水搜索已切换为匹配源');
 }
+
 'use strict';
 
 
@@ -54235,6 +54248,7 @@ async function pollQishuiQr(generation) {
     scheduleQishuiQrPoll(generation, nextDelay);
   }
 }
+
 'use strict';
 
 
@@ -54594,6 +54608,7 @@ async function checkQr() {
     }
   } catch (e) { console.warn(e); }
 }
+
 'use strict';
 
 function loggedProviderCount() {
@@ -54914,6 +54929,7 @@ async function doLogout() {
   closeUserModal();
   showToast('已退出登录');
 }
+
 'use strict';
 
 
@@ -55038,6 +55054,7 @@ function maybeRunStartupLoginGuide(source) {
     runLoginGuideParticles(function () { showLoginModal({ guided: true, source: source || 'startup' }); });
   }, source === 'splash' ? 6200 : 2600);
 }
+
 'use strict';
 
 
@@ -55258,6 +55275,7 @@ function scheduleIdleGuideFrame(delay) {
     requestAnimationFrame(drawIdleGuideFrame);
   }
 }
+
 'use strict';
 
 
@@ -55759,6 +55777,7 @@ function loadScriptOnce(src) {
     document.head.appendChild(sc);
   });
 }
+
 'use strict';
 
 // ============================================================
@@ -56120,6 +56139,7 @@ function resumeSavedGestureControl(reason) {
     return started === true;
   });
 }
+
 'use strict';
 
 
@@ -56422,6 +56442,7 @@ function processHandFrame(rawLm) {
   if (fx.gestureHandOverlay !== false) drawHandSkeleton(lm, isPinch, openness, isFist);
   else if (handCanvasCtx) handCanvasCtx.clearRect(0, 0, innerWidth, innerHeight);
 }
+
 'use strict';
 
 
@@ -56553,6 +56574,7 @@ function showGestureHUD(label, progress, detail) {
 function showGestureCursor() { }
   // stub: 兼容旧调用
 function hideGestureCursor() { }
+
 'use strict';
 
 // ============================================================
@@ -56573,6 +56595,7 @@ function scheduleMainRendererViewportRefresh(reason) {
     setTimeout(function () { refreshMainRendererViewport(reason || 'sync'); }, delay);
   });
 }
+
 'use strict';
 
 
@@ -56623,7 +56646,6 @@ function isSearchPeekRevealPending() {
 
 function scheduleSearchPeekAfterGlassReady(el) {
   if (!el) return;
-  if (key === 'pl' && on && performance.now() < (el.__dismissedUntil || 0)) return;
   var token = searchPeekRevealToken + 1;
   searchPeekRevealToken = token;
   searchPeekRevealPending = true;
@@ -56965,6 +56987,7 @@ function shouldHidePlaylistPanelOnWindowLeave(e) {
   if (isPlaylistFullscreenEdgeMode() && e.clientX <= 2 && e.clientY > playlistPanelEdgeTopGutter(window.innerHeight) && e.clientY < window.innerHeight - playlistPanelEdgeBottomGutter(window.innerHeight)) return false;
   return e.clientX <= 12 || e.clientX >= window.innerWidth - 2 || e.clientY <= 2 || e.clientY >= window.innerHeight - 2;
 }
+
 'use strict';
 
 
@@ -57193,6 +57216,7 @@ function drawMineradioSplashWebgl(elapsed) {
   gl.uniform1f(splashGlUniforms.time, elapsed);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
+
 'use strict';
 
 
@@ -57922,6 +57946,7 @@ function setDesktopIconsVisibility(desired, event) {
 function toggleDesktopIconsVisibility(event) {
   return setDesktopIconsVisibility(!desktopIconsAreVisible(desktopWallpaperRuntimeState), event);
 }
+
 'use strict';
 
 
@@ -58295,6 +58320,7 @@ function flushDesktopIconShieldReport(forceEmpty) {
     api.updateDesktopIconShields(payload);
   } catch (_) { }
 }
+
 'use strict';
 
 
@@ -59067,6 +59093,7 @@ function toggleFullscreen() {
     scheduleMainRendererViewportRefresh('document-fullscreen-exit');
   }
 }
+
 'use strict';
 
 
@@ -64192,7 +64219,6 @@ var scheduledBeatPulse = 0;
 
 var scheduledBeatFlag = false;
 
-
 'use strict';
 
 var albumBackgroundSlot = 0;
@@ -65124,7 +65150,6 @@ var sourceFallbackRecoverySerial = 0;
 var activeSourceFallbackRecovery = null;
 
 var sourceFallbackBudgetTimeoutResult = {};
-
 
 'use strict';
 
@@ -66085,7 +66110,6 @@ var CONTROL_GLASS_CHROMA_MAX_SPREAD = 22;
   };
 });
 
-
 'use strict';
 
 (function(root, factory) {
@@ -66186,7 +66210,6 @@ var CONTROL_GLASS_CHROMA_MAX_SPREAD = 22;
 
   return { createCuefieldSourceLoop: createCuefieldSourceLoop };
 });
-
 
 'use strict';
 
@@ -69443,9 +69466,11 @@ var desktopWindowRestoreTimer = 0;
   var PROFILE_SCHEMA = 2;
   var currentProvider = 'netease', phoneMode = 'sms', sessionKey = '', sessionDeadline = 0;
   var sessionManual = false, sessionInteractive = false;
-  function nativeAccountLogin(provider) { return !!window.__mineradioIOS && (provider === 'qq' || provider === 'kugou'); }
+  function qishuiPhoneLogin(provider) { return !!window.__mineradioIOS && provider === 'qishui'; }
+  function nativeAccountLogin(provider) { return !!window.__mineradioIOS && providers.indexOf(provider) >= 0 && !qishuiPhoneLogin(provider); }
   var actionEpoch = 0, pollTimer = 0, smsTimer = 0, smsNextAt = 0;
   var opened = false, busy = false, reauth = false, loginMode = 'official', ui = null;
+  function storageDescription() { return window.__mineradioIOS ? '登录信息保存在这台设备中。' : 'Cookie 保存在当前浏览器，每次请求自动携带。'; }
   var clientId = '';
 
   var health = {}, healthTimer = 0;
@@ -69603,7 +69628,7 @@ var desktopWindowRestoreTimer = 0;
   };
   async function request(path, body) {
     var controller = new AbortController();
-    var timeout = setTimeout(function () { controller.abort(); }, path === 'session' && body && body.provider === 'qishui' ? 95000 : 55000);
+    var timeout = setTimeout(function () { controller.abort(); }, path === 'show' ? 16000 : path === 'session' && body && body.provider === 'qishui' ? 95000 : 55000);
     var options = { credentials: 'same-origin', cache: 'no-store', signal: controller.signal };
     if (body) {
       options.method = 'POST';
@@ -69832,21 +69857,26 @@ var desktopWindowRestoreTimer = 0;
     ui.accountHealth.classList.toggle('expired', !!account.reauthRequired);
     ui.accountHealth.textContent = account.reauthRequired ? '登录已失效' : account.checkFailed ? '暂时无法检测，请稍后重试' : account.authState === 'valid' ? '登录正常' : '登录状态待检测';
     if (localAccount(currentProvider).cookie && !reauth) {
-      ui.description.textContent = account.reauthRequired ? '登录已失效，请点击重新登录。' : 'Cookie 保存在当前浏览器，每次请求自动携带。';
+      ui.description.textContent = account.reauthRequired ? '登录已失效，请点击重新登录。' : storageDescription();
       if (account.reauthRequired) report('账号已失效，需要重新登录。', 'error');
       else if (ui.message && ui.message.textContent === '账号已失效，需要重新登录。') report(account.checkFailed ? '暂时无法检测，请稍后重试。' : '登录正常', account.checkFailed ? '' : 'success');
     }
   }
   function renderProvider() {
     var provider = currentProvider, account = accounts[provider] || {};
-    var isPhone = provider === 'netease', loggedIn = !!account.loggedIn, manual = loginMode === 'cookie';
+    var qishuiPhone = qishuiPhoneLogin(provider);
+    var isPhone = provider === 'netease' && !window.__mineradioIOS || qishuiPhone, loggedIn = !!account.loggedIn, manual = loginMode === 'cookie';
+    if (qishuiPhone) phoneMode = 'sms';
     var nativeLogin = nativeAccountLogin(provider);
     var showSaved = !!localAccount(provider).cookie && !reauth;
     ui.root.dataset.provider = provider;
     ui.title.textContent = showSaved ? labels[provider] : ('登录' + labels[provider]);
     ui.description.textContent = showSaved
-      ? (account.reauthRequired ? '登录已失效，请点击重新登录。' : 'Cookie 保存在当前浏览器，每次请求自动携带。')
-      : (manual ? '粘贴当前平台的 Cookie，保存到当前浏览器。' : (nativeLogin ? '在平台官方窗口使用账号密码或验证码登录，授权后回到播放器。' : isPhone ? '使用手机号和短信验证码，或账号密码登录。' : '二维码会自动生成，请扫码并在手机上确认登录。'));
+      ? (account.reauthRequired ? '登录已失效，请点击重新登录。' : storageDescription())
+      : (manual ? '粘贴当前平台的 Cookie，保存到当前浏览器。' : (qishuiPhone ? '使用汽水官方短信验证码登录，登录信息保存在这台 iPad 中。' : nativeLogin ? '在平台官方窗口使用账号密码或验证码登录，授权后回到播放器。' : isPhone ? '使用手机号和短信验证码，或账号密码登录。' : '二维码会自动生成，请扫码并在手机上确认登录。'));
+    if (qishuiPhone && window.MINERADIO_QISHUI_PUBLIC_ONLY) {
+      ui.description.textContent += ' 当前播放使用官方公开音源；全站搜索和会员整曲还需平台接入授权。';
+    }
     ui.account.hidden = !showSaved;
     ui.accountActions.hidden = !showSaved;
     ui.profileRefresh.hidden = localAccount(provider).source !== 'manual';
@@ -69855,10 +69885,16 @@ var desktopWindowRestoreTimer = 0;
     ui.savedCookie.value = showSaved ? (localAccount(provider).cookie || '') : '';
     ui.phoneForm.hidden = !isPhone || manual;
     ui.qrPanel.hidden = isPhone || manual || nativeLogin;
-    ui.officialBlock.hidden = !window.__mineradioIOS || manual || provider === 'qishui' || showSaved;
+    ui.officialBlock.hidden = !window.__mineradioIOS || manual || showSaved || qishuiPhone;
+    ui.modeCookie.hidden = !!window.__mineradioIOS;
+    ui.savedCredentials.hidden = !!window.__mineradioIOS || !showSaved;
     ui.officialOpen.textContent = nativeLogin ? '账号密码 / 验证码登录' : '使用官方窗口登录或完成验证';
     ui.cookieForm.hidden = !manual;
     ui.modeOfficial.textContent = nativeLogin ? '账号登录' : isPhone ? '手机号登录' : '扫码登录';
+    ui.modePassword.hidden = qishuiPhone;
+    ui.submit.textContent = '登录' + labels[provider];
+    ui.captcha.pattern = qishuiPhone ? '[0-9]{6}' : '[0-9]{4,8}';
+    ui.captcha.maxLength = qishuiPhone ? 6 : 8;
     ui.modeOfficial.classList.toggle('active', !manual);
     ui.modeCookie.classList.toggle('active', manual);
     ui.modeOfficial.setAttribute('aria-pressed', String(!manual));
@@ -69883,7 +69919,7 @@ var desktopWindowRestoreTimer = 0;
     };
     ui.avatar.src = providerAvatarSrc(provider, account);
     ui.accountName.textContent = account.nickname || labels[provider];
-    ui.accountId.textContent = account.userId ? ('ID · ' + account.userId) : '本地已保存 Cookie';
+    ui.accountId.textContent = account.userId ? ('ID · ' + account.userId) : (window.__mineradioIOS ? '本机已保存登录信息' : '本地已保存 Cookie');
     ui.logout.textContent = '退出' + shortLabels[provider];
     if (!sessionKey) {
       ui.qrImage.hidden = true;
@@ -69900,11 +69936,11 @@ var desktopWindowRestoreTimer = 0;
     ui.password.required = phoneMode === 'password';
     renderTabs();
     setBusy(busy);
-    if (!sessionKey && !busy) report(showSaved ? (account.reauthRequired ? '账号已失效，需要重新登录。' : account.checkFailed ? '网络或平台暂时不可用，尚未确认登录失效。' : '已使用本地 Cookie，可直接查看和复制。') : '', account.reauthRequired ? 'error' : '');
+    if (!sessionKey && !busy) report(showSaved ? (account.reauthRequired ? '账号已失效，需要重新登录。' : account.checkFailed ? '网络或平台暂时不可用，尚未确认登录失效。' : window.__mineradioIOS ? '已使用本机保存的登录信息。' : '已使用本地 Cookie，可直接查看和复制。') : '', account.reauthRequired ? 'error' : '');
     autoGenerateQr();
   }
   function autoGenerateQr() {
-    if (!nativeAccountLogin(currentProvider) && opened && currentProvider !== 'netease' && loginMode === 'official' &&
+    if (!nativeAccountLogin(currentProvider) && !qishuiPhoneLogin(currentProvider) && opened && currentProvider !== 'netease' && loginMode === 'official' &&
         (!localAccount(currentProvider).cookie || reauth) && !sessionKey && !busy) generateQr();
   }
   function switchProvider(provider) {
@@ -69930,7 +69966,7 @@ var desktopWindowRestoreTimer = 0;
     if (sessionKey && Date.now() < sessionDeadline) return sessionKey;
     sessionKey = '';
     sessionDeadline = 0;
-    var result = await request('session', { provider: provider, method: provider === 'qq' ? ui.qqMethod.value : undefined });
+    var result = await request('session', { provider: provider, method: qishuiPhoneLogin(provider) ? 'sms' : provider === 'qq' ? ui.qqMethod.value : undefined });
     if (!isCurrent(epoch, provider)) return '';
     if (!result.key) throw new Error(result.message || result.msg || '未能创建登录会话，请重试。');
     rememberSession(result);
@@ -69939,8 +69975,16 @@ var desktopWindowRestoreTimer = 0;
   async function openOfficialLogin() {
     if (busy || !opened || loginMode !== 'official') return;
     var provider = currentProvider, epoch = actionEpoch;
-    if (provider === 'qishui' && (!sessionKey || !sessionInteractive)) return;
-    if (provider !== 'qishui' && (!sessionKey || !sessionManual || Date.now() >= sessionDeadline)) {
+    clearTimeout(pollTimer); pollTimer = 0;
+    if (qishuiPhoneLogin(provider)) {
+      if (!sessionKey || !sessionInteractive) return;
+      setBusy(true);
+      try { await request('show', {provider:provider,key:sessionKey}); }
+      catch (error) { if (isCurrent(epoch,provider)) report(errorMessage(error),'error'); }
+      finally { if (isCurrent(epoch,provider)) setBusy(false); }
+      return;
+    }
+    if (!sessionKey || !sessionManual || Date.now() >= sessionDeadline) {
       stopPending(); epoch = actionEpoch;
     }
     setBusy(true);
@@ -69957,7 +70001,17 @@ var desktopWindowRestoreTimer = 0;
       report('请在官方窗口输入账号、密码或验证码，完成后返回此处。');
       clearTimeout(pollTimer);
       pollTimer = setTimeout(function () { pollQr(epoch,provider); },3000);
-    } catch(error) { if (isCurrent(epoch,provider)) report(errorMessage(error),'error'); }
+    } catch(error) {
+      if (isCurrent(epoch,provider)) {
+        var code = error.result && (error.result.error || error.result.code) || '';
+        if (/missing|closed|unavailable|timeout|finished/.test(String(code)) || !error.result) {
+          // A timed-out native runtime is closed. The next explicit click must
+          // create a fresh owned session instead of reusing its unusable key.
+          sessionKey = ''; sessionDeadline = 0; sessionManual = false; sessionInteractive = false;
+        }
+        report(errorMessage(error),'error');
+      }
+    }
     finally { if (isCurrent(epoch,provider)) setBusy(false); }
   }
   async function onAuthorized(result, epoch, provider) {
@@ -69979,6 +70033,16 @@ var desktopWindowRestoreTimer = 0;
     if (typeof showToast === 'function') showToast(labels[provider] + '登录成功');
   }
   function isAuthorized(result) { return result && (result.authorized === true || result.status === 'authorized') && typeof result.cookie === 'string' && !!result.cookie; }
+  function phoneVerification(result, epoch, provider) {
+    if (!qishuiPhoneLogin(provider) || !result) return;
+    sessionInteractive = result.verification_required === true && result.interactive_window === true;
+    ui.officialBlock.hidden = !sessionInteractive;
+    ui.officialOpen.textContent = '打开安全验证窗口';
+    if (sessionInteractive) {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(function () { pollQr(epoch,provider); },3000);
+    }
+  }
   async function sendSms() {
     if (busy || Date.now() < smsNextAt) return;
     updatePhoneValidation();
@@ -69996,6 +70060,7 @@ var desktopWindowRestoreTimer = 0;
       var result = await request('sms', { provider: provider, key: key, phone: phone, countrycode: country });
       if (!isCurrent(epoch, provider)) return;
       forgetExpired(result);
+      phoneVerification(result, epoch, provider);
       var sent = result.sms_sent === true || result.status === 'sms_sent';
       report(result.message || result.msg || (sent ? '验证码已发送，请查看手机短信。' : '短信发送尚未确认，请检查安全验证提示后手动重试。'), sent ? 'success' : 'error');
     } catch (error) {
@@ -70022,6 +70087,7 @@ var desktopWindowRestoreTimer = 0;
       var result = await request('login', payload);
       if (!isCurrent(epoch, provider)) return;
       forgetExpired(result);
+      phoneVerification(result, epoch, provider);
       if (isAuthorized(result)) await onAuthorized(result, epoch, provider);
       else report(result.message || result.msg || '尚未完成登录，请检查填写内容或完成官方安全验证。', 'error');
     } catch (error) {
@@ -70097,10 +70163,12 @@ var desktopWindowRestoreTimer = 0;
   }
   async function pollQr(epoch, provider) {
     if (!isCurrent(epoch, provider) || !sessionKey) return;
+    var checkedKey = sessionKey;
     try {
-      var result = await request('check', { provider: provider, key: sessionKey });
-      if (!isCurrent(epoch, provider)) return;
+      var result = await request('check', { provider: provider, key: checkedKey });
+      if (!isCurrent(epoch, provider) || sessionKey !== checkedKey) return;
       if (isAuthorized(result)) { await onAuthorized(result, epoch, provider); return; }
+      if (qishuiPhoneLogin(provider)) phoneVerification(result, epoch, provider);
       if(provider==='qishui'&&result.remote_verification&&result.verification_required&&window.mineradioQishuiVerification){
         ui.qrPanel.hidden=true;
         mineradioQishuiVerification.open(ui.login,function(input){return request('verify',{provider:provider,key:sessionKey,...(input?{input:input}:{})});},function(){return isCurrent(epoch,provider)&&!!sessionKey;});
@@ -70118,7 +70186,7 @@ var desktopWindowRestoreTimer = 0;
         ui.generate.textContent = '重新生成二维码'; return; }
       pollTimer = setTimeout(function () { pollQr(epoch, provider); }, 3000);
     } catch (error) {
-      if (!isCurrent(epoch, provider)) return;
+      if (!isCurrent(epoch, provider) || sessionKey !== checkedKey) return;
       if(window.mineradioQishuiVerification)mineradioQishuiVerification.stop();
       report(errorMessage(error), 'error');
       sessionKey = '';
@@ -70128,7 +70196,7 @@ var desktopWindowRestoreTimer = 0;
     }
   }
   async function generateQr() {
-    if (busy || !opened || currentProvider === 'netease' || loginMode !== 'official') return;
+    if (busy || !opened || currentProvider === 'netease' || qishuiPhoneLogin(currentProvider) || loginMode !== 'official') return;
     stopPending();
     var epoch = actionEpoch, provider = currentProvider;
     setBusy(true);
@@ -70173,6 +70241,7 @@ var desktopWindowRestoreTimer = 0;
     finally { if (isCurrent(epoch, provider)) { setBusy(false); autoGenerateQr(); } }
   }
   function changePhoneMode(mode) {
+    if (qishuiPhoneLogin(currentProvider) && mode !== 'sms') return;
     if (phoneMode === mode) return;
     stopPending();
     clearFields();
@@ -70279,7 +70348,7 @@ var desktopWindowRestoreTimer = 0;
     ui.installId = makeInput('text', 'install_id（可选）'); ui.installId.maxLength = 128; ui.installId.setAttribute('aria-label', '安装 ID'); labeled(ui.qishuiFields, '安装 ID（install_id，可选）', ui.installId); ui.cookieForm.appendChild(ui.qishuiFields);
     ui.cookieSubmit = element('button', 'local-auth-primary', '保存并应用 Cookie'); ui.cookieSubmit.type = 'submit'; ui.cookieForm.appendChild(ui.cookieSubmit); ui.cookieForm.appendChild(element('p', 'local-auth-footnote', 'Cookie 只保存在当前浏览器，读取昵称与头像时随请求发送到对应平台。')); ui.login.appendChild(ui.cookieForm);
     ui.message = element('p', 'local-auth-message'); ui.message.setAttribute('role', 'status'); ui.message.setAttribute('aria-live', 'polite'); root.appendChild(ui.message);
-    root.appendChild(element('p', 'local-auth-footnote', 'Cookie 随每次平台请求发送，切换平台互不影响。'));
+    root.appendChild(element('p', 'local-auth-footnote', window.__mineradioIOS ? '各平台账号分别保存在本机，切换平台互不影响。' : 'Cookie 随每次平台请求发送，切换平台互不影响。'));
     panel.appendChild(root);
     smsTimer = setInterval(updateSmsButton, 1000);
     document.addEventListener('keydown', function (event) {

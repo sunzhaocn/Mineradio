@@ -217,7 +217,8 @@ function renderSongSearchResults(songs) {
   searchMusicRenderState.remoteHasMore = !!plan.hasMore;
   searchMusicRenderState.songs = playlist;
   searchMusicRenderState.visibleCount = Math.min(playlist.length, plan.visibleCount || MUSIC_SEARCH_INITIAL_VISIBLE);
-  var html = '';
+  var html = searchMode === 'qishui' && window.MINERADIO_QISHUI_PUBLIC_ONLY
+    ? '<div class="search-empty">官方公开目录 · 可按歌曲链接 / ID 导入；试听以实际片段播放。全站搜索及会员整曲需要平台接入授权。</div>' : '';
   for (var i = 0; i < searchMusicRenderState.visibleCount; i++) html += searchSongResultHtml(playlist[i], i);
   $results.innerHTML = html + searchLoadMoreSentinelHtml();
   $results.classList.add('show');

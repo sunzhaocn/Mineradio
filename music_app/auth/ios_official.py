@@ -16,7 +16,6 @@ from music_app.core import request_credentials
 TTL = 600
 LABELS = {'qq': 'QQ 音乐', 'kugou': '酷狗音乐'}
 QQ_KEYS = ('qqmusic_key', 'qm_keyst', 'qqmusic_key2', 'wxmusickey')
-QQ_FIELDS = frozenset(QQ_KEYS + ('qqmusic_uin', 'uin', 'wxuin', 'tmeLoginType'))
 
 
 class AuthError(Exception):
@@ -75,8 +74,10 @@ def _cookie_header(cookies, provider):
                 or type(expires) not in (int, float) or not math.isfinite(expires)
                 or expires != -1 and expires <= time.time()):
             continue
-        if provider == 'qq' and name not in QQ_FIELDS:
-            continue
+        # Keep the current flow's first-party music/SSO cookies together. In
+        # particular, wxopenid and psrf_* participate in official music OAuth.
+        # Authentication below still requires a music-specific key and a real
+        # private music read; generic QQ cookies alone never authorize a login.
         fields[name] = value.strip('"')
     header = '; '.join(name + '=' + value for name, value in fields.items())
     return header if len(header) <= 65536 else ''
@@ -94,6 +95,23 @@ def _credentials(cookie, provider):
     from music_app.providers.kugou.transport import kg_cookie_fields
     parsed = kg_cookie_fields(cookie)
     return parsed['uid'] if re.fullmatch(r'[1-9]\d{0,24}', parsed['uid']) and parsed['cloud_token'] else None
+
+
+def _kugou_music_cookie(cookie, snapshot):
+    """Join the official QR client token with this same flow's web exchange."""
+    supplied = snapshot.get('client_authorization')
+    if supplied is None:
+        return cookie
+    from mineradio.official_login import kugou_client_authorization
+    authorization = kugou_client_authorization(dict(path='/v2/get_userinfo_qrcode',
+        token=supplied.get('token'), userid=supplied.get('userid'))) if isinstance(supplied, dict) else None
+    from music_app.providers.kugou.transport import kg_cookie_fields
+    fields = kg_cookie_fields(cookie)
+    if (not authorization or authorization['userid'] != fields['uid'] or not fields['token']):
+        return ''
+    parts = dict(part.split('=', 1) for part in cookie.split('; ') if '=' in part)
+    parts.update(token=authorization['token'], t=fields['token'], userid=fields['uid'], KugooID=fields['uid'])
+    return '; '.join(name + '=' + value for name, value in parts.items())
 
 
 def create_session(platform):
@@ -125,6 +143,8 @@ def check_session(state):
     waiting = {'status': 'waiting', 'message': '请点击“打开验证窗口”，在' + LABELS[provider] +
                '官网完成登录与音乐授权；密码与验证码只在官网输入'}
     cookie = _cookie_header(snapshot.get('cookies'), provider)
+    if provider == 'kugou':
+        cookie = _kugou_music_cookie(cookie, snapshot)
     uid = _credentials(cookie, provider)
     if not uid:
         if snapshot.get('page_error'):

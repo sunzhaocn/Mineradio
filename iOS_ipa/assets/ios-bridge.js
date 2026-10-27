@@ -267,7 +267,7 @@
     });
     var area=document.getElementById('login-platform-tabs');
     if (area) { var note=document.createElement('p'); note.className='mineradio-ios-note';
-      note.textContent='首次连接汽水音乐时，请确认设备环境信息的使用，再使用自己的账号扫码授权。'; area.after(note); }
+      note.textContent='账号保存在这台设备中。汽水使用短信验证码，其他平台通过官方窗口登录。'; area.after(note); }
     report();
   });
   setInterval(report,1000);

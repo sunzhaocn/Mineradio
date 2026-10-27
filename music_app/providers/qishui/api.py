@@ -49,15 +49,31 @@ def detail_key(song_id):
     return (song_id, request_credentials.fingerprint('qishui'))
 
 
+def _ios_signer_status():
+    try:
+        from mineradio.signer import status
+        return status()
+    except (ImportError, RuntimeError):
+        # Unknown/broken configuration is not proof that configuration is absent.
+        return {'configurationAvailable': None, 'error': 'signer_status_unavailable'}
+
+
+def _public_mode(native=None):
+    """Only explicit absence of iOS SDK configuration selects public mode."""
+    from music_app import platform_runtime
+    if not platform_runtime.is_ios():
+        return False
+    native = _ios_signer_status() if native is None else native
+    return (native.get('configurationAvailable') is False and
+            native.get('error') in (None, '', 'signer_configuration_missing'))
+
+
 def local_status():
     """只报告配置是否存在，不能据此断言登录仍有效或账号有播放权限。"""
     from music_app import platform_runtime
     if platform_runtime.is_ios():
-        try:
-            from mineradio.signer import status as native_status
-            native = native_status()
-        except (ImportError, RuntimeError):
-            native = {}
+        native = _ios_signer_status()
+        public = _public_mode(native)
         try:
             configured = not load_session().get('guest', False)
         except QishuiError:
@@ -65,11 +81,17 @@ def local_status():
         available = bool(native.get('libraryAvailable'))
         ready = bool(native.get('initialized') and native.get('httpCallbackInstalled') and not native.get('error'))
         return dict(session_configured=configured, sdk_available=available, native_signing=available,
-                    native_muxer=True, node_available=False, direct_playback=ready and media_capable(),
-                    local_decryption=media_capable(), ffmpeg_available=False, available=available,
+                    native_muxer=True, node_available=False, direct_playback=public or ready and media_capable(),
+                    local_decryption=media_capable(), ffmpeg_available=False, available=public or available,
+                    sdk_configuration_available=native.get('configurationAvailable') is True,
+                    public_catalog=public, publicPlayback=public,
+                    search_scope='public_catalog' if public else 'signed_api',
+                    public_catalog_available=public,
+                    sourceScope='public_catalog' if public else 'signed_api',
                     signer_initialized=bool(native.get('initialized')),
                     signer_ready=ready,
-                    reason=('qishui_signer_missing' if not available else
+                    reason=('qishui_public_catalog' if public else
+                            'qishui_signer_missing' if not available else
                             'qishui_signer_failed' if native.get('error') else
                             'qishui_activation_required' if not ready else ''))
     status = {"session_configured": False, "sdk_available": False,
@@ -118,6 +140,15 @@ def chart_catalog():
     每个 inner_block 对应一个榜单，resources 是客户端展示的有序歌曲列表。
     这里只用第一首歌的专辑封面作缩略图；完整曲目通过 chart_tracks 单独获取。
     """
+    if _public_mode():
+        from . import public_web
+        catalog = public_web.catalog_search('', size=100)
+        songs = catalog['songs']
+        return [{'id': 'public_catalog', 'name': '汽水官方公开目录', 'category': '公开目录',
+                 'cover': next((s.get('cover') for s in songs if s.get('cover')), ''),
+                 'description': '仅展示官方歌曲页已返回的有限公开推荐，不是完整榜单或全站曲库。',
+                 'update': '', 'track_count': catalog['total'], 'scope': 'public_catalog',
+                 'sourceScope': 'public_catalog', 'publicCatalog': True, 'isChart': False}]
     result = request_json("discover", body={})
     if not isinstance(result.get("blocks"), list):
         raise QishuiError(502, "qishui_charts_invalid", "汽水榜单目录格式异常，请稍后重试")
@@ -159,6 +190,15 @@ def chart_tracks(chart_id):
     count_tracks 用于主 API 的 complete 校验，缺歌时不能声称已获取完整榜单。
     仅提取歌曲元信息，既不请求音频地址，也不获取音质或解密数据。
     """
+    if _public_mode():
+        if chart_id != 'public_catalog':
+            raise QishuiError(404, 'qishui_public_catalog_only', '公开模式仅提供官方公开目录，不提供完整榜单')
+        from . import public_web
+        catalog = public_web.catalog_search('', size=100)
+        songs = list(catalog['songs'])
+        if catalog['has_more']:
+            songs.extend(public_web.catalog_search('', page=2, size=100)['songs'])
+        return songs, catalog['total']
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", str(chart_id)):
         raise QishuiError(400, "qishui_chart_id_invalid", "汽水榜单 ID 格式不正确")
     result = request_json("charts/" + str(chart_id))
@@ -188,6 +228,11 @@ def search(keyword, size=20, page=1):
     不用综合搜索的六首预览冒充分页；最多读五批，防止一次请求无限抓取。
     上游只给 has_more，没有可靠总数，因此不编造 total。
     """
+    if _public_mode():
+        from . import public_web
+        result = public_web.catalog_search(keyword, page=page, size=size)
+        result.update(publicSearch=True, publicPlayback=True, sourceScope='public_catalog')
+        return result
     offset, end = (page - 1) * size, page * size
     if end > 100:
         raise QishuiError(400, "qishui_page_limit", "汽水单次搜索支持前 100 条，请调整 page/size")
@@ -267,6 +312,8 @@ def media_url(value):
 
 def details(song_id):
     """短缓存减少重复签名/请求；登录配置更新时自然使用新的缓存键。"""
+    if _public_mode():
+        return _public_details(song_id)
     key = detail_key(song_id)
     now = time.monotonic()
     with _LOCK:
@@ -335,6 +382,70 @@ def details(song_id):
     return item
 
 
+def _public_selection(item, selected):
+    """All public duration/previewDuration fields are seconds; *Ms are ms."""
+    access = selected.get('access', 'unknown') if selected else 'unknown'
+    duration_ms = selected.get('durationMs', 0) if selected else 0
+    preview = access == 'preview'
+    item.update(access=access, isPreview=preview, preview=preview,
+                previewDuration=duration_ms / 1000 if preview else 0,
+                previewDurationMs=duration_ms if preview else 0,
+                durationMs=duration_ms, streamDuration=duration_ms / 1000,
+                message=selected.get('message', '') if selected else item.get('error', ''))
+    if selected:
+        item.update(duration_s=duration_ms / 1000, duration=duration_ms / 1000)
+
+
+def _public_details(song_id):
+    from . import public_web
+    result = public_web.resolve(song_id)
+    item = normalize_track(result['track'])
+    lyric = result.get('lyric') or {}
+    item.update(native_lyric=lyric.get('content', ''), lrc=native_to_lrc(lyric.get('content', '')),
+                tlyric='', originalDuration_s=item['duration_s'], sourceScope='public_catalog',
+                scope='public_catalog', publicPlayback=True)
+    qualities = []
+    for audio in result.get('audio') or []:
+        if not isinstance(audio, dict):
+            continue
+        key, access = audio.get('key'), audio.get('access')
+        if (key not in ('medium', 'higher', 'highest') or
+                access not in ('preview', 'full_public') or audio.get('encrypted') is not False or
+                audio.get('codec') != 'aac' or audio.get('format') != 'm4a' or
+                not public_web.allowed_audio_url(audio.get('url')) or
+                type(audio.get('durationMs')) not in (int, float) or not 0 < audio['durationMs'] <= 86400000 or
+                type(audio.get('bitrate')) not in (int, float) or not 0 < audio['bitrate'] <= 3000000 or
+                type(audio.get('size')) not in (int, float) or not 0 < audio['size'] <= public_web.MAX_AUDIO_BYTES or
+                type(audio.get('expiresAt')) not in (int, float) or
+                not time.time() < audio['expiresAt'] <= time.time() + 7 * 86400):
+            continue
+        if access == 'full_public' and (
+                any((result['track'].get('label_info') or {}).get(k)
+                    for k in ('only_vip_playable', 'only_purchase_playable')) or
+                result['track'].get('hasUnresolvedDigitalTrack')):
+            continue
+        kind = '官方试听' if access == 'preview' else '官方公开版本'
+        message = '当前为官方试听，仅播放平台提供的试听片段' if access == 'preview' else '当前为官方公开版本'
+        duration_ms = audio['durationMs']
+        qualities.append({'key': key, 'quality': QUALITY_NAMES[key] + ' · ' + kind,
+            'kind': kind, 'message': message, 'bitrate': round(audio['bitrate'] / 1000), 'filesize': audio['size'],
+            'encode': 'aac', 'sample_rate': '', 'source_available': True, 'available': True,
+            'url': audio['url'], 'encrypted': False, 'decryption_supported': False,
+            'encryption_method': '', 'vip_required': False, 'access': access,
+            'isPreview': access == 'preview', 'preview': access == 'preview',
+            'previewDuration': duration_ms / 1000 if access == 'preview' else 0,
+            'previewDurationMs': duration_ms if access == 'preview' else 0,
+            'duration_s': duration_ms / 1000, 'duration': duration_ms / 1000,
+            'durationMs': duration_ms, 'expiresAt': audio['expiresAt'],
+            'publicPlayback': True, 'sourceScope': 'public_catalog'})
+    item.update(qualities=qualities, playback_supported=bool(qualities), encrypted=False if qualities else None,
+                error='' if qualities else '官方未返回可确认的公开音源或试听，请稍后重试或使用官方客户端')
+    if not qualities and result.get('reason'):
+        item['publicError'] = result['reason']
+    _public_selection(item, pick_quality(qualities, 'auto'))
+    return item
+
+
 def playback_source(song_id, quality):
     """内部读取；URL 和密钥不进入公开响应。"""
     if not re.fullmatch(r'[1-9]\d{0,24}', song_id) or quality not in QUALITY_NAMES:
@@ -374,6 +485,9 @@ def handle(one, flag, path, mode):
                 raise QishuiError(400, "qishui_track_id_required", "汽水播放请先通过搜索获取歌曲 ID")
             return 200, search(keyword, size, page)
         song_id = one("id", "song_id", "track_id", "url").strip()
+        if _public_mode():
+            from . import public_web
+            song_id = public_web.parse_track_id(song_id) or song_id
         if not re.fullmatch(r"[1-9]\d{0,24}", song_id):
             raise QishuiError(400, "invalid_track_id", "汽水歌曲需传入数字 id/track_id（可从搜索结果获取）")
         quality = one("quality").strip().lower() or "auto"
@@ -384,10 +498,13 @@ def handle(one, flag, path, mode):
         item['qualitiesComplete'] = not flag('playback')
         options = item["qualities"]
         selected = pick_quality(options, quality)
+        if item.get('publicPlayback'):
+            _public_selection(item, selected)
         item.update(requested_quality=quality, quality_key=selected["key"] if selected else "",
                     quality=selected["quality"] if selected else "", url=selected["url"] if selected else "",
                     bitrate=selected["bitrate"] if selected else 0,
-                    error="当前账号未返回可解密的所选音源" if selected and selected['encrypted'] and not selected['available'] else "")
+                    error="当前账号未返回可解密的所选音源" if selected and selected['encrypted'] and not selected['available']
+                    else item.get('error', '') if item.get('publicPlayback') else "")
         if path in ("/stream", "/best"):
             if quality not in ("auto", "best") and not selected:
                 raise QishuiError(404, "quality_unavailable", "该歌曲未提供所选音质")
@@ -399,9 +516,17 @@ def handle(one, flag, path, mode):
             if path == "/stream":
                 return 302, {"_location": item["url"]}
         if path == "/lyric":
-            return 200, {k: item[k] for k in ("id", "title", "author", "lrc", "tlyric", "native_lyric")}
+            keys = ("id", "title", "author", "lrc", "tlyric", "native_lyric")
+            public_keys = ('sourceScope', 'publicPlayback', 'access', 'isPreview', 'previewDuration',
+                           'previewDurationMs', 'duration_s', 'durationMs', 'originalDuration_s',
+                           'preview', 'streamDuration', 'message')
+            return 200, {k: item[k] for k in keys + public_keys if k in item}
         if path == "/qualities":
-            return 200, {k: item[k] for k in ("id", "title", "qualities", "encrypted", "playback_supported", "error")}
+            keys = ("id", "title", "qualities", "encrypted", "playback_supported", "error")
+            public_keys = ('sourceScope', 'publicPlayback', 'access', 'isPreview', 'previewDuration',
+                           'previewDurationMs', 'duration_s', 'durationMs', 'originalDuration_s', 'publicError',
+                           'preview', 'streamDuration', 'message')
+            return 200, {k: item[k] for k in keys + public_keys if k in item}
         return 200, item
     except QishuiError as exc:
         return exc.status, {"error_code": exc.status, "code": exc.code, "msg": str(exc)}

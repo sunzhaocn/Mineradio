@@ -24,7 +24,22 @@ jobs:
             exit 1
           fi
       - name: Install pinned build tooling
-        run: python -m pip install briefcase==0.3.26
+        run: python -m pip install briefcase==0.3.26 Pillow==13.0.0
+      - name: Prepare the public source checkout when necessary
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: |
+          if [ ! -f src/mineradio/bundle/source-manifest.json ]; then
+            python prepare.py
+          fi
+      - name: Check local runtime and login isolation
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: |
+          if [ -d checks ]; then
+            python -m unittest discover -s checks -p 'test_*.py' -v
+          fi
+          for check in checks/check_*.cjs; do
+            if [ -f "$check" ]; then node "$check"; fi
+          done
       - name: Select installed Xcode 26 for iPadOS 26
         shell: python
         run: |
@@ -45,9 +60,15 @@ jobs:
             ${{ env.IOS_PROJECT }}/build/mineradio/ios/xcode
             ~/Library/Developer/Xcode/DerivedData/Mineradio-*
           key: ios-native-cache-v2-${{ env.XCODE_CACHE_VERSION }}-${{ runner.arch }}-${{ hashFiles('pyproject.toml', 'iOS_ipa/pyproject.toml') }}-briefcase0326
+      - name: Warm the iPadOS 26 simulator while compiling
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: python build_simulator_smoke.py --warmup
       - name: Build arm64 IPA
         working-directory: ${{ env.IOS_PROJECT }}
         run: python build_unsigned.py
+      - name: Launch the installed app on iPadOS 26 Simulator
+        working-directory: ${{ env.IOS_PROJECT }}
+        run: python build_simulator_smoke.py
       - uses: actions/cache/save@v4
         if: always() && steps.xcode-cache.outputs.cache-hit != 'true'
         with:
@@ -62,6 +83,7 @@ jobs:
           path: |
             ${{ env.IOS_PROJECT }}/dist/*.ipa
             ${{ env.IOS_PROJECT }}/dist/build-result.json
+            ${{ env.IOS_PROJECT }}/dist/device-build.log
             ${{ env.IOS_PROJECT }}/dist/simulator-*
           if-no-files-found: error
           retention-days: 14

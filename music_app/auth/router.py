@@ -131,9 +131,17 @@ def shutdown():
 
 
 def create(platform, method=""):
-    adapter = _adapter(platform)
     method = method.strip().lower()
     from music_app.platform_runtime import is_ios
+    if is_ios() and platform == 'qishui':
+        if method not in ('', 'official', 'phone', 'sms'):
+            raise AuthError(400, 'login_method_invalid', '汽水音乐请使用短信验证码登录')
+        return create_phone('qishui')
+    if is_ios():
+        if method not in ('', 'official'):
+            raise AuthError(400, 'login_method_invalid', 'iPad 请使用官方账号密码／验证码登录窗口')
+        method = 'official'
+    adapter = _adapter(platform)
     official = method == 'official' and is_ios() and platform in ('netease','qqmusic','kugou')
     if official and platform != 'netease':
         adapter = importlib.import_module('music_app.auth.ios_official')
@@ -159,18 +167,21 @@ def create(platform, method=""):
         raise
 
 
-def create_phone():
+def create_phone(platform='netease'):
     """手机号登录创建空白会话，不发送短信、不访问扫码页面。"""
-    adapter = _adapter("netease")
+    if platform not in ('netease', 'qishui'):
+        raise AuthError(400, 'login_platform_invalid', '此平台不支持手机号登录')
+    adapter = (importlib.import_module('music_app.auth.qishui.phone') if platform == 'qishui'
+               else _adapter('netease'))
     with _lock:
         if _stopping:
             raise AuthError(503, "login_service_stopping", "登录服务正在关闭，请重新启动后再试")
         _prune(time.monotonic())
         if len(_sessions) >= MAX_SESSIONS:
             raise AuthError(429, "login_sessions_full", "登录会话过多，请稍后再试")
-    created = _invoke(adapter, "create_phone_session")
+    created = _invoke(adapter, 'create_session' if platform == 'qishui' else 'create_phone_session')
     try:
-        return _register_created("netease", "phone", adapter, created, requires_qr=False)
+        return _register_created(platform, "phone", adapter, created, requires_qr=False)
     except Exception:
         _release_state({"adapter": adapter, "state": created.get("state")})
         raise
@@ -282,6 +293,8 @@ def _accept_result(session, result):
         raise AuthError(502, "login_invalid_response", "平台返回了未知登录状态，请重新开始")
     if result["status"] == "authorized" and not result.get("cookie"):
         raise AuthError(502, "login_cookie_missing", "平台未返回完整登录凭据，请重新登录")
+    if session.get('method') == 'phone' and session['platform'] == 'qishui':
+        session['interactive_window'] = bool(result.get('interactive_window') and result.get('verification_required'))
     session["result"] = result
     if result["status"] in TERMINAL:
         _release_state(session)
@@ -289,7 +302,7 @@ def _accept_result(session, result):
     return _public(session, time.monotonic())
 
 
-def phone_action(operation, key, **fields):
+def phone_action(operation, key, *, expected_platform='netease', **fields):
     """每次只执行用户明确提交的操作，凭据不进入会话或诊断摘要。"""
     if operation not in ("send_sms", "login_phone"):
         raise AuthError(400, "login_operation_invalid", "不支持的手机号登录操作")
@@ -298,7 +311,8 @@ def phone_action(operation, key, **fields):
     with _lock:
         _prune(time.monotonic())
         session = _sessions.get(key)
-    if not session or session["platform"] != "netease" or session.get("method") != "phone":
+    if (not session or session['platform'] != expected_platform or expected_platform not in ('netease', 'qishui')
+            or session.get('method') != 'phone'):
         raise AuthError(404, "login_session_missing", "手机号登录会话不存在，请重新开始")
     with session["lock"]:
         now = time.monotonic()
@@ -327,6 +341,17 @@ def show(platform, key):
         session = _sessions.get(key)
     if not session or session["platform"] != platform:
         raise AuthError(404, "login_session_missing", "扫码会话不存在，请重新生成二维码")
+    # A private account read can hold session.lock for several seconds. Opening
+    # the already-owned official WK view is a UI operation, not another account
+    # read. Its native key/closed checks make concurrent completion safe.
+    state = session.get('state')
+    status = session['result']['status']
+    if (session.get('manual_login') and session.get('interactive_window') and state is not None
+            and status not in TERMINAL and time.monotonic() < session['expires']
+            and callable(getattr(session['adapter'], 'show_session', None))):
+        _invoke(session['adapter'], 'show_session', state)
+        return {'platform': platform, 'shown': True, 'status': status,
+                'message': '已打开本次官网登录窗口，请继续完成登录'}
     with session["lock"]:
         status = session["result"]["status"]
         if status not in TERMINAL and time.monotonic() >= session["expires"]:

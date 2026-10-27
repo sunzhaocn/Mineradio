@@ -48,7 +48,6 @@ function isSearchPeekRevealPending() {
 
 function scheduleSearchPeekAfterGlassReady(el) {
   if (!el) return;
-  if (key === 'pl' && on && performance.now() < (el.__dismissedUntil || 0)) return;
   var token = searchPeekRevealToken + 1;
   searchPeekRevealToken = token;
   searchPeekRevealPending = true;

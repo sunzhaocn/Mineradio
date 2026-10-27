@@ -8,3 +8,5 @@ __pycache__/
 *.p12
 *.mobileprovision
 .DS_Store
+native/vendor/
+qishui-sdk.local.json

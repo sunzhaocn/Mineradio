@@ -24,12 +24,12 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
         web_marker = Path(data_root) / 'runtime/cache/ios-web-loaded.json'
         web_marker.unlink(missing_ok=True)
         from music_app.api.server import create_server
-        api = create_server('127.0.0.1', api_port)
+        from .local_server import LocalHTTPServer
+        api = create_server('127.0.0.1', api_port, server_class=LocalHTTPServer)
         os.environ['MUSIC_API_BASE'] = 'http://127.0.0.1:' + str(api.server_address[1])
         try:
             from music_app.web.httpserver import Handler
             from music_app.web.templates import render_page
-            from music_app.core.httpserver import ExclusiveThreadingHTTPServer
             from music_app.paths import WEB_ROOT
             from music_app.web import constants
             constants.API = os.environ['MUSIC_API_BASE']
@@ -41,13 +41,17 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
                     if path == '/ios-bridge.js':
                         web_marker.write_text('{"webResourcesLoaded":true}', encoding='utf-8')
                     if path == '/api/app/version':
-                        return self.json(dict(version='0.1.0', platform='ios'))
+                        return self.json(dict(version='0.1.3', platform='ios',
+                                              runtime='embedded-local', remoteBackendRequired=False))
                     if path == '/api/platform/capabilities':
                         data = self.route(path, {})
                         from music_app.providers.qishui.api import local_status
                         state = local_status()
                         data['qishui'].update(available=state['available'], reason=state['reason'],
-                            signerReady=state['signer_ready'], activationRequired=not state['signer_initialized'])
+                            signerReady=state['signer_ready'], activationRequired=state.get('sdk_configuration_available', False) and not state['signer_initialized'],
+                            searchScope=state.get('search_scope', 'platform'),
+                            publicCatalogAvailable=state.get('public_catalog_available', False),
+                            phoneLoginAvailable=True, phoneLoginValidated=False)
                         return self.json(data)
                     return super()._get()
 
@@ -60,7 +64,10 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
                     if tablet:
                         page = page.replace('width=device-width, initial-scale=1.0, viewport-fit=cover',
                             'width=1100, viewport-fit=cover')
-                    bootstrap = '<script src="/ios-layout.js"></script><script src="/ios-bridge.js"></script><link rel="stylesheet" href="/ios.css">'
+                    from music_app.providers.qishui.api import local_status
+                    public_only = local_status().get('search_scope') == 'public_catalog'
+                    bootstrap = ('<script>window.MINERADIO_QISHUI_PUBLIC_ONLY=' + str(public_only).lower() + ';</script>'
+                        '<script src="/ios-layout.js"></script><script src="/ios-bridge.js"></script><link rel="stylesheet" href="/ios.css">')
                     page = page.replace('<script src="js/features/mobile/mobile-simple-mode.js">',
                         bootstrap + '<script src="js/features/mobile/mobile-simple-mode.js">', 1)
                     page = re.sub(r'<link\s+href="https://fonts.googleapis.com/[^>]+>', '', page)
@@ -72,7 +79,7 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
                     if not head:
                         self.wfile.write(raw)
 
-            web = ExclusiveThreadingHTTPServer(('127.0.0.1', web_port), IOSHandler)
+            web = LocalHTTPServer(('127.0.0.1', web_port), IOSHandler)
         except Exception:
             api.server_close()
             raise
@@ -87,5 +94,8 @@ def stop():
     with _lock:
         for server in reversed(_servers):
             server.shutdown()
+        for server in reversed(_servers):
+            server.close_connections()
+        for server in reversed(_servers):
             server.server_close()
         _servers.clear()

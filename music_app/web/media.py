@@ -1,4 +1,5 @@
 """已授权平台媒体与登记成品的流式传输，保留 Range/206。"""
+import http.client
 import os
 from pathlib import Path
 import re
@@ -24,7 +25,16 @@ class MediaRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if not allowed_media(newurl):
             raise ValueError('媒体重定向地址不在音乐平台域名内')
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected is not None:
+            # Only the initial trusted loopback request needs account headers.
+            # Every permitted redirect targets a platform CDN, including any
+            # further hops, and must not receive another platform's cookies.
+            for name, _ in redirected.header_items():
+                if name.lower() in ('x-music-credentials', 'x-music-cookie', 'x-music-session',
+                                    'cookie', 'authorization', 'proxy-authorization'):
+                    redirected.remove_header(name)
+        return redirected
 
 
 def cover_candidates(url):
@@ -188,16 +198,19 @@ class MediaMixin:
         Range/206 原样透传，进度拖动不会下载整首后再返回。客户端中断时立即停止读取。
         """
         local_audio = bool(audio and url and _web_client.local_qishui_audio_url(url) == url)
-        scopes = _web_state.AUDIO_SCOPES.get(url, set()) if audio else set()
+        with _web_state.LOCK:
+            registered = url in _web_state.AUDIO_URLS
+            scopes = tuple(_web_state.AUDIO_SCOPES.get(url, ())) if audio else ()
         account_allowed = not scopes or any(request_credentials.fingerprint(provider) == scope for provider, scope in scopes)
-        if (not allowed_media(url) and not local_audio) or (audio and (url not in _web_state.AUDIO_URLS or not account_allowed)):
+        if (not allowed_media(url) and not local_audio) or (audio and (not registered or not account_allowed)):
             return self.json(dict(error='媒体地址未获授权，请重新点击播放'), 403)
         if not audio and not video:
             return self.cached_cover(url)
         host = (urllib.parse.urlsplit(url).hostname or '').lower()
         qq_media = any(host == domain or host.endswith('.' + domain) for domain in ('qq.com', 'qlogo.cn', 'qpic.cn'))
+        douyin_media = host == 'douyinvod.com' or host.endswith('.douyinvod.com')
         headers = {'User-Agent': 'Mozilla/5.0', 'Accept-Encoding': 'identity',
-                   'Referer': 'https://y.qq.com/' if qq_media else 'https://music.163.com/'}
+                   'Referer': 'https://y.qq.com/' if qq_media else 'https://www.douyin.com/' if douyin_media else 'https://music.163.com/'}
         if video:
             from .video_cache import complete_video
             request = urllib.request.Request(url, headers=headers)
@@ -206,16 +219,23 @@ class MediaMixin:
             return self.existing_file(path, None, content_type='video/mp4')
         if self.headers.get('Range'):
             headers['Range'] = self.headers['Range']
-        if local_audio:
-            headers['X-Music-Credentials'] = request_credentials.header_value()
         request = urllib.request.Request(url, headers=headers)
+        handlers = [MediaRedirect]
+        if local_audio:
+            request.add_unredirected_header('X-Music-Credentials', request_credentials.header_value())
+            handlers.insert(0, urllib.request.ProxyHandler({}))
         try:
-            response = urllib.request.build_opener(MediaRedirect).open(request, timeout=85 if local_audio else 30)
+            response = urllib.request.build_opener(*handlers).open(request, timeout=85 if local_audio else 30)
         except urllib.error.HTTPError as error:
-            if error.code != 416 or not (local_audio or attachment):
+            if error.code != 416:
+                error.close()
                 raise
             response = error
         with response:
+            length = response.headers.get('Content-Length')
+            if length is not None and not re.fullmatch(r'[0-9]+', length.strip()):
+                raise ValueError('媒体响应长度无效')
+            expected = int(length) if length is not None else None
             self.send_response(response.status)
             for name in ('Content-Type', 'Content-Length', 'Content-Range', 'Accept-Ranges'):
                 if response.headers.get(name):
@@ -228,8 +248,14 @@ class MediaMixin:
                 self.close_connection = True
             self.send_header('Cache-Control', 'private, no-store' if local_audio or attachment else 'private, max-age=300')
             self.end_headers()
+            transferred = 0
             try:
                 while chunk := response.read(65536):
                     self.wfile.write(chunk)
-            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                    transferred += len(chunk)
+                if expected is not None and transferred != expected:
+                    self.close_connection = True
+            except (OSError, http.client.HTTPException):
+                # Status and media bytes are already on the wire. Returning a
+                # JSON error now would append another response to the stream.
                 self.close_connection = True

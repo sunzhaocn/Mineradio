@@ -38,8 +38,12 @@ def dispatch(path, q):
         data = _web_client.upstream('/search', platform=_web_constants.PROVIDERS[provider], keyword=q.get('keywords', ''),
                         size=limit, page=offset // limit + 1, simple=1)
         songs = [_web_songs.song_row(s, provider) for s in data.get('songs', [])]
-        return dict(songs=songs, provider=provider, limit=limit, offset=offset,
+        result = dict(songs=songs, provider=provider, limit=limit, offset=offset,
                     nextOffset=offset + len(songs), hasMore=data.get('has_more', len(songs) >= limit), total=data.get('total'))
+        if provider == 'qishui':
+            result.update({name: data[name] for name in (
+                'scope', 'sourceScope', 'publicSearch', 'publicPlayback', 'message') if name in data})
+        return result
     if path.endswith('/qualities') or path.endswith('/song/url') or path.endswith('/song/detail'):
         quality = q.get('quality') or q.get('level') or 'auto'
         allow_quality_fallback = path.endswith('/song/url') and str(q.get('allowQualityFallback', '')).lower() in ('1', 'true')
@@ -64,10 +68,14 @@ def dispatch(path, q):
         playable = bool(selected and selected['available'])
         message = ('汽水音源已加密，当前网页暂不能直接播放；可以查看歌词和音质信息' if encrypted and not playable else
                    '当前歌曲没有所选音质或该音质暂不可用' if not playable else '')
+        source_fields = {}
+        if provider == 'qishui':
+            source_fields = _web_songs.qishui_playback_fields(data, selected)
+            message = source_fields.pop('message', '') or message
         native = selected['key'] if selected else ''
         # level 供原作显示；nativeQuality 保留精确档位，手动切换按原生 key 发送。
         legacy = ({'flac': 'lossless', 'sq': 'lossless', '320': 'exhigh', '128': 'standard', 'aac': 'aac'}.get(native, native))
-        return dict(url=selected['url'] if playable else '', provider=provider, level=legacy,
+        result = dict(url=selected['url'] if playable else '', provider=provider, level=legacy,
                     nativeQuality=native, quality=native, requestedQuality=quality, qualities=options,
                     qualitiesComplete=not path.endswith('/song/url'),
                     br=(selected.get('bitrate') or 0) * 1000 if selected else None,
@@ -83,6 +91,10 @@ def dispatch(path, q):
                     qualityFallback=bool(playable and quality not in ('auto', 'best')
                                          and native != _web_qualities.normalize_quality(provider, quality)),
                     localExactQuality=quality not in ('auto', 'best') and not allow_quality_fallback, **labels)
+        if provider == 'qishui':
+            result.update(source_fields)
+            result['trial'] = bool(source_fields.get('isPreview') or result['trial'])
+        return result
     if path.endswith('/lyric'):
         if provider == 'kugou':
             from .lyrics import kugou_lyric

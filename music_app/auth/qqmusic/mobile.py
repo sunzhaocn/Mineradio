@@ -18,6 +18,8 @@ import urllib.error
 import urllib.request
 import uuid
 
+from .credentials import credential_fields, valid_cookie as _valid_cookie, validate_credentials
+
 MUSIC_URL = "https://u.y.qq.com/cgi-bin/musicu.fcg"
 USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36")
@@ -83,18 +85,11 @@ def _cgi(state, method, param, login_type=0, comm=None):
         raise _error("qqmusic_mobile_upstream", "QQ 音乐客户端登录服务暂时不可用，请重新扫码", "create" if method == "CreateQRCode" else "exchange") from None
 
 
-def _valid_cookie(name, value):
-    return (isinstance(name, str) and re.fullmatch(r"[!#$%&'*+.^_`|~0-9A-Za-z-]{1,128}", name)
-            and isinstance(value, (str, int)) and not isinstance(value, bool)
-            and str(value) and len(str(value)) <= 16384
-            and not any(ord(char) < 32 or ord(char) == 127 or char == ";" for char in str(value)))
-
-
 def _authorized(state, data):
-    musicid = str(data.get("musicid") or data.get("str_musicid") or "")
-    musickey = data.get("musickey")
-    if not musicid.isdigit() or int(musicid) <= 0 or not _valid_cookie("qqmusic_key", musickey):
-        raise _error("qqmusic_mobile_credentials", "已确认扫码，但 QQ 音乐未返回完整登录凭据", "exchange")
+    try:
+        musicid, musickey = validate_credentials(data.get("musicid") or data.get("str_musicid") or "", data.get("musickey"))
+    except (ValueError, TypeError, AttributeError):
+        raise _error("qqmusic_mobile_credentials", "已确认扫码，但 QQ 音乐未返回完整登录凭据", "exchange") from None
     values = {cookie.name: cookie.value for cookie in state["jar"]
               if cookie.domain.lstrip(".") in {"qq.com", "y.qq.com", "u.y.qq.com"}
               and not cookie.is_expired() and _valid_cookie(cookie.name, cookie.value)}
@@ -103,12 +98,7 @@ def _authorized(state, data):
     # MQTT qqmusic_key 是临时票据；必须由 Login 返回的 musickey 覆盖。
     values.update({"qqmusic_key": str(musickey), "qqmusic_uin": musicid, "uin": musicid,
                    "qm_keyst": str(musickey), "tmeLoginType": str(login_type)})
-    credentials = {"musicid": musicid, "musickey": str(musickey), "login_type": login_type}
-    for key in ("openid", "refresh_token", "access_token", "expired_at", "unionid", "str_musicid", "refresh_key",
-                "musickeyCreateTime", "keyExpiresIn", "needRefreshKeyIn", "encryptUin", "bindAccountType"):
-        value = data.get(key)
-        if isinstance(value, (str, int)) and not isinstance(value, bool) and value != "":
-            credentials[key] = value
+    credentials = credential_fields(data, musicid, musickey, login_type, extra=("bindAccountType",))
     from .profile import identity
     account = {"id": musicid, **identity(data)}
     result = {"status": "authorized", "message": "QQ 音乐客户端扫码登录成功",
@@ -270,6 +260,9 @@ def _prepare_qr_image(image):
     if is_ios():
         try:
             import png
+        except ImportError:
+            raise AuthError(503, "qqmusic_qr_image_dependency", "QQ 音乐客户端二维码需要安装 pypng") from None
+        try:
             reader = png.Reader(bytes=image)
             reader.preamble()
             if not (1 <= reader.width <= 1024 and 1 <= reader.height <= 1024):

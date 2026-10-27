@@ -54,11 +54,13 @@
     if (name === 'previous' && typeof prevTrack === 'function') prevTrack(true);
   }
   window.mineradioAndroidAction = action;
-  var oldAudio, artworkKey = '', artwork = '', artworkLoading = '';
+  var oldAudio, artworkKey = '', artwork = '';
+  var lastSnapshot = '', lastArtwork = null;
+  var mediaEvents = ['playing','pause','ended','loadedmetadata','seeked','error'];
   function coverFor(song) {
     var key = song && typeof songCoverSrc === 'function' ? songCoverSrc(song, 512) : song && song.cover || '';
     if (key === artworkKey) return;
-    artworkKey = key; artwork = ''; artworkLoading = key;
+    artworkKey = key; artwork = '';
     if (!key) return;
     // Blob/custom covers are only readable in the WebView. Convert once per
     // cover, at a bounded resolution, for Android's separate MediaSession.
@@ -72,11 +74,17 @@
         artwork=canvas.toDataURL('image/jpeg',.88); report();
       } catch (_) {}
     };
-    image.onerror=function(){if(artworkKey===key)artworkLoading='';};
     image.src=/^(blob:|data:|\/)/.test(key) ? key : '/api/cover?url='+encodeURIComponent(key);
   }
-  function report() {
+  function report(force) {
+    force = force === true;
     var media = window.audio;
+    if (oldAudio !== media) {
+      if (oldAudio) mediaEvents.forEach(function (event) { oldAudio.removeEventListener(event, report); });
+      oldAudio = media;
+      if (media) mediaEvents.forEach(function (event) { media.addEventListener(event, report); });
+      lastSnapshot = '';
+    }
     var song = typeof currentIdx !== 'undefined' && window.playQueue ? playQueue[currentIdx] : null;
     if (!song && typeof currentIdx !== 'undefined' && window.playlist) song = playlist[currentIdx];
     coverFor(song);
@@ -84,13 +92,21 @@
       position: media && isFinite(media.currentTime) ? media.currentTime : 0,
       duration: media && isFinite(media.duration) ? media.duration : 0,
       title: song && (song.title || song.name) || 'Mineradio',
-      artist: song && (song.artist || song.author) || '', artwork:artwork, profile: window.mineradioAndroidProfile };
-    try { MineradioAndroid.playback(JSON.stringify(data)); } catch (_) {}
-    if (media && oldAudio !== media) {
-      oldAudio = media;
-      ['playing','pause','ended','loadedmetadata','seeked','error'].forEach(function (event) { media.addEventListener(event, report); });
+      artist: song && (song.artist || song.author) || '', artworkKey:artworkKey, profile: window.mineradioAndroidProfile };
+    var snapshot = JSON.stringify(data);
+    if (!force && snapshot === lastSnapshot && artwork === lastArtwork) return;
+    // The native service extrapolates the position while playing. A heartbeat
+    // only transfers small state; artwork is sent once per change or restart.
+    if (force || artwork !== lastArtwork) data.artwork = artwork;
+    try {
+      MineradioAndroid.playback(JSON.stringify(data));
+      lastSnapshot = snapshot; lastArtwork = artwork;
+    } catch (_) {
+      // Keep the previous marker so a later event/heartbeat can retry.
     }
   }
+  // A recreated foreground service requests one complete current snapshot.
+  window.mineradioAndroidReport = report;
   setInterval(report, 1000);
   window.addEventListener('load', report);
 })();

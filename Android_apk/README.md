@@ -1,48 +1,72 @@
 # Mineradio Android
 
-1.1.9 同步平板与电脑播放器共用修复：左侧点击展开队列、面板避开控制条、DIY/控制台点击开关、MV 缓存与歌词恢复、当前/下一首音频缓存、平板旋转识别以及首次离线初始化不打断导入。当前包为 `dist/Mineradio-1.1.9.apk历史验证记录（已清理）../docs/播放器修复验收-2.3.0.md`。
+同一个 APK 支持 Android 8.0 及以上的 ARM64 手机和平板，需要可用的 Android System WebView。小于 600dp 使用手机播放器，600dp 及以上使用桌面布局与视觉效果。APK 内置 Python 3.12、本地服务、播放器和汽水签名桥；使用时不需要 Windows 电脑或云端后端。
 
-1.0.3 同步修复 Home 返回时 MV 的隐藏/暂停与舞台恢复，音乐继续播放；全浸控制栏约 1 秒后收起并加快动画。手机仍沿用简易播放器，MV 适用于平板布局。
+支持网易云、QQ、酷狗、汽水以及本地音频/歌词、播放队列、下载和系统媒体控制；平台结果受账号状态、会员权益和上游接口影响。手机使用轻量封面/歌词界面，平板保留 MV 与视觉效果。账号及主动下载的本地曲库保存在设备内，清除应用数据会删除它们。
 
-1.0.2 同步 MV 显示与性能修复：平板布局下播放栏常驻；全浸模式可从底部唤回完整控制；MV 卡片下方可选择并记住无 MV 时的默认视觉预设。视频播放时隐藏并停止旧粒子场景，避免反复时间跳转，优先使用适合背景播放的视频清晰度。手机仍使用原有简易播放器。
+## 完整汽水构建材料
 
-同一个 APK，自动按 Android 的最小屏幕宽度选择界面：手机使用简易播放器，600dp 及以上使用电脑布局及 WebGL 动效。屏幕旋转不清空播放状态；切到后台停止动效绘制并保留音乐。平板首次启动保留电脑端的“点击进入”启动页。
+构建必须提供完整 SDK 材料包，缺少材料时会明确失败。当前适配器只验证过汽水 `com.luna.music` **21.3.0 / 100213030** 的指定原始 APK。导入器检查整个 APK 的 SHA-256、ARM64 原生库、21 个 DEX 及反射调用所需类定义；不支持随意换用新版 APK。
 
-安装文件在 `dist/Mineradio-1.1.0.apk`，与 `dist/Mineradio-1.1.0-release-arm64.apk` 内容一致。安装要求为 Android 8.0 及以上、ARM64 和可用的 Android System WebView。手机和平板不需要分别下载两个包。
+从已授权 USB 调试的自有手机复制安装包（只读取程序包，不读取账号数据）：
 
-## 本地运行
+```powershell
+adb devices
+adb shell pm path com.luna.music
+# 将上一条输出中 package: 后的 base.apk 路径填入下面命令。
+New-Item -ItemType Directory -Force runtime/android-sdk-extraction
+adb pull "<手机上的 base.apk 路径>" runtime/android-sdk-extraction/base.apk
+```
 
-APK 内置 Python 3.12、本项目的 `music_app/`、播放器资源、Android 音频容器处理和汽水签名桥。服务仅绑定设备自己的 `127.0.0.1:18000/18080`，无需启动 Windows 电脑或配置云端后端。搜索和播放网络音乐仍需连接各音乐平台。
+准备已有的 SDK 专用 JSON 配置，只允许 `appId`、`license`、`clientType`、`collectMode`、`channel` 五个字段；不得使用账号 Cookie、用户令牌或整份账号配置。配置和 APK 均由构建者自行提供。本次本机恢复使用手机原包和已存在的匹配 SDK 配置，未提取手机账号数据。
 
-签名 SDK 在应用自己的 `:sdk` 私有进程中运行。原生异常不会直接终止播放器进程；请求有超时。Android 通过原 NetworkParams 接口生成签名，不运行 Windows 的 `.node历史验证记录（已清理）runtime/android-build/`。调试版的媒体测试接口、测试音频及 WebView 调试在 release 版本中不可用；release 不接受测试用界面覆盖参数。
+```powershell
+python Android_apk/extract_sdk.py `
+  --apk runtime/android-sdk-extraction/base.apk `
+  --config Android_apk/.local/sdk-config.json `
+  --output runtime/android-sdk-extraction/sdk-bundle-21.3.0
+```
+
+输出目录必须尚不存在。材料包包含 `sdk-manifest.json`、`provenance.json`、原生库与有序 DEX；保留原始文件内容和摘要。21 个 DEX 用于维持现有依赖完整性，尚未证明能够安全裁剪为更小集合。静态校验通过不等同真机登录、签名和播放验收通过。
+
+`runtime/` 和 `.local/` 已排除版本控制。第三方 APK、DEX、原生库、许可配置和签名私钥不随公开源码提交；公开仓库提供提取、校验和构建脚本。
 
 ## 构建
 
+需要 JDK 17、Android SDK Platform 36 / Build Tools 35.0.0、Python 3.12。仓库内的 Gradle Wrapper 固定为 8.14.3 并校验下载摘要，无需指定开发者的 Gradle 缓存目录。首次构建需要联网下载 Gradle、Android/Python 依赖及汽水登录页所需资源。
+
 ```powershell
-./Android_apk/build.ps1 -Variant debug
-./Android_apk/build.ps1 -Variant release
+./Android_apk/build.ps1 -Variant release `
+  -SdkBundle ./runtime/android-sdk-extraction/sdk-bundle-21.3.0
 ```
 
-构建工具需要 JDK 17、Android SDK 36 / Build Tools 35、Gradle 8.14.3、Python 3.12。[Chaquopy 官方文档](https://chaquo.com/chaquopy/doc/current/android.html)说明 Python 嵌入与 Android 依赖的配置方式。脚本使用独立 ASCII 构建目录，避免 Windows 中文路径造成 Java 工具参数编码问题。
+工具不在默认位置时，可传入 `-JavaHome`、`-Python312`、`-AndroidSdk`、`-Workspace`；也可使用 `JAVA_HOME`、`MINERADIO_BUILD_PYTHON`、`ANDROID_HOME`、`MINERADIO_ANDROID_WORKSPACE`。`MINERADIO_ANDROID_SDK_BUNDLE` 可替代 `-SdkBundle`。构建在 `%LOCALAPPDATA%/MineradioAndroidBuild/source-project` 的独立 ASCII 目录进行，不覆盖旧的 `project` 目录。脚本拒绝清理未标记为本项目生成目录的路径。
 
-已验证的本机原 SDK 来源位于项目 `runtime/android-portability/com.luna.music-21.3.0/`。构建会保留原 `.so` 和 21 份 DEX 的内容及顺序，记录各自摘要；不会复制电脑的账号配置或运行缓存。不要将此诊断闭包误认为已经裁剪过的最小 SDK 发行包。
+每次准备会替换生成的 Java、Python、网页和 SDK 资源，清除旧构建残留；网页离线缓存版本随实际内容改变。SDK 配置同时放在 Java 与 Python 各自需要的位置，打包前再次核验 SDK 摘要。完成后追加原始 DEX，执行 16KiB ZIP 对齐和签名检查。产物在 `Android_apk/dist/`，文件名包含源码中的版本号和构建类型。
 
-`.local/mineradio.keystore` 和 `.local/signing-password.txt` 是后续覆盖升级所需的本机签名资料，均已加入忽略规则。请自行备份，不能丢弃或公开。发布包在构建后追加原始 SDK DEX，再进行 16KiB ZIP 对齐和 APK v2/v3 签名验证。
+正式覆盖升级必须保留 `.local/mineradio.keystore` 和 `.local/signing-password.txt`。新项目首次签名会生成本机密钥；已有安装必须使用原密钥，不能用新密钥替代。可用 `-Unsigned` 只验证未签名构建。不要公开这些签名资料。
 
-## 1.0.1 更新
+汽水签名在应用的 `:sdk` 私有进程中运行；请求有超时，原生异常与播放器主进程隔离。release 禁用 WebView 调试、调试媒体接口及测试布局参数。本地服务只绑定设备自己的回环地址。
 
-- 手机不启动 WebGL 特效，保留封面与歌词先淡出、后淡入的轻量过渡；平板使用电脑布局与动效。移动设备不显示全屏入口，播放器增益默认 100%，保留淡入淡出。
-- 进度条跟随音频时钟逐帧前进，暂停、后台与拖动时停止相应更新。“更多”打开时隐藏原封面/歌词并保留返回状态。
-- 电脑和平板 DIY 新增 MV 预设。优先关联的官方 MV，缺少关联时仅按相同歌名、歌手查找；没有可用视频回退 emily。已真机解码网易云 MV，并在 Windows 成品解码 QQ MV。平台拒绝或未关联的视频不保证可用。
-- 下载菜单内含歌词下载。APK/EXE 选择音乐音质后，自动把音频、歌词和封面保存到本地曲库。保存记录使用本机应用的 IndexedDB，重新进入后可在“本地音乐”播放；无需账号或网络。应用数据被清理时，这份曲库也会清理。
-- 酷狗同时保留云曲库与网页播放所需的令牌；完整 Cookie 通过手动输入表单重用已实测成功。旧版漏掉的令牌需通过一次新版扫码重新取得。
-- 首页“为你挑选”在本次进入期间固定，媒体链接过期时播放会重新解析；返回 APP 时更新一次。
-- 安卓系统媒体卡片补上封面，并在闲置服务被系统回收后，于实际播放时重新启动媒体服务。
+## 后台播放与性能
 
-本次逐项记录见 历史验证记录（已清理），机器可读汇总见 历史验证记录（已清理）。
+- 播放时使用媒体前台服务和有超时、按需续期的唤醒锁。耳机拔出、暂停或停止时立即释放唤醒锁。
+- 暂停一分钟后退出前台服务，保留可继续播放的通知入口，避免闲置占用。WebView 仍由应用持有，Activity 销毁不直接丢失音频。
+- 合并服务启动请求并限制失败重试频率。服务重建时重新读取完整状态；主进程被系统回收后显示返回播放器提示，交由现有队列恢复流程处理。
+- 封面只在变化或服务请求完整快照时跨桥传递；相同的暂停状态不重复发送。元数据和通知只在需要时更新，封面解码最多保留一个等待任务。
+- 更新后的资源仅在安装版本变化或资源缺失时展开，减少普通启动时的目录遍历。移除了访问不存在接口的听歌上报；本地最近播放、歌曲/歌手统计和每日统计继续保留。
 
-## 1.0.2 酷狗 Cookie 修复
+系统“强行停止”、整进程回收和部分厂商电池策略仍可能中断播放。本实现没有将 WebView 音频迁移到独立原生播放器，因此不能承诺进程被杀后无缝继续播放；必要时由用户重新打开应用。
 
-移除读取酷狗昵称、头像时调用的自动登录接口。现在仅解析 Cookie 中已有的公开资料，不重新登录、兑换令牌或注册设备；缺少资料时保留 Cookie 和已有账号资料。同一 Cookie 再次应用时保留扫码取得的昵称、头像、原令牌及设备字段，不串用不同 Cookie 的资料。已被平台作废的旧 Cookie 不能通过本机解析恢复。
+## 检查
 
-本次成品、隔离凭据验证和限制见 历史验证记录（已清理）。
+以下检查使用合成 SDK/本机运行时，不需要真实账号或第三方安装包：
+
+```powershell
+python -X utf8 -m unittest discover -s Android_apk/checks -p "test_*.py" -v
+node --test Android_apk/checks/bridge-regressions.test.cjs checks/listen-stats.test.cjs
+```
+
+JDK 可用时同时编译并执行服务启动策略的十种生命周期检查。GitHub Actions 在 Windows 和 Linux 上执行这些检查；完整 APK 构建仍需构建者本地的 SDK 材料和签名资料。
+
+真机验收应覆盖汽水签名初始化、真实账号授权与播放、锁屏连续播放、暂停后通知继续、耳机拔出、Activity 重建和进程回收。本次已验证完整 release 构建、SDK 文件摘要及 APK 签名；按用户选择暂不安装手机，真实账号和后台行为尚未进行本轮真机验收。

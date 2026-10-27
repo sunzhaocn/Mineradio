@@ -5,6 +5,8 @@ user-authorized provider flow after validating the SDK/license combination.
 """
 from urllib.parse import urlsplit
 
+_configured = False
+
 
 class SignerError(RuntimeError):
     def __init__(self, code):
@@ -36,7 +38,10 @@ def install(config):
                                             for k in ('appId', 'license')):
         raise SignerError('signer_configuration_invalid')
     from rubicon.objc import ns_from_py
-    return _result(_native().configure(ns_from_py(config)))
+    global _configured
+    result = _result(_native().configure(ns_from_py(config)))
+    _configured = True
+    return result
 
 
 def enable():
@@ -45,12 +50,16 @@ def enable():
 
 
 def status():
+    if not _configured:
+        return dict(ok=False, libraryAvailable=False, configurationAvailable=False,
+                    initialized=False, httpCallbackInstalled=False,
+                    error='signer_configuration_missing')
     try:
         from rubicon.objc import py_from_ns
         value = py_from_ns(_native().status())
         if not isinstance(value, dict):
             raise SignerError('signer_response_invalid')
-        return value
+        return dict(value, configurationAvailable=True)
     except (SignerError, ImportError) as error:
         return dict(ok=False, libraryAvailable=False, initialized=False,
                     httpCallbackInstalled=False, error=getattr(error, 'code', 'signer_library_missing'))

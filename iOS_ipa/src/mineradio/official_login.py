@@ -23,7 +23,9 @@ PROVIDERS = {
                     'ssl.ptlogin2.qq.com', 'ssl.ptlogin2.graph.qq.com', 'open.weixin.qq.com'}),
            'suffixes': ('.y.qq.com',), 'message_hosts': ('y.qq.com',)},
     'kugou': {'home': 'https://login-user.kugou.com/login/?appid=1014', 'title': '酷狗音乐官网登录',
-              'hosts': frozenset({'kugou.com'}), 'suffixes': ('.kugou.com',),
+              'hosts': frozenset({'kugou.com', 'graph.qq.com', 'xui.ptlogin2.qq.com',
+                  'ssl.ptlogin2.qq.com', 'ssl.ptlogin2.graph.qq.com', 'open.weixin.qq.com'}),
+              'suffixes': ('.kugou.com',),
               'message_hosts': ('kugou.com',)},
 }
 QR_PATHS = frozenset({'/weapi/login/qrcode/unikey', '/weapi/login/qrcode/client/login'})
@@ -59,6 +61,45 @@ OBSERVER = r'''(()=>{
      if(route(response.url))response.clone().json().then(data=>report(response.url,response.status,data)).catch(()=>{});
    }).catch(()=>{});return task;};}
 })();'''
+
+# The official Kugou page exchanges a QR-issued client token for a different
+# KuGoo.t web cookie. Retain only the successful response's client credential
+# so that cloudlist reads use the same fresh authorization, never a web t as a
+# native token. No password, code, request body or browser storage is inspected.
+KUGOU_OBSERVER = r'''(()=>{
+ if(!location.hostname.endsWith('.kugou.com')&&location.hostname!=='kugou.com')return;
+ if(window.__mineradioKugouObserver)return;window.__mineradioKugouObserver=true;
+ function route(value){try{const u=new URL(String(value),location.href);
+   return u.protocol==='https:'&&(!u.port||u.port==='443')&&!u.username&&!u.password&&
+    ['login-user.kugou.com','loginuserretry.kugou.com'].includes(u.hostname)&&
+    u.pathname.replace(/\/$/,'')==='/v2/get_userinfo_qrcode';}catch(_){return false;}}
+ function report(url,status,data){try{
+   if(!route(url)||Number(status)!==200||!data||Number(data.status)!==1||Number(data.error_code||0)!==0)return;
+   const d=data.data;if(!d||Number(d.status)!==4||typeof d.token!=='string'||!/^\d+$/.test(String(d.userid)))return;
+   window.webkit.messageHandlers.mineradioNeteaseLogin.postMessage({kind:'kugou-client',
+    path:'/v2/get_userinfo_qrcode',token:d.token,userid:String(d.userid)});
+ }catch(_){}}
+ const open=XMLHttpRequest.prototype.open;
+ XMLHttpRequest.prototype.open=function(){this.addEventListener('loadend',function(){try{
+   if(route(this.responseURL))report(this.responseURL,this.status,
+    this.responseType==='json'?this.response:JSON.parse(this.responseText));
+ }catch(_){}},{once:true});return open.apply(this,arguments);};
+ if(typeof fetch==='function'){const original=fetch;
+  window.fetch=function(){const task=original.apply(this,arguments);task.then(r=>{
+   if(route(r.url))r.clone().json().then(d=>report(r.url,r.status,d)).catch(()=>{});
+  }).catch(()=>{});return task;};}
+})();'''
+
+
+def kugou_client_authorization(value):
+    if not isinstance(value, dict) or value.get('path') != '/v2/get_userinfo_qrcode':
+        return None
+    token, uid = value.get('token'), value.get('userid')
+    if (not isinstance(token, str) or not 1 <= len(token) <= 16384
+            or any(ord(c) < 33 or ord(c) > 126 or c == ';' for c in token)
+            or not isinstance(uid, str) or not re.fullmatch(r'[1-9][0-9]{0,24}', uid)):
+        return None
+    return dict(token=token, userid=uid)
 
 
 def allowed_navigation(value, provider='netease', *, main_frame=True):
@@ -132,14 +173,20 @@ def close(key):
         asyncio.run_coroutine_threadsafe(_host.perform('close', key), _host.loop)
 
 
-async def diagnostic(provider):
-    """Load public official pages; never enter, return or submit form values."""
+async def diagnostic(provider, *, verify_windows=False):
+    """Use a fresh public-page flow; never read or submit account/form values.
+
+    The optional window probe is only enabled here, never by the backend's
+    production facade. It exercises a blank child and our own native window.
+    """
     import secrets
     key = secrets.token_hex(16)
     if _host is None:
         return {'pageLoaded': False, 'error': 'host_missing'}
+    if _host.active and not _host.active.closed:
+        return {'pageLoaded': False, 'error': 'session_active', 'accountAuthorized': False}
     try:
-        created = await _host.perform('create', key, provider)
+        created = await _host.perform('create', key, provider, diagnostic_windows=verify_windows is True)
         flow = _host.active
         # didFinishNavigation waits for subresources too. Public login pages
         # can already be usable while an analytics/image request is pending.
@@ -158,13 +205,77 @@ async def diagnostic(provider):
             await asyncio.sleep(.25)
         loaded = (metadata.get('readyState') in ('interactive', 'complete') and metadata.get('bodyPresent')
                   and type(flow.http_status) is int and 200 <= flow.http_status < 400)
-        return dict(pageLoaded=bool(loaded and not flow.page_error), httpStatus=flow.http_status,
-                    manualLogin=created.get('manual_login') is True,
-                    page=metadata, accountAuthorized=False)
+        result = dict(pageLoaded=bool(loaded and not flow.page_error), httpStatus=flow.http_status,
+                      manualLogin=created.get('manual_login') is True,
+                      page=metadata, accountAuthorized=False)
+        if verify_windows is True:
+            result['windows'] = await _diagnostic_windows(flow) if result['pageLoaded'] else {
+                'requested': True, 'passed': False, 'error': 'page_unavailable'}
+        return result
     except Exception as error:
         return {'pageLoaded': False, 'error': type(error).__name__, 'accountAuthorized': False}
     finally:
         await _host.perform('close', key)
+
+
+async def _wait_presentation(flow, navigation, timeout=4):
+    """Wait for UIKit's animation, not just presentViewController's return."""
+    from rubicon.objc.runtime import send_message
+    presenter = _obj(flow.app.main_window._impl.native, 'rootViewController')
+    deadline = asyncio.get_running_loop().time() + timeout
+    while asyncio.get_running_loop().time() < deadline:
+        if (_obj(presenter, 'presentedViewController') == navigation
+                and not send_message(navigation, 'isBeingPresented', restype=c_bool)):
+            return True
+        await asyncio.sleep(.05)
+    return False
+
+
+async def _diagnostic_windows(flow):
+    """Return booleans only; do not inspect cookies, forms or user identity."""
+    popup = dict(opened=False, openerRetained=False, nativeChildCreated=False,
+                 rootRetained=False, childClosed=False)
+    presentation = dict(firstPresented=False, dismissalCompleted=False,
+                        reopened=False, secondDismissalCompleted=False)
+    result = dict(requested=True, passed=False, popup=popup, presentation=presentation)
+    try:
+        if not flow.diagnostic_windows or flow.popups:
+            raise RuntimeError('Window probe requires a fresh diagnostic flow')
+        root = flow.view
+        value = await flow.evaluate('''(()=>{const child=window.open('about:blank','_blank');
+          window.__mineradioWindowProbe=child;return {opened:!!child,
+          openerRetained:!!child&&child.opener===window};})()''', timeout=5)
+        if isinstance(value, dict):
+            popup['opened'] = value.get('opened') is True
+            popup['openerRetained'] = value.get('openerRetained') is True
+        popup['nativeChildCreated'] = len(flow.popups) == 1
+        popup['rootRetained'] = flow.view == root
+        await flow.evaluate('''(()=>{if(window.__mineradioWindowProbe)window.__mineradioWindowProbe.close();
+          delete window.__mineradioWindowProbe;return true;})()''', timeout=5)
+        deadline = asyncio.get_running_loop().time() + 3
+        while flow.popups and asyncio.get_running_loop().time() < deadline:
+            await asyncio.sleep(.05)
+        popup['childClosed'] = not flow.popups and flow.active_view() == root
+        await flow.show()
+        first = flow.presentation
+        presentation['firstPresented'] = first is not None and await _wait_presentation(flow, first)
+        flow.hide()
+        # Reopen immediately: show must wait for the old dismissal completion.
+        await flow.show()
+        presentation['dismissalCompleted'] = bool(flow.dismissal and flow.dismissal.done())
+        second = flow.presentation
+        presentation['reopened'] = bool(second is not None and second != first
+            and await _wait_presentation(flow, second) and flow.active_view() == root)
+        flow.hide()
+        if flow.dismissal:
+            await asyncio.wait_for(asyncio.shield(flow.dismissal), timeout=4)
+        presenter = _obj(flow.app.main_window._impl.native, 'rootViewController')
+        presentation['secondDismissalCompleted'] = bool(flow.dismissal and flow.dismissal.done()
+            and flow.presentation is None and _obj(presenter, 'presentedViewController') is None)
+        result['passed'] = all(popup.values()) and all(presentation.values())
+    except Exception as error:
+        result['error'] = type(error).__name__
+    return result
 
 
 def _obj(receiver, selector):
@@ -190,7 +301,7 @@ class _Host:
         self.thread = threading.get_ident()
         self.active = None
 
-    async def perform(self, operation, key, provider='netease'):
+    async def perform(self, operation, key, provider='netease', *, diagnostic_windows=False):
         if not re.fullmatch('[0-9a-f]{32}', key):
             raise ValueError('Invalid official login session key')
         if operation == 'create':
@@ -198,7 +309,7 @@ class _Host:
                 raise ValueError('Unsupported official music login provider')
             if self.active:
                 self.active.close()
-            flow = _Flow(self.app, key, provider)
+            flow = _Flow(self.app, key, provider, diagnostic_windows=diagnostic_windows is True)
             self.active = flow
             try:
                 result = await flow.start()
@@ -219,7 +330,7 @@ class _Host:
             self.active = None
             return True
         if operation == 'show':
-            self.active.show()
+            await self.active.show()
             return True
         if operation == 'check':
             return await self.active.check()
@@ -279,15 +390,26 @@ def _delegate():
 
         @objc_method
         def webView_createWebViewWithConfiguration_forNavigationAction_windowFeatures_(self, view, config, action, features) -> objc_id:
-            # Official OAuth commonly opens a new window. Keep that navigation
-            # in this exact isolated store rather than invoking Safari.
             flow = self.owner
             if flow and not flow.closed and not _obj(action, 'targetFrame'):
                 request = _obj(action, 'request')
                 target = _text(_obj(request, 'URL'), 'absoluteString')
-                if allowed_navigation(target, flow.provider):
-                    flow.view.loadRequest(request)
+                if target == 'about:blank' or allowed_navigation(target, flow.provider):
+                    # Return a real child WebView made with WebKit's supplied
+                    # configuration. Loading this into the root instead loses
+                    # window.opener and the music site's OAuth callback.
+                    return flow.create_popup(config)
             return None
+
+        @objc_method
+        def webViewDidClose_(self, view) -> None:
+            if self.owner:
+                self.owner.close_popup(view)
+
+        @objc_method
+        def presentationControllerDidDismiss_(self, controller) -> None:
+            if self.owner:
+                self.owner.presentation_dismissed(_obj(controller, 'presentedViewController'))
 
         @objc_method
         def userContentController_didReceiveScriptMessage_(self, controller, message) -> None:
@@ -314,6 +436,11 @@ def _receive(flow, message):
             return
         value = py_from_ns(_obj(message, 'body'))
         if not isinstance(value, dict):
+            return
+        if value.get('kind') == 'kugou-client' and flow.provider == 'kugou':
+            authorization = kugou_client_authorization(value)
+            if authorization:
+                flow.client_authorization = authorization
             return
         if value.get('kind') == 'response' and flow.provider == 'netease':
             code, path = value.get('code'), value.get('path')
@@ -343,7 +470,7 @@ def _receive(flow, message):
 
 
 class _Flow:
-    def __init__(self, app, key, provider='netease'):
+    def __init__(self, app, key, provider='netease', *, diagnostic_windows=False):
         self.app, self.key = app, key
         self.provider, self.spec = provider, PROVIDERS[provider]
         self.loaded = asyncio.get_running_loop().create_future()
@@ -354,19 +481,29 @@ class _Flow:
         self.preparing = None
         self.closed = False
         self.view = self.delegate = self.presentation = None
+        self.popups = []
+        self.visible_controller = None
+        self.dismissal = None
+        self.dismiss_callback = None
+        self.closing_presentation = None
+        self.client_authorization = None
+        self.diagnostic_windows = diagnostic_windows is True
 
     async def start(self):
         from rubicon.objc import ObjCClass
         config = ObjCClass('WKWebViewConfiguration').alloc().init()
         self.data_store = _obj(ObjCClass('WKWebsiteDataStore'), 'nonPersistentDataStore')
         config.websiteDataStore = self.data_store
-        _obj(config, 'preferences').javaScriptCanOpenWindowsAutomatically = False
+        _obj(config, 'preferences').javaScriptCanOpenWindowsAutomatically = self.diagnostic_windows
         _obj(config, 'defaultWebpagePreferences').preferredContentMode = 2
         self.delegate = _delegate().alloc().init()
         self.delegate.owner = self
         content = _obj(config, 'userContentController')
         if self.provider == 'netease':
             script = ObjCClass('WKUserScript').alloc().initWithSource(OBSERVER, injectionTime=0, forMainFrameOnly=True)
+            content.addUserScript(script)
+        elif self.provider == 'kugou':
+            script = ObjCClass('WKUserScript').alloc().initWithSource(KUGOU_OBSERVER, injectionTime=0, forMainFrameOnly=True)
             content.addUserScript(script)
         content.addScriptMessageHandler(self.delegate, name='mineradioNeteaseLogin')
         self.view = ObjCClass('WKWebView').alloc().initWithFrame((( -2000, -2000), (1100, 820)), configuration=config)
@@ -380,7 +517,7 @@ class _Flow:
         self.view.loadRequest(ObjCClass('NSURLRequest').requestWithURL(ObjCClass('NSURL').URLWithString(self.spec['home'])))
         # Creating an isolated official page is independent of whether the site
         # paints its QR canvas. A slow QR must not block password/SMS choices.
-        if self.provider == 'netease':
+        if self.provider == 'netease' and not self.diagnostic_windows:
             self.preparing = asyncio.create_task(self.prepare_login_entry())
         return {'manual_login':True, 'qr_image':'', 'qr_url':''}
 
@@ -451,10 +588,19 @@ class _Flow:
             return {'cookies':[], 'closed':True}
         snapshot = dict(self.observed, cookies=cookies, closed=False, manual_login=True,
                         page_loading=self.page_loading, page_error=self.page_error)
+        if self.provider == 'kugou' and self.client_authorization:
+            snapshot['client_authorization'] = dict(self.client_authorization)
         if self.provider != 'netease':
             return snapshot
         from music_app.auth.netease.browser import _cookie_values
         if _cookie_values(cookies).get('MUSIC_U'):
+            target = _text(_obj(self.view, 'URL'), 'absoluteString')
+            if not allowed_message_url(target, 'netease'):
+                from rubicon.objc import ObjCClass
+                self.page_loading = True
+                self.view.loadRequest(ObjCClass('NSURLRequest').requestWithURL(ObjCClass('NSURL').URLWithString(HOME)))
+                snapshot.update(account_lookup_failed=True, page_loading=True)
+                return snapshot
             try:
                 data = await self.evaluate('''(async()=>{const r=await fetch('https://music.163.com/api/nuser/account/get',
                   {credentials:'include',cache:'no-store',redirect:'error'});return r.ok?await r.json():null;})()''', timeout=12)
@@ -467,41 +613,110 @@ class _Flow:
             snapshot['cookies'] = await self.cookies()
         return snapshot
 
-    def show(self):
+    def active_view(self):
+        return self.popups[-1] if self.popups else self.view
+
+    def _mount(self, view):
+        for candidate in [self.view, *self.popups]:
+            candidate.removeFromSuperview()
+            candidate.alpha = .01
+            candidate.frame = ((-2000, -2000), (1100, 820))
+            self.container.addSubview(candidate)
+        if self.visible_controller:
+            from rubicon.objc.types import CGRect
+            from rubicon.objc.runtime import send_message
+            container = _obj(self.visible_controller, 'view')
+            view.removeFromSuperview()
+            view.alpha = 1
+            view.frame = send_message(container, 'bounds', restype=CGRect)
+            view.autoresizingMask = 18
+            container.addSubview(view)
+
+    def create_popup(self, configuration):
+        from rubicon.objc import ObjCClass
+        if len(self.popups) >= 4:
+            return None
+        configuration.websiteDataStore = self.data_store
+        child = ObjCClass('WKWebView').alloc().initWithFrame(((-2000, -2000), (1100, 820)), configuration=configuration)
+        child.inspectable = False
+        child.customUserAgent = USER_AGENT
+        child.navigationDelegate = self.delegate
+        child.UIDelegate = self.delegate
+        self.popups.append(child)
+        self._mount(child)
+        return child
+
+    def close_popup(self, view):
+        child = next((candidate for candidate in self.popups if candidate == view), None)
+        if child is None:
+            if view == self.view:
+                self.hide()
+            return
+        child.stopLoading()
+        child.navigationDelegate = child.UIDelegate = None
+        child.removeFromSuperview()
+        self.popups.remove(child)
+        if not self.closed:
+            self._mount(self.active_view())
+
+    async def show(self):
         if self.closed:
             raise RuntimeError('Official music login is closed')
-        if self.presentation:
-            return
+        if self.dismissal and not self.dismissal.done():
+            await asyncio.wait_for(asyncio.shield(self.dismissal), timeout=4)
+        if self.closed:
+            raise RuntimeError('Official music login is closed')
+        return self._present()
+
+    def _present(self):
         from rubicon.objc import ObjCClass
         from rubicon.objc.runtime import SEL
         from rubicon.objc.types import CGRect
         from rubicon.objc.runtime import send_message
         presenter = _obj(self.app.main_window._impl.native, 'rootViewController')
+        if self.presentation:
+            if _obj(presenter, 'presentedViewController') == self.presentation:
+                return
+            # UIKit may have dismissed a sheet through system/window controls.
+            # Reconcile actual native state instead of trusting a stale handle.
+            self.presentation_dismissed(self.presentation)
         if _obj(presenter, 'presentedViewController'):
             raise RuntimeError('Close the current system window first')
         controller = ObjCClass('UIViewController').alloc().init()
         controller.title = self.spec['title']
         view = _obj(controller, 'view')
-        self.view.removeFromSuperview()
-        self.view.alpha = 1
-        self.view.frame = send_message(view, 'bounds', restype=CGRect)
-        self.view.autoresizingMask = 18
-        view.addSubview(self.view)
+        self.visible_controller = controller
+        self._mount(self.active_view())
         _obj(controller, 'navigationItem').rightBarButtonItem = ObjCClass('UIBarButtonItem').alloc().initWithBarButtonSystemItem(
             0, target=self.delegate, action=SEL('closeNeteaseLogin:'))
         self.presentation = ObjCClass('UINavigationController').alloc().initWithRootViewController(controller)
         self.presentation.modalInPresentation = True
         presenter.presentViewController(self.presentation, animated=True, completion=None)
+        presentation_controller = _obj(self.presentation, 'presentationController')
+        if presentation_controller:
+            presentation_controller.delegate = self.delegate
 
     def hide(self):
-        if self.presentation:
-            self.presentation.dismissViewControllerAnimated(True, completion=None)
-            self.presentation = None
+        if not self.presentation:
+            return
+        from rubicon.objc import Block
+        navigation, self.presentation = self.presentation, None
+        self.closing_presentation = navigation
+        self.dismissal = asyncio.get_running_loop().create_future()
+        def completed() -> None:
+            self.presentation_dismissed(navigation)
+        self.dismiss_callback = Block(completed, None)
+        navigation.dismissViewControllerAnimated(True, completion=self.dismiss_callback)
+
+    def presentation_dismissed(self, navigation=None):
+        if navigation is not None and navigation not in (self.presentation, self.closing_presentation):
+            return
+        self.presentation = self.visible_controller = None
+        self.closing_presentation = None
         if not self.closed:
-            self.view.removeFromSuperview()
-            self.view.frame = ((-2000, -2000), (1100, 820))
-            self.view.alpha = 0.01
-            self.container.addSubview(self.view)
+            self._mount(self.active_view())
+        if self.dismissal and not self.dismissal.done():
+            self.dismissal.set_result(True)
 
     def close(self):
         if self.closed:
@@ -513,15 +728,20 @@ class _Flow:
             self.presentation.dismissViewControllerAnimated(False, completion=None)
             self.presentation = None
         if self.view:
-            self.view.stopLoading()
             _obj(_obj(self.view, 'configuration'), 'userContentController').removeScriptMessageHandlerForName('mineradioNeteaseLogin')
-            self.view.navigationDelegate = None
-            self.view.UIDelegate = None
-            self.view.removeFromSuperview()
+            for view in [self.view, *self.popups]:
+                view.stopLoading()
+                view.navigationDelegate = view.UIDelegate = None
+                view.removeFromSuperview()
         if not self.loaded.done():
             self.loaded.cancel()
         for future in tuple(self.pending.values()):
             if not future.done():
                 future.cancel()
         self.pending.clear()
+        if self.dismissal and not self.dismissal.done():
+            self.dismissal.set_result(True)
+        self.popups.clear()
+        self.client_authorization = None
+        self.visible_controller = None
         self.view = self.delegate = self.presentation = None

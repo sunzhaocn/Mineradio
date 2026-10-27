@@ -157,7 +157,7 @@ def _account(data):
     return result
 
 
-def _authorized(state, data):
+def _authorized(state, data, *, profile_verified=False):
     q = state["query"]
     query = {"aid": "386088", "app_name": "luna_pc", "region": "cn", "geo_region": "cn",
              "os_region": "cn", "sim_region": "", "device_id": q["device_id"],
@@ -167,12 +167,13 @@ def _authorized(state, data):
              "os_version": "Windows 10", "fp": q["device_id"]}
     account = _account(data)
     # 本次新 Cookie 的账号信息；查询失败不丢弃已获得的会话，也不编造头像/昵称。
-    try:
-        profile = _request(state, "/passport/account/info/v2/", query=state["query"])
-        if profile.get("message") == "success" and isinstance(profile.get("data"), dict):
-            account.update(_account(profile["data"]))
-    except AuthError:
-        pass
+    if not profile_verified:
+        try:
+            profile = _request(state, "/passport/account/info/v2/", query=state["query"])
+            if profile.get("message") == "success" and isinstance(profile.get("data"), dict):
+                account.update(_account(profile["data"]))
+        except AuthError:
+            pass
     values = _cookie_values(state)
     cookie = "; ".join(f"{k}={v}" for k, v in sorted(values.items()))
     credentials = {"device_id": q["device_id"], "install_id": q["install_id"],

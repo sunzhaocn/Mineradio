@@ -187,7 +187,12 @@ function updateSearchModeTabs() {
       ? '搜索播客、电台...'
       : (searchMode === 'kugou' ? '搜索酷狗音乐...' : (searchMode === 'qq' ? '搜索 QQ 音乐...' : (searchMode === 'netease' ? '搜索网易云音乐...' : '搜索歌曲、歌手...')));
   }
-  if ($input && searchMode === 'qishui') $input.placeholder = '搜索汽水音乐…';
+  if (qishuiBtn && window.MINERADIO_QISHUI_PUBLIC_ONLY) {
+    qishuiBtn.title = '官方公开目录；可粘贴官方歌曲链接或歌曲 ID';
+    qishuiBtn.textContent = '汽水·公开';
+  }
+  if ($input && searchMode === 'qishui') $input.placeholder = window.MINERADIO_QISHUI_PUBLIC_ONLY
+    ? '筛选公开目录，或粘贴官方歌曲链接 / ID…' : '搜索汽水音乐…';
   requestAnimationFrame(updateSearchPillGlassDisplacementMap);
 }
 

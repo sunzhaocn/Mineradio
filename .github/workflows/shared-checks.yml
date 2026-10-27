@@ -1,0 +1,41 @@
+name: Shared runtime regression checks
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regressions:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Install image validation dependency
+        run: python -m pip install Pillow==13.0.0
+      - name: Check Python authentication and media boundaries
+        run: python -X utf8 -m unittest discover -s checks -p 'test_*.py' -v
+      - name: Check desktop lifecycle and update retries
+        working-directory: Windows_exe
+        run: npm test
+      - name: Check Android preparation, SDK validation and service lifecycle policy
+        run: python -X utf8 -m unittest discover -s Android_apk/checks -p 'test_*.py' -v
+      - name: Check Android playback bridge and local listening statistics
+        run: node --test Android_apk/checks/bridge-regressions.test.cjs checks/listen-stats.test.cjs

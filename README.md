@@ -12,6 +12,8 @@ Windows 下载 Release 中的 Setup 安装包安装，随后从桌面或开始�
 
 Android 构建与安装见 [Android_apk/README.md](Android_apk/README.md)。iPhone/iPad 工程与个人签名说明见 [iOS_ipa/README.md](iOS_ipa/README.md)；iOS 仍有平台功能和真机验证限制。
 
+Android 保留完整汽水接入，构建前需从自有手机导入匹配的汽水 SDK 材料并校验；公开仓库提供脚本，第三方程序包与许可配置仅保存在本地。后台播放已补充服务恢复、暂停资源释放和通知状态更新；系统强行停止应用后仍需重新打开。当前未实现跨设备同步、完整 Spotify 播放、评论发布或平台听歌上报，本地听歌记录与统计继续保留。
+
 ## 源码结构
 
 | 目录 | 用途 |
@@ -24,6 +26,19 @@ Android 构建与安装见 [Android_apk/README.md](Android_apk/README.md)。iPho
 | `third_party/` | 上游版权与第三方声明 |
 | `docs/` | 接口、架构、登录和更新说明 |
 
-`web/` 与 `music_app/web/` 是客户端运行所需的共享资源。独立 Web 启动入口、登录测试页、测试脚本和历史验收产物已清理。源码依赖清单与锁文件用于重新构建；构建说明见各客户端目录。
+`web/` 与 `music_app/web/` 是客户端运行所需的共享资源。独立 Web 启动入口、登录测试页和历史验收产物已清理。源码依赖清单与锁文件用于重新构建；构建说明见各客户端目录。
+
+## 回归检查
+
+共享认证与媒体检查位于 `checks/`，使用本机测试服务与合成凭据，不登录真实账号。安装源码依赖后运行：
+
+```powershell
+python -X utf8 -m unittest discover -s checks -p "test_*.py" -v
+npm --prefix Windows_exe test
+python -X utf8 -m unittest discover -s Android_apk/checks -p "test_*.py" -v
+node --test Android_apk/checks/bridge-regressions.test.cjs checks/listen-stats.test.cjs
+```
+
+GitHub Actions 在 Windows 和 Linux 上自动执行上述检查。Android 材料检查使用合成测试文件，服务策略检查需要 JDK；完整 APK 另行使用本地 SDK 材料构建。iOS 的准备、检查与真机验证范围见 [iOS_ipa/README.md](iOS_ipa/README.md)。
 
 账号凭据保存在当前客户端本地；公开源码不包含开发机器上的 Cookie、账号配置、个人音乐或运行缓存。Windows 用户数据位于 `%APPDATA%/Mineradio`。

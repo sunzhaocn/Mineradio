@@ -87,35 +87,30 @@ def _kugou():
 
 
 def _qishui_passport():
-    from music_app.auth.qishui.common import USER_AGENT
-    query = urllib.parse.urlencode({'aid': '386088', 'app_name': 'luna_pc',
-                                   'account_sdk_source': 'web', 'language': 'zh'})
-    request = urllib.request.Request('https://api.qishui.com/passport/account/info/v2/?' + query,
-        headers={'Cookie': request_credentials.cookie('qishui'), 'User-Agent': USER_AGENT,
-                 'Referer': 'https://www.qishui.com/'})
-    with urllib.request.urlopen(request, timeout=12) as response:
-        result = json.loads(response.read(1024 * 1024))
-    if not isinstance(result, dict) or result.get('message') != 'success' or not isinstance(result.get('data'), dict):
-        raise ValueError('汽水 Cookie 账号资料暂时无法读取')
-    return result['data']
+    from music_app.providers.qishui.passport_account import verified_data
+    return verified_data()
 
 
 def _qishui_identity(data):
     from music_app.providers.qishui.comments import _url
+    from music_app.providers.qishui.passport_account import account_id, user as passport_user
     if not isinstance(data, dict):
         raise ValueError('汽水账号资料暂时无法读取')
-    user = next((data[key] for key in ('my_info', 'user', 'user_info', 'account', 'me')
-                 if isinstance(data.get(key), dict)), data)
+    user = passport_user(data)
     avatar = next((user[key] for key in ('avatar_url', 'avatar', 'url_avatar', 'medium_avatar_url',
                                        'thumb_avatar_url') if user.get(key)), '')
-    return {'id': user.get('id') or user.get('user_id') or user.get('uid'),
+    return {'id': account_id(data),
             'name': user.get('nickname') or user.get('public_name') or user.get('screen_name') or user.get('name'),
             'avatar': _url(avatar, avatar=True)}
 
 
 def _qishui():
-    # Passport identity only needs the supplied Cookie, not desktop device ids.
-    # Media/library requests keep their existing device-session requirements.
+    from music_app.platform_runtime import is_ios
+    # On iPad, Passport verification is independent of the optional music SDK.
+    # A failed read must preserve the client's saved identity rather than call
+    # a different, unconfigured native signer and obscure the original failure.
+    if is_ios():
+        return _qishui_identity(_qishui_passport())
     try:
         account = _qishui_identity(_qishui_passport())
         if account.get('avatar') and account.get('name'):

@@ -3,7 +3,6 @@ import json
 from pathlib import Path
 import sys
 import os
-import secrets
 
 sys.path.insert(0, str(Path(__file__).parent / 'vendor'))
 
@@ -19,13 +18,19 @@ class Mineradio(toga.App):
         # logging/socket pipe must raise EPIPE rather than kill the UIKit app.
         import signal
         signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-        self.main_window = toga.MainWindow(title='Mineradio')
-        self.main_window.content = toga.Label('正在启动本机音乐服务…', style=Pack(padding=24))
+        from . import presentation
+        presentation.configure_factory()
+        self.main_window = toga.MainWindow(title='')
+        self.main_window.content = toga.Box(style=Pack(background_color='#000000', flex=1))
         self.main_window.show()
         asyncio.create_task(self.start_player())
 
     async def start_player(self):
         try:
+            from . import tls
+            self.paths.cache.mkdir(parents=True, exist_ok=True)
+            (self.paths.cache / 'ios-tls-configuration.json').write_text(
+                json.dumps(tls.install()), encoding='utf-8')
             if os.environ.get('MINERADIO_IOS_DIAGNOSTIC') == '1':
                 import faulthandler
                 self.paths.cache.mkdir(parents=True, exist_ok=True)
@@ -40,12 +45,14 @@ class Mineradio(toga.App):
             passport.install(self)
             official_login.install(self)
             self.signer_config = json.loads((Path(__file__).parent / 'bundle/sdk-config.json').read_text(encoding='utf-8'))
-            signer.install(self.signer_config)
+            if self.signer_config.get('configured'):
+                signer.install(self.signer_config)
             self.qishui_enabled = False
             preference = self.paths.data / 'qishui-connection.json'
             try:
                 approved = json.loads(preference.read_text(encoding='utf-8'))
-                if approved.get('privacyAgreed') is True and isinstance(approved.get('deviceId'), str):
+                if (self.signer_config.get('configured') and approved.get('privacyAgreed') is True
+                        and isinstance(approved.get('deviceId'), str)):
                     self.signer_config.update(privacyAgreed=True, deviceId=approved['deviceId'])
                     signer.install(self.signer_config)
             except (OSError, ValueError, RuntimeError):
@@ -59,6 +66,8 @@ class Mineradio(toga.App):
                     json.dumps(dict(stage=stage, **details)), encoding='utf-8')
             media_ios.prepare_native_runtime(progress=media_progress)
             self.web = toga.WebView(style=Pack(flex=1))
+            from . import presentation
+            presentation.configure_webview(self.web._impl.native)
             self.bridge = native.MineradioWKBridge.alloc().init()
             self.bridge.owner = self
             self.web._impl.native.configuration.userContentController.addScriptMessageHandler(self.bridge, name='mineradio')
@@ -80,6 +89,8 @@ class Mineradio(toga.App):
             self.layout = layout.install(self)
             self.web.url = f'http://127.0.0.1:{self.port}/?ios_layout={profile}'
             asyncio.create_task(self.check_player_modules())
+            if os.environ.get('MINERADIO_IOS_PHONE_SECURITY_CHECK') == '1':
+                asyncio.create_task(self.check_phone_security())
             if os.environ.get('MINERADIO_IOS_DIAGNOSTIC') == '1':
                 asyncio.create_task(self.check_qishui_native())
         except Exception as error:
@@ -146,16 +157,20 @@ class Mineradio(toga.App):
 
     async def enable_qishui(self, identifier):
         try:
-            if not self.qishui_enabled:
+            if not self.signer_config.get('configured'):
+                # Public song pages use ordinary HTTPS and need no account SDK.
+                self.qishui_enabled = True
+            elif not self.qishui_enabled:
                 agreed = self.signer_config.get('privacyAgreed') is True
                 if not agreed:
                     agreed = await self.main_window.dialog(toga.ConfirmDialog('连接汽水音乐',
-                        '汽水连接组件会读取设备、网络及运动传感器信息，用于平台请求验证。音乐账号仍由你扫码授权。是否同意启用？'))
+                        '汽水连接组件会读取设备、网络及运动传感器信息，用于平台请求验证。音乐账号由你单独登录授权。是否同意启用？'))
                 if not agreed:
                     raise RuntimeError('你尚未同意启用汽水连接')
                 from . import signer
-                config = dict(self.signer_config, privacyAgreed=True,
-                              deviceId=self.signer_config.get('deviceId') or str(secrets.randbelow(8 * 10**15) + 10**15))
+                if not self.signer_config.get('deviceId'):
+                    raise RuntimeError('正式汽水接入还需平台提供合法设备注册配置；当前可使用官方公开目录。')
+                config = dict(self.signer_config, privacyAgreed=True)
                 signer.install(config)
                 state = await asyncio.wait_for(asyncio.to_thread(signer.enable), timeout=40)
                 if not state.get('initialized') or not state.get('httpCallbackInstalled'):
@@ -169,6 +184,28 @@ class Mineradio(toga.App):
             result, error = False, str(failure) if isinstance(failure, RuntimeError) else '汽水连接组件暂不可用'
         await self.reply('window.mineradioIOSReply(' + ','.join(json.dumps(value,ensure_ascii=True)
             for value in (identifier, result, error)) + ')')
+
+    async def check_phone_security(self):
+        # Build-time simulator check only: no phone, SMS request or account.
+        await asyncio.sleep(8)
+        try:
+            from . import tls
+            network = await asyncio.to_thread(tls.diagnostic)
+            (self.paths.cache / 'ios-tls-diagnostic.json').write_text(json.dumps(network), encoding='utf-8')
+            from . import passport
+            result = await passport.diagnostic()
+            if result.get('ready'):
+                from music_app.auth.qishui import phone
+                result['anonymousRequest'] = await asyncio.to_thread(phone.diagnostic)
+                result['ready'] = result['anonymousRequest'].get('ready') is True
+        except Exception as error:
+            import traceback
+            result = dict(ready=False, error=type(error).__name__,
+                          traceback=traceback.format_exc(), code=getattr(error, 'code', ''))
+        (self.paths.cache / 'ios-phone-security-diagnostic.json').write_text(
+            json.dumps(result), encoding='utf-8')
+        from . import compatibility_check
+        await compatibility_check.run(self)
 
     async def check_qishui_native(self):
         import time
