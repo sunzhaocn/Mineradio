@@ -1,6 +1,6 @@
 # Mineradio Windows
 
-当前版本：**2.3.16**。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/latest) · [更新说明](../docs/releases/v2.3.16.md)。
+当前版本：**2.3.17**。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/latest) · [更新说明](../docs/releases/v2.3.17.md)。
 
 歌曲下载菜单新增“导出视频 · 当前预设”，使用所选歌曲生成 MP4，支持 720p/1080p、30/60 帧，以及进度、收起和取消。本机音乐库可分别导出原音频、LRC 和带背景/字体/幻灯片素材的预设配置，或保存、加载、导入此曲预设。详见 [导出说明与验证范围](../docs/VISUAL_EXPORTS.md)。
 

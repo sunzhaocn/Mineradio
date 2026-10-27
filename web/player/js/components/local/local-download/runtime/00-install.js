@@ -151,6 +151,8 @@
     if (window.mineradioTrackExports) {
       var presetExport=document.createElement('button');presetExport.type='button';presetExport.className='web-download-option';presetExport.textContent='下载当前预设';
       presetExport.onclick=function(){var selected=Object.assign({},target.song);menu.close('preset');mineradioTrackExports.perform(async function(){var value=await mineradioTrackExports.forSong(selected);await mineradioTrackExports.recipe(selected,value);await mineradioTrackExports.exportPreset(selected,value);});};list.append(presetExport);
+      var presetManage=document.createElement('button');presetManage.type='button';presetManage.className='web-download-option';presetManage.textContent='此曲预设';
+      presetManage.onclick=function(event){var selected=Object.assign({},target.song),anchor=target.anchor||event.currentTarget;menu.close('preset-manage');mineradioTrackExports.openPresetMenu(selected,{currentTarget:anchor});};list.append(presetManage);
       if (window.desktopWindow && typeof desktopWindow.exportVisualVideo==='function') {
         var video=document.createElement('button');video.type='button';video.className='web-download-option';video.textContent='导出视频 · 当前预设';
         video.onclick=function(){var selected=Object.assign({},target.song);menu.close('video');mineradioTrackExports.perform(function(){return mineradioTrackExports.video(selected);});};list.append(video);
@@ -168,7 +170,7 @@
     menu.open(anchor);
     var token=++generation;
     // 歌曲和平台固定到本次打开，不会误用异步完成后正在播放的另一首歌。
-    target={provider:p,id:String(id(song)),name:song.name || song.title || '当前歌曲',song:Object.assign({},song)};
+    target={anchor:anchor,provider:p,id:String(id(song)),name:song.name || song.title || '当前歌曲',song:Object.assign({},song)};
     options=[];list.replaceChildren();
     songTitle.textContent=target.name+(song.artist ? ' · '+song.artist:'');songTitle.title=songTitle.textContent;
     source.className='tag-source '+p;source.textContent=names[p] || '本地文件';

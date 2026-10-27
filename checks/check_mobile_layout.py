@@ -142,6 +142,9 @@ def main():
                     for destination, selector in [('library', '.web-library'), ('player', '#web-player-stage')]:
                         page.locator(f'[data-mobile-destination="{destination}"]').click()
                         page.locator(selector).wait_for(state='visible')
+                        if destination == 'library':
+                            assert page.locator('[data-library-provider=local]').count() == 0
+                            assert '本机已保存的音乐' not in page.locator('#web-library-content').inner_text()
                         case['pages'][destination] = bounds(page, selector)
                         page.screenshot(path=str(args.output / f'{width}x{height}-{destination}.png'))
                     for control in ('#play-btn', '#prev-btn', '#next-btn', '#web-player-more-btn'):
@@ -208,12 +211,20 @@ def main():
                         assert page.evaluate('()=>mineradioTrackExports.recipe({localFileId:"bbbbbbbbbbbbbbbbbbbbbbbb"})') is None
                         preset_path = Path(directory) / 'round-trip.json'
                         preset_path.write_bytes(preset_bytes)
-                        page.locator('.web-local-export-actions button', has_text='预设').first.click()
+                        page.locator('[data-mobile-destination="player"]').click()
+                        if not page.locator('#web-download-btn').is_visible():
+                            page.locator('#web-player-more-btn').click()
+                        page.locator('#web-download-btn').click()
+                        page.get_by_role('button', name='此曲预设', exact=True).click()
                         with page.expect_file_chooser() as chooser:
                             page.get_by_role('button', name='导入预设文件到此曲', exact=True).click()
                         chooser.value.set_files(str(preset_path))
                         page.wait_for_function('document.getElementById("toast").textContent.includes("已导入此曲预设")')
-                        page.locator('.web-local-export-actions button', has_text='预设').first.click()
+                        page.locator('[data-mobile-destination="player"]').click()
+                        if not page.locator('#web-download-btn').is_visible():
+                            page.locator('#web-player-more-btn').click()
+                        page.locator('#web-download-btn').click()
+                        page.get_by_role('button', name='此曲预设', exact=True).click()
                         page.get_by_role('button', name='加载此曲预设', exact=True).click()
                         page.wait_for_function('fx.preset===9')
                         assert page.evaluate('localStorage.getItem("export-preservation-fixture")') == 'keep'

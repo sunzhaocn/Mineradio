@@ -254,22 +254,6 @@
     });
     menu.open(event.currentTarget);
   }
-  function row(song) {
-    var wrapper = document.createElement('div'); wrapper.className = 'web-local-export-row';
-    var title = document.createElement('strong'); title.textContent = song.name || '本地歌曲'; wrapper.append(title);
-    var actions = document.createElement('div'); actions.className = 'web-local-export-actions';
-    [['音频', function () { perform(function () { return exportAudio(song); }); }],
-     ['歌词', function () { perform(function () { return exportLyric(song); }); }],
-     ['预设', function (event) { presetMenu(song, event); }]].forEach(function (entry) {
-      var button = document.createElement('button'); button.type = 'button'; button.className = 'fx-mini-btn ghost';
-      button.textContent = entry[0]; button.onclick = entry[1]; actions.append(button);
-    });
-    if (window.desktopWindow && typeof desktopWindow.exportVisualVideo === 'function') {
-      var video = document.createElement('button'); video.type = 'button'; video.className = 'fx-mini-btn ghost'; video.textContent = '导出视频';
-      video.onclick = function () { perform(function () { return videoDialog(song); }); }; actions.append(video);
-    }
-    wrapper.append(actions); return wrapper;
-  }
   // The Windows video module supplies the isolated render/encode workflow.
   function videoDialog(song) {
     if (!window.mineradioVideoExport) throw new Error('当前设备不支持视频导出');
@@ -277,5 +261,5 @@
   }
   window.mineradioTrackExports = {capture:capture, forSong:forSong, normalize:normalize, apply:apply, recipe:recipe, save:save,
     audioFile:audioFile, lyric:lyric, exportAudio:exportAudio, exportLyric:exportLyric, exportPreset:exportPreset,
-    createLibraryRow:row, video:videoDialog, perform:perform, filename:filename};
+    openPresetMenu:presetMenu, video:videoDialog, perform:perform, filename:filename};
 })();

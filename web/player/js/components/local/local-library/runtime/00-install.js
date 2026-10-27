@@ -9,20 +9,6 @@
   var mask = document.getElementById('web-library-mask'), content = document.getElementById('web-library-content');
   var lastFingerprint = '', publishedFingerprint = '';
   var importRequests = new Map(), importProgress = {};
-  var savedTracks = [], savedMusicError = '', savedRead = 0;
-  var localShown = 20;
-  async function readSavedMusic() {
-    if (!window.browserLocalMusic) return;
-    var token = ++savedRead;
-    try {
-      var result = await browserLocalMusic.listLocalMusicLibrary();
-      if (token !== savedRead) return;
-      savedTracks = result.tracks || []; savedMusicError = '';
-      var channel = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mineradioAudio;
-      if (channel) channel.postMessage({op:'library', tracks:savedTracks.length, lyrics:savedTracks.filter(function (s) { return s.hasLyric; }).length, failed:false});
-    } catch (_) { savedMusicError = '本地曲库暂时无法读取，请重试'; }
-    render();
-  }
   function isLikedPlaylist(row) { return !!row && (row.isLiked === true || row.kind === 'liked'); }
   function element(tag, className, text) {
     var node = document.createElement(tag); if (className) node.className = className;
@@ -177,7 +163,7 @@
       window.webMobileNavigation.go('library');
       return;
     }
-    previousFocus = document.activeElement; mask.hidden = false; render(); readSavedMusic();
+    previousFocus = document.activeElement; mask.hidden = false; render();
     if (window.checkClientPlatformAssets) window.checkClientPlatformAssets(selected);
     var dialog = mask.querySelector('.web-library'); if (dialog) dialog.focus();
     refreshUserPlaylists(false);
@@ -228,18 +214,6 @@
     status.textContent = state.error || (state.loading ? '正在加载歌单…' : state.partial ? '部分平台加载失败，可刷新重试' : state.playlists.length + ' 个歌单');
     status.dataset.error = state.error || state.partial ? 'true' : 'false';
     content.replaceChildren();
-    if (selected === 'all') {
-      var local = element('section', 'web-library-platform'); local.dataset.libraryProvider = 'local';
-      local.append(element('h3', '', '本机已保存的音乐'));
-      local.append(element('p', 'web-library-note', savedMusicError || savedTracks.length + ' 首 · ' + savedTracks.filter(function (s) { return s.hasLyric; }).length + ' 首带歌词 · 可离线播放'));
-      local.append(button('打开本地歌曲', function () { openPlaylist({provider:'mineradio',id:'local:saved',name:'本机已保存的音乐'}); }, 'fx-mini-btn ghost'));
-      if (window.mineradioTrackExports) {
-        savedTracks.slice(0, localShown).forEach(function (song) { local.append(mineradioTrackExports.createLibraryRow(song)); });
-        if (savedTracks.length > localShown) local.append(button('显示更多本地歌曲', function () { localShown += 20; render(); }, 'fx-mini-btn ghost'));
-      }
-      if (!savedTracks.length && !savedMusicError) local.append(element('p', 'web-library-empty', '在歌曲下载菜单中选择音质，等待“已保存音乐”后会出现在这里。'));
-      content.append(local);
-    }
     if (manage) content.append(element('p', 'web-library-manage-hint', '可隐藏整个平台，也可只隐藏某个歌单。被隐藏的内容可随时恢复。'));
     providers.filter(function (p) { return selected === 'all' || selected === p; }).forEach(function (p) {
       var platformHidden = store.preferences.hiddenProviders.indexOf(p) >= 0;
@@ -327,8 +301,6 @@
     if (target) { event.preventDefault(); event.stopPropagation(); importPlaylist(target.getAttribute('data-web-library-import')).catch(function () {}); }
   });
   lastFingerprint = accountFingerprint();
-  window.addEventListener('mineradio:local-library-changed', readSavedMusic);
-  readSavedMusic();
   publish(true);
   store.loadCatalog(false);
 }());

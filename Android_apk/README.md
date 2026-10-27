@@ -1,6 +1,6 @@
 # Mineradio Android
 
-当前版本：**1.1.13**（versionCode `10113`）。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.16) · [更新说明](../docs/releases/v2.3.16.md)。
+当前版本：**1.1.14**（versionCode `10113`）。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.17) · [更新说明](../docs/releases/v2.3.17.md)。
 
 本机音乐库的每首歌曲提供“音频”“歌词”“预设”入口，可选择系统保存位置，单独导出原音频、LRC 及可重新加载的预设配置。预设可关联歌曲并保留背景、字体与幻灯片素材；手机轻量模式不额外启动三维渲染，视频生成目前由 Windows 完成。详见 [导出说明](../docs/VISUAL_EXPORTS.md)。
 
