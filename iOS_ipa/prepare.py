@@ -19,7 +19,7 @@ ROOT = PROJECT.parent
 APP = PROJECT / 'src/mineradio'
 VERSION = tomllib.loads((PROJECT / 'pyproject.toml').read_text(encoding='utf-8'))['tool']['briefcase']['version']
 DEPENDENCIES = ['pyaes==1.6.1', 'rsa==4.9.1', 'pyasn1==0.6.1',
-                'qrcode==8.2', 'pypng==0.20220715.0', 'paho-mqtt==2.1.0']
+                'qrcode==8.2', 'pypng==0.20220715.0', 'paho-mqtt==2.1.0', 'certifi==2026.10.23']
 ICON_SIZES = (20, 29, 40, 58, 60, 76, 80, 87, 120, 152, 167, 180, 640, 1024, 1280, 1920)
 SDK_URL = 'https://sf3-ttcdn-tos.pstatp.com/obj/volcengine/VolMetaSecML/4.3.9/VolMetaSecML.zip'
 SDK_SHA256 = '06fe7eeaef17a76f61c6480299f22a9fa651770992ffda49ee970efaa513c1d5'

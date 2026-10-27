@@ -341,6 +341,17 @@ def show(platform, key):
         session = _sessions.get(key)
     if not session or session["platform"] != platform:
         raise AuthError(404, "login_session_missing", "扫码会话不存在，请重新生成二维码")
+    # A private account read can hold session.lock for several seconds. Opening
+    # the already-owned official WK view is a UI operation, not another account
+    # read. Its native key/closed checks make concurrent completion safe.
+    state = session.get('state')
+    status = session['result']['status']
+    if (session.get('manual_login') and session.get('interactive_window') and state is not None
+            and status not in TERMINAL and time.monotonic() < session['expires']
+            and callable(getattr(session['adapter'], 'show_session', None))):
+        _invoke(session['adapter'], 'show_session', state)
+        return {'platform': platform, 'shown': True, 'status': status,
+                'message': '已打开本次官网登录窗口，请继续完成登录'}
     with session["lock"]:
         status = session["result"]["status"]
         if status not in TERMINAL and time.monotonic() >= session["expires"]:

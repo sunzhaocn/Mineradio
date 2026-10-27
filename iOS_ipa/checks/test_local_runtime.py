@@ -98,7 +98,11 @@ with tempfile.TemporaryDirectory() as directory:
         assert version['remoteBackendRequired'] is False
         with urllib.request.urlopen(base + '/api/platform/capabilities') as response:
             caps = json.load(response)
-        assert caps['qishui']['available'] is False
+        assert caps['qishui']['available'] is True
+        assert caps['qishui']['searchScope'] == 'public_catalog'
+        assert caps['qishui']['signerReady'] is False
+        assert caps['qishui']['activationRequired'] is False
+        assert 'window.MINERADIO_QISHUI_PUBLIC_ONLY=true' in page
         assert caps['qishui']['phoneLoginAvailable'] is True
         assert caps['qishui']['phoneLoginValidated'] is False
         # Keep an HTTP/1.1 connection open: shutdown must wake and join its

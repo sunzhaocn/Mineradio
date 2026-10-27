@@ -139,6 +139,42 @@ def main():
         report['phoneSecurity'] = phone_security
         if not isinstance(phone_security, dict) or phone_security.get('ready') is not True:
             raise RuntimeError('The installed simulator did not pass the account-free phone security check')
+        tls_paths = list(data.rglob('ios-tls-diagnostic.json'))
+        network = next((json.loads(path.read_text(encoding='utf-8')) for path in tls_paths
+                        if path.stat().st_mtime >= launch_started), None)
+        report['https'] = network
+        if not network or network.get('ready') is not True:
+            raise RuntimeError('The embedded Python runtime could not verify HTTPS to every music platform')
+        compatibility = None
+        compatibility_deadline = time.monotonic() + 300
+        while time.monotonic() < compatibility_deadline:
+            for path in data.rglob('ios-compatibility-diagnostic.json'):
+                try:
+                    if path.stat().st_mtime >= launch_started:
+                        compatibility = json.loads(path.read_text(encoding='utf-8'))
+                except (OSError, ValueError):
+                    continue
+            if compatibility and (compatibility.get('complete') or compatibility.get('error')):
+                break
+            time.sleep(.5)
+        report['compatibility'] = compatibility
+        if not compatibility or compatibility.get('complete') is not True or compatibility.get('error'):
+            raise RuntimeError('The installed app did not finish native login and public playback checks')
+        for provider in ('netease', 'qq', 'kugou'):
+            value = compatibility.get('officialLogin', {}).get(provider, {})
+            windows = value.get('windows', {})
+            popup_keys = ('opened', 'openerRetained', 'nativeChildCreated', 'rootRetained', 'childClosed')
+            presentation_keys = ('firstPresented', 'dismissalCompleted', 'reopened', 'secondDismissalCompleted')
+            if (value.get('error') or value.get('pageLoaded') is not True or value.get('manualLogin') is not True
+                    or value.get('accountAuthorized') is not False or windows.get('requested') is not True
+                    or windows.get('passed') is not True
+                    or not all(windows.get('popup', {}).get(key) is True for key in popup_keys)
+                    or not all(windows.get('presentation', {}).get(key) is True for key in presentation_keys)):
+                raise RuntimeError('Native official login window recovery failed: ' + provider)
+        public_audio = compatibility.get('publicAudio', {})
+        if (public_audio.get('ready') is not True or public_audio.get('scope') != 'public_catalog'
+                or public_audio.get('access') not in ('preview', 'full_public')):
+            raise RuntimeError('The installed local player did not advance official public audio playback')
         for pattern in ('*diagnostic*.json', '*failure*.txt', 'Mineradio-startup-diagnostic.txt'):
             for path in data.rglob(pattern):
                 if path.is_file():

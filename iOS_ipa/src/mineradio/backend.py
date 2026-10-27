@@ -41,14 +41,16 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
                     if path == '/ios-bridge.js':
                         web_marker.write_text('{"webResourcesLoaded":true}', encoding='utf-8')
                     if path == '/api/app/version':
-                        return self.json(dict(version='0.1.2', platform='ios',
+                        return self.json(dict(version='0.1.3', platform='ios',
                                               runtime='embedded-local', remoteBackendRequired=False))
                     if path == '/api/platform/capabilities':
                         data = self.route(path, {})
                         from music_app.providers.qishui.api import local_status
                         state = local_status()
                         data['qishui'].update(available=state['available'], reason=state['reason'],
-                            signerReady=state['signer_ready'], activationRequired=not state['signer_initialized'],
+                            signerReady=state['signer_ready'], activationRequired=state.get('sdk_configuration_available', False) and not state['signer_initialized'],
+                            searchScope=state.get('search_scope', 'platform'),
+                            publicCatalogAvailable=state.get('public_catalog_available', False),
                             phoneLoginAvailable=True, phoneLoginValidated=False)
                         return self.json(data)
                     return super()._get()
@@ -62,7 +64,10 @@ def start(data_root, bundle=None, *, api_port=18000, web_port=18080):
                     if tablet:
                         page = page.replace('width=device-width, initial-scale=1.0, viewport-fit=cover',
                             'width=1100, viewport-fit=cover')
-                    bootstrap = '<script src="/ios-layout.js"></script><script src="/ios-bridge.js"></script><link rel="stylesheet" href="/ios.css">'
+                    from music_app.providers.qishui.api import local_status
+                    public_only = local_status().get('search_scope') == 'public_catalog'
+                    bootstrap = ('<script>window.MINERADIO_QISHUI_PUBLIC_ONLY=' + str(public_only).lower() + ';</script>'
+                        '<script src="/ios-layout.js"></script><script src="/ios-bridge.js"></script><link rel="stylesheet" href="/ios.css">')
                     page = page.replace('<script src="js/features/mobile/mobile-simple-mode.js">',
                         bootstrap + '<script src="js/features/mobile/mobile-simple-mode.js">', 1)
                     page = re.sub(r'<link\s+href="https://fonts.googleapis.com/[^>]+>', '', page)

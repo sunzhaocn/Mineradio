@@ -165,11 +165,14 @@ try {
       }
       if (_invocationState.data.trial) {
         _invocationState.trialAccountStatus = playbackTrialAccountStatus(_invocationState.playbackProvider, _invocationState.data);
-        _invocationState.txt = playbackTrialMessage(_invocationState.trialAccountStatus);
+        var publicPreview = _invocationState.data.sourceScope === 'public_catalog';
+        _invocationState.txt = publicPreview
+          ? '汽水官方试听片段 · 完整曲库及会员整曲需要平台接入授权'
+          : playbackTrialMessage(_invocationState.trialAccountStatus);
         document.getElementById('trial-text').textContent = _invocationState.txt;
         _invocationState.trialLoginBtn = document.getElementById('trial-login-btn');
         if (_invocationState.trialLoginBtn) {
-          _invocationState.trialLoginBtn.style.display = _invocationState.trialAccountStatus.loggedIn ? 'none' : '';
+          _invocationState.trialLoginBtn.style.display = publicPreview || _invocationState.trialAccountStatus.loggedIn ? 'none' : '';
           _invocationState.trialLoginBtn.onclick = function () { openProviderLogin(_invocationState.playbackProvider); };
         }
         document.getElementById('trial-banner').classList.add('show');

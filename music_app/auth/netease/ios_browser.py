@@ -18,7 +18,7 @@ class _OfficialIOSBrowser:
         if self.closed.is_set():
             if method == 'check':
                 return {'closed': True, 'cookies': []}
-            raise AuthError(409, 'netease_browser_closed', '本次网易云官网登录窗口已关闭，请重新生成二维码')
+            raise AuthError(409, 'netease_browser_closed', '本次网易云官网登录窗口已关闭，请重新开始登录')
         try:
             if method == 'create':
                 return self.native.open(self.key)
@@ -31,7 +31,7 @@ class _OfficialIOSBrowser:
             raise
         except (TimeoutError, concurrent.futures.TimeoutError):
             self.close()
-            raise AuthError(504, 'netease_browser_timeout', '网易云官网登录窗口响应超时，请重新生成二维码') from None
+            raise AuthError(504, 'netease_browser_timeout', '网易云官网登录窗口响应超时，请重新打开') from None
         except Exception:
             raise AuthError(503, 'netease_browser_unavailable', '设备内网易云官网登录窗口未能完成请求，请重试') from None
 
@@ -64,7 +64,32 @@ def check_session(state):
     if state.get('authorized'):
         return state['authorized']
     snapshot = state['browser_runtime'].call('check')
+    # A site can issue a provisional/old MUSIC_U before its music-account
+    # exchange has completed. Authorize only after this same WK session's
+    # private account read proves a positive account identity. A network or
+    # verification failure keeps the isolated session available for retry.
+    values = _cookie_values(snapshot.get('cookies', []))
+    if values.get('MUSIC_U') and not snapshot.get('closed'):
+        from music_app.providers.netease.session_status import classify
+        account = snapshot.get('account')
+        verified = classify(account) == 'valid' and not snapshot.get('account_lookup_failed')
+        if not verified:
+            _diagnostics(state, stage='account_verification_pending', has_session_cookie=True,
+                         account_lookup_failed=bool(snapshot.get('account_lookup_failed')),
+                         account_code=account.get('code') if isinstance(account, dict) else None)
+            return dict(status='waiting',
+                message=('网易云音乐账号验证暂时失败，登录信息未丢失；请重新打开官网窗口后重试'
+                         if snapshot.get('account_lookup_failed') else
+                         '网易云尚未完成音乐账号授权，请在当前官网窗口完成登录'),
+                diagnostics=dict(state.get('diagnostics') or {}))
     result = _result(state, snapshot)
+    if state.get('manual_login') and result.get('status') == 'expired' and not snapshot.get('closed'):
+        # The website's initial QR can expire while the user is entering an
+        # official password/SMS form. Only the owned login-session TTL should
+        # expire the whole window; a QR response must not close another method.
+        result.update(status='waiting', message='官网登录尚未完成，请在当前窗口继续或重新打开')
+    if result.get('status') == 'cancelled':
+        result['message'] = '本次网易云官网登录窗口已关闭，请重新打开'
     if state.get('manual_login') and result.get('status') == 'waiting':
         result['message'] = ('官网登录页面尚未加载完成，请打开验证窗口检查网络后重试' if snapshot.get('page_error') else
             '请点击“打开验证窗口”，在网易云官网完成登录；密码与验证码只在官网输入')

@@ -176,7 +176,7 @@
   };
   async function request(path, body) {
     var controller = new AbortController();
-    var timeout = setTimeout(function () { controller.abort(); }, path === 'session' && body && body.provider === 'qishui' ? 95000 : 55000);
+    var timeout = setTimeout(function () { controller.abort(); }, path === 'show' ? 16000 : path === 'session' && body && body.provider === 'qishui' ? 95000 : 55000);
     var options = { credentials: 'same-origin', cache: 'no-store', signal: controller.signal };
     if (body) {
       options.method = 'POST';
@@ -422,6 +422,9 @@
     ui.description.textContent = showSaved
       ? (account.reauthRequired ? '登录已失效，请点击重新登录。' : storageDescription())
       : (manual ? '粘贴当前平台的 Cookie，保存到当前浏览器。' : (qishuiPhone ? '使用汽水官方短信验证码登录，登录信息保存在这台 iPad 中。' : nativeLogin ? '在平台官方窗口使用账号密码或验证码登录，授权后回到播放器。' : isPhone ? '使用手机号和短信验证码，或账号密码登录。' : '二维码会自动生成，请扫码并在手机上确认登录。'));
+    if (qishuiPhone && window.MINERADIO_QISHUI_PUBLIC_ONLY) {
+      ui.description.textContent += ' 当前播放使用官方公开音源；全站搜索和会员整曲还需平台接入授权。';
+    }
     ui.account.hidden = !showSaved;
     ui.accountActions.hidden = !showSaved;
     ui.profileRefresh.hidden = localAccount(provider).source !== 'manual';
@@ -520,6 +523,7 @@
   async function openOfficialLogin() {
     if (busy || !opened || loginMode !== 'official') return;
     var provider = currentProvider, epoch = actionEpoch;
+    clearTimeout(pollTimer); pollTimer = 0;
     if (qishuiPhoneLogin(provider)) {
       if (!sessionKey || !sessionInteractive) return;
       setBusy(true);
@@ -545,7 +549,17 @@
       report('请在官方窗口输入账号、密码或验证码，完成后返回此处。');
       clearTimeout(pollTimer);
       pollTimer = setTimeout(function () { pollQr(epoch,provider); },3000);
-    } catch(error) { if (isCurrent(epoch,provider)) report(errorMessage(error),'error'); }
+    } catch(error) {
+      if (isCurrent(epoch,provider)) {
+        var code = error.result && (error.result.error || error.result.code) || '';
+        if (/missing|closed|unavailable|timeout|finished/.test(String(code)) || !error.result) {
+          // A timed-out native runtime is closed. The next explicit click must
+          // create a fresh owned session instead of reusing its unusable key.
+          sessionKey = ''; sessionDeadline = 0; sessionManual = false; sessionInteractive = false;
+        }
+        report(errorMessage(error),'error');
+      }
+    }
     finally { if (isCurrent(epoch,provider)) setBusy(false); }
   }
   async function onAuthorized(result, epoch, provider) {
@@ -697,9 +711,10 @@
   }
   async function pollQr(epoch, provider) {
     if (!isCurrent(epoch, provider) || !sessionKey) return;
+    var checkedKey = sessionKey;
     try {
-      var result = await request('check', { provider: provider, key: sessionKey });
-      if (!isCurrent(epoch, provider)) return;
+      var result = await request('check', { provider: provider, key: checkedKey });
+      if (!isCurrent(epoch, provider) || sessionKey !== checkedKey) return;
       if (isAuthorized(result)) { await onAuthorized(result, epoch, provider); return; }
       if (qishuiPhoneLogin(provider)) phoneVerification(result, epoch, provider);
       if(provider==='qishui'&&result.remote_verification&&result.verification_required&&window.mineradioQishuiVerification){
@@ -719,7 +734,7 @@
         ui.generate.textContent = '重新生成二维码'; return; }
       pollTimer = setTimeout(function () { pollQr(epoch, provider); }, 3000);
     } catch (error) {
-      if (!isCurrent(epoch, provider)) return;
+      if (!isCurrent(epoch, provider) || sessionKey !== checkedKey) return;
       if(window.mineradioQishuiVerification)mineradioQishuiVerification.stop();
       report(errorMessage(error), 'error');
       sessionKey = '';

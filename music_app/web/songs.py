@@ -18,6 +18,45 @@ def seconds(value):
         return sum(float(v) * 60 ** i for i, v in enumerate(reversed(parts)))
     return float(value or 0)
 
+def qishui_source_fields(row):
+    """Expose the official public-source boundary, never session/signing fields."""
+    return {name: row[name] for name in (
+        'scope', 'sourceScope', 'publicPlayback', 'publicSearch', 'access', 'isPreview', 'preview',
+        'previewDuration', 'previewDurationMs', 'originalDuration_s', 'durationMs', 'streamDuration',
+        'playback_supported', 'publicError', 'message',
+    ) if name in row}
+
+
+def qishui_playback_duration(data, selected=None):
+    """A public excerpt's playable length must not become the original song length."""
+    selected = selected or {}
+    fields = qishui_source_fields(data)
+    fields.update(qishui_source_fields(selected))
+    duration = seconds(selected.get('duration_s', selected.get('duration',
+                       data.get('duration_s', data.get('duration')))))
+    if fields.get('isPreview'):
+        preview = seconds(fields.get('previewDuration'))
+        if preview > 0:
+            duration = min(duration, preview) if duration > 0 else preview
+    return duration
+
+
+def qishui_playback_fields(data, selected=None):
+    fields = qishui_source_fields(data)
+    fields.update(qishui_source_fields(selected or {}))
+    duration = qishui_playback_duration(data, selected)
+    fields.update(duration_s=duration, duration=duration)
+    if 'isPreview' in fields and 'preview' in fields:
+        fields['preview'] = fields['isPreview']
+    if 'durationMs' in fields:
+        fields['durationMs'] = round(duration * 1000)
+    if 'streamDuration' in fields:
+        fields['streamDuration'] = duration
+    if 'previewDurationMs' in fields and 'previewDuration' in fields:
+        fields['previewDurationMs'] = round(seconds(fields['previewDuration']) * 1000)
+    return fields
+
+
 def song_row(row, provider=None):
     """搜索简化格式/榜单聚合格式 -> Mineradio 的统一歌曲对象。"""
     source = (row.get('sources') or [{}])[0]
@@ -49,6 +88,7 @@ def song_row(row, provider=None):
         for name in ('nativeMediaType', 'playable', 'encrypted', 'decryption_supported'):
             if name in row:
                 result[name] = row[name]
+        result.update(qishui_playback_fields(row))
     # Keep only upstream-provided classification; never guess a genre from a title.
     for name in ('genre', 'genres', 'tags', 'language', 'lang'):
         value = row.get(name)

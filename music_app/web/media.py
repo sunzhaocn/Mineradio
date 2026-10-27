@@ -196,8 +196,9 @@ class MediaMixin:
             return self.cached_cover(url)
         host = (urllib.parse.urlsplit(url).hostname or '').lower()
         qq_media = any(host == domain or host.endswith('.' + domain) for domain in ('qq.com', 'qlogo.cn', 'qpic.cn'))
+        douyin_media = host == 'douyinvod.com' or host.endswith('.douyinvod.com')
         headers = {'User-Agent': 'Mozilla/5.0', 'Accept-Encoding': 'identity',
-                   'Referer': 'https://y.qq.com/' if qq_media else 'https://music.163.com/'}
+                   'Referer': 'https://y.qq.com/' if qq_media else 'https://www.douyin.com/' if douyin_media else 'https://music.163.com/'}
         if video:
             from .video_cache import complete_video
             request = urllib.request.Request(url, headers=headers)

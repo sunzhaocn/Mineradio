@@ -3,7 +3,6 @@ import json
 from pathlib import Path
 import sys
 import os
-import secrets
 
 sys.path.insert(0, str(Path(__file__).parent / 'vendor'))
 
@@ -28,6 +27,10 @@ class Mineradio(toga.App):
 
     async def start_player(self):
         try:
+            from . import tls
+            self.paths.cache.mkdir(parents=True, exist_ok=True)
+            (self.paths.cache / 'ios-tls-configuration.json').write_text(
+                json.dumps(tls.install()), encoding='utf-8')
             if os.environ.get('MINERADIO_IOS_DIAGNOSTIC') == '1':
                 import faulthandler
                 self.paths.cache.mkdir(parents=True, exist_ok=True)
@@ -155,8 +158,9 @@ class Mineradio(toga.App):
     async def enable_qishui(self, identifier):
         try:
             if not self.signer_config.get('configured'):
-                raise RuntimeError('汽水本地连接尚未配置，当前版本不能使用汽水；本地曲库和其他平台可正常使用。')
-            if not self.qishui_enabled:
+                # Public song pages use ordinary HTTPS and need no account SDK.
+                self.qishui_enabled = True
+            elif not self.qishui_enabled:
                 agreed = self.signer_config.get('privacyAgreed') is True
                 if not agreed:
                     agreed = await self.main_window.dialog(toga.ConfirmDialog('连接汽水音乐',
@@ -164,8 +168,9 @@ class Mineradio(toga.App):
                 if not agreed:
                     raise RuntimeError('你尚未同意启用汽水连接')
                 from . import signer
-                config = dict(self.signer_config, privacyAgreed=True,
-                              deviceId=self.signer_config.get('deviceId') or str(secrets.randbelow(8 * 10**15) + 10**15))
+                if not self.signer_config.get('deviceId'):
+                    raise RuntimeError('正式汽水接入还需平台提供合法设备注册配置；当前可使用官方公开目录。')
+                config = dict(self.signer_config, privacyAgreed=True)
                 signer.install(config)
                 state = await asyncio.wait_for(asyncio.to_thread(signer.enable), timeout=40)
                 if not state.get('initialized') or not state.get('httpCallbackInstalled'):
@@ -184,6 +189,9 @@ class Mineradio(toga.App):
         # Build-time simulator check only: no phone, SMS request or account.
         await asyncio.sleep(8)
         try:
+            from . import tls
+            network = await asyncio.to_thread(tls.diagnostic)
+            (self.paths.cache / 'ios-tls-diagnostic.json').write_text(json.dumps(network), encoding='utf-8')
             from . import passport
             result = await passport.diagnostic()
             if result.get('ready'):
@@ -196,6 +204,8 @@ class Mineradio(toga.App):
                           traceback=traceback.format_exc(), code=getattr(error, 'code', ''))
         (self.paths.cache / 'ios-phone-security-diagnostic.json').write_text(
             json.dumps(result), encoding='utf-8')
+        from . import compatibility_check
+        await compatibility_check.run(self)
 
     async def check_qishui_native(self):
         import time
