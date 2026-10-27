@@ -9,6 +9,7 @@
   "main": "desktop/main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node --test checks/*.test.js",
     "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
     "pack": "electron-builder --win dir --x64 --publish never",
     "dist": "electron-builder --win nsis --x64 --publish never"

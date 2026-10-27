@@ -18,3 +18,5 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 已有依赖时可加 `-SkipDependencyInstall`。只有后端与共享资源均未改变时才可加 `-SkipBackend`；`-DirectoryOnly` 只生成解包目录。安装包输出到 `dist/Mineradio-版本-Setup-x64.exe`。
 
 `scripts/` 仅保留构建与资源准备工具。`desktop/` 提供窗口、托盘、本机曲库、桌面歌词及更新；`backend_entry.py` 提供内嵌服务资源路径和生命周期。
+
+在 `Windows_exe/` 下执行 `npm test` 可检查更新失败后的重试、重复请求合并、更新调用权限和后端退出时的日志收尾。检查使用模拟更新器和子进程，不会下载或安装更新。

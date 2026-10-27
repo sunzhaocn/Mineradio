@@ -38,12 +38,13 @@ function createAppUpdater({ updater, app, ipcMain, trusted, broadcast, schedule 
   });
   async function check() {
     if (downloading || installScheduled) return snapshot();
-    if (!checking) checking = (async () => {
-      try { await updater.checkForUpdates(); }
-      catch (error) { change({ status: 'error', error: String(error.message || error).slice(0, 500) }); }
-      finally { checking = null; }
-      return snapshot();
-    })();
+    // Store the in-flight promise before calling the updater: it can throw
+    // synchronously, and that must not leave a completed promise blocking retry.
+    if (!checking) checking = Promise.resolve()
+      .then(() => updater.checkForUpdates())
+      .catch(error => change({ status: 'error', error: String(error.message || error).slice(0, 500) }))
+      .finally(() => { checking = null; })
+      .then(snapshot);
     return checking;
   }
   async function download() {
@@ -52,12 +53,11 @@ function createAppUpdater({ updater, app, ipcMain, trusted, broadcast, schedule 
     if (downloading) return downloading;
     if (!state.updateAvailable) return { ...snapshot(), ok: false, error: '请先检查更新' };
     change({ status: 'downloading', progress: 0, error: '' });
-    downloading = (async () => {
-      try { await updater.downloadUpdate(); }
-      catch (error) { change({ status: 'error', progress: 0, error: String(error.message || error).slice(0, 500) }); }
-      finally { downloading = null; }
-      return snapshot();
-    })();
+    downloading = Promise.resolve()
+      .then(() => updater.downloadUpdate())
+      .catch(error => change({ status: 'error', progress: 0, error: String(error.message || error).slice(0, 500) }))
+      .finally(() => { downloading = null; })
+      .then(snapshot);
     return downloading;
   }
   for (const [channel, action] of [['state', snapshot], ['check', check], ['download', download]]) {

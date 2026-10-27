@@ -88,14 +88,15 @@ async function startBackend(app, userData, onUnexpectedExit) {
   let closePromise = null;
   child.stdout.pipe(log, { end: false });
   child.stderr.pipe(log, { end: false });
-  const exited = new Promise((resolve) => {
+  const closed = new Promise((resolve) => {
     child.once('exit', (code, signal) => {
       service.listening = false;
-      log.end();
-      resolve();
       if (!expectedExit && service.listeningStarted && typeof onUnexpectedExit === 'function') onUnexpectedExit(code, signal);
     });
-    child.once('error', (error) => { child.startupError = error; log.write(String(error.message) + '\n'); resolve(); });
+    child.once('error', (error) => { child.startupError = error; log.write(String(error.message) + '\n'); });
+    // 'exit' can precede the final stdout/stderr data. 'close' also runs after
+    // a failed spawn, so finish the shared log only once both pipes are done.
+    child.once('close', () => log.end(resolve));
   });
   const service = {
     child, pid: child.pid, ports, listening: false, listeningStarted: false,
@@ -104,11 +105,15 @@ async function startBackend(app, userData, onUnexpectedExit) {
       expectedExit = true;
       service.listening = false;
       closePromise = (async () => {
-        if (child.exitCode !== null || !child.pid) return;
-        if (process.platform === 'win32') {
-          await new Promise((resolve) => execFile('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, timeout: 8000 }, () => resolve()));
-        } else { child.kill('SIGTERM'); }
-        await Promise.race([exited, new Promise((resolve) => setTimeout(resolve, 1500))]);
+        if (child.exitCode === null && !child.signalCode && child.pid) {
+          if (process.platform === 'win32') {
+            await new Promise((resolve) => execFile('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, timeout: 8000 }, () => resolve()));
+          } else { child.kill('SIGTERM'); }
+        }
+        let timeout;
+        try {
+          await Promise.race([closed, new Promise((resolve) => { timeout = setTimeout(resolve, 1500); })]);
+        } finally { clearTimeout(timeout); }
       })();
       return closePromise;
     },

@@ -38,9 +38,14 @@ class PrivateTrust(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which('openssl'), 'OpenSSL CLI needed to create a one-use test server')
     def test_an_untrusted_local_tls_server_is_still_rejected(self):
+        import certifi
         with tempfile.TemporaryDirectory() as directory:
             certificate = Path(directory) / 'server.crt'
             key = Path(directory) / 'server.key'
+            # Match the iOS App's ASCII container path, as in the trust-store
+            # test above. A Windows Unicode checkout is not an iOS container.
+            bundle = Path(directory) / 'trusted-roots.pem'
+            shutil.copyfile(certifi.where(), bundle)
             subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                             '-subj', '/CN=localhost', '-keyout', str(key), '-out', str(certificate)],
                            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -54,7 +59,7 @@ class PrivateTrust(unittest.TestCase):
             worker = threading.Thread(target=server.serve_forever)
             worker.start()
             try:
-                with patch.dict(os.environ), patch.object(tls, '_installed', None):
+                with patch.dict(os.environ), patch.object(tls, '_installed', None), patch.object(certifi, 'where', return_value=str(bundle)):
                     tls.install()
                     with self.assertRaises(urllib.error.URLError) as failure:
                         urllib.request.urlopen('https://localhost:' + str(server.server_port), timeout=3)

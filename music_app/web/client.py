@@ -1,12 +1,20 @@
 """只连接固定本机 API，校验汽水本机音频端点。"""
 import json
 import re
+import urllib.error
 import urllib.parse
 import urllib.request
 from music_app.core import request_credentials
 from music_app.core import request_lifecycle
 
 from . import constants as _web_constants
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, message, headers, newurl):
+        # This internal JSON API has no redirect flow. Never forward a client's
+        # credentials or cancellation ticket to a location in a response.
+        return None
 
 
 def upstream(path, *, request_timeout=85, **params):
@@ -19,12 +27,21 @@ def upstream(path, *, request_timeout=85, **params):
         request = urllib.request.Request(url, headers=headers)
         try:
             request_lifecycle.check()
-            with urllib.request.urlopen(request, timeout=request_timeout) as response:
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
+            with opener.open(request, timeout=request_timeout) as response:
                 data = json.load(response)
             request_lifecycle.check()
+        except urllib.error.HTTPError as error:
+            error.close()
+            request_lifecycle.check()
+            if 300 <= error.code < 400:
+                raise ValueError('本机音乐接口返回了非预期跳转') from None
+            raise
         except OSError:
             request_lifecycle.check()
             raise
+    if not isinstance(data, dict):
+        raise ValueError('本机音乐接口返回的数据格式无效')
     # 歌曲资料中的 error 可以是“音源加密/指定音质不可用”，仍需把音质和歌词送到网页。
     if data.get('error_code') not in (None, 0, 200) or data.get('code', 200) not in (0, 200):
         raise ValueError(data.get('msg') or data.get('error') or '音乐平台请求失败')

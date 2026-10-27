@@ -18,6 +18,8 @@
 
 ## Sensitive Data
 
+QQ 音乐微信扫码登录中的 `WECHAT_APP_ID` 是公开的应用标识，随官方二维码请求发送，不能单独授权用户账号。它应保留以支持登录，不能用删除、编码或拆分字符串的方式掩盖扫描告警。若 Secret scanning 仅标记此公开标识，核对告警位置与用途后可按 false positive 关闭；配套 AppSecret、用户 Cookie 和访问令牌不适用此结论。
+
 Mineradio 不应收集或上传用户 Cookie。用户登录状态应保存在本地用户数据目录中。
 
 如果你要提交问题反馈，请先确认没有附带：

@@ -24,6 +24,17 @@ Android 构建与安装见 [Android_apk/README.md](Android_apk/README.md)。iPho
 | `third_party/` | 上游版权与第三方声明 |
 | `docs/` | 接口、架构、登录和更新说明 |
 
-`web/` 与 `music_app/web/` 是客户端运行所需的共享资源。独立 Web 启动入口、登录测试页、测试脚本和历史验收产物已清理。源码依赖清单与锁文件用于重新构建；构建说明见各客户端目录。
+`web/` 与 `music_app/web/` 是客户端运行所需的共享资源。独立 Web 启动入口、登录测试页和历史验收产物已清理。源码依赖清单与锁文件用于重新构建；构建说明见各客户端目录。
+
+## 回归检查
+
+共享认证与媒体检查位于 `checks/`，使用本机测试服务与合成凭据，不登录真实账号。安装源码依赖后运行：
+
+```powershell
+python -X utf8 -m unittest discover -s checks -p "test_*.py" -v
+npm --prefix Windows_exe test
+```
+
+GitHub Actions 在 Windows 和 Linux 上自动执行这两组检查。iOS 的准备、检查与真机验证范围见 [iOS_ipa/README.md](iOS_ipa/README.md)。
 
 账号凭据保存在当前客户端本地；公开源码不包含开发机器上的 Cookie、账号配置、个人音乐或运行缓存。Windows 用户数据位于 `%APPDATA%/Mineradio`。
