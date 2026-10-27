@@ -1,5 +1,7 @@
 # Mineradio Android
 
+当前版本：**1.1.10**（versionCode `10110`）。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.12) · [更新说明](../docs/releases/v2.3.12.md)。
+
 同一个 APK 支持 Android 8.0 及以上的 ARM64 手机和平板，需要可用的 Android System WebView。小于 600dp 使用手机播放器，600dp 及以上使用桌面布局与视觉效果。APK 内置 Python 3.12、本地服务、播放器和汽水签名桥；使用时不需要 Windows 电脑或云端后端。
 
 支持网易云、QQ、酷狗、汽水以及本地音频/歌词、播放队列、下载和系统媒体控制；平台结果受账号状态、会员权益和上游接口影响。手机使用轻量封面/歌词界面，平板保留 MV 与视觉效果。账号及主动下载的本地曲库保存在设备内，清除应用数据会删除它们。

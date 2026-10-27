@@ -12,3 +12,5 @@ Windows 2.3.11 起，启动时自动检查正式发行版，右上角按钮可�
 2. 按客户端构建说明生成安装包。后端或共享界面变化时须重建后端资源。
 3. 创建对应版本的正式 GitHub Release，上传同一构建生成的安装包、`.exe.blockmap`、`.exe.sha256` 和 `latest.yml`。
 4. 同时公开安装包和清单，不要手改清单中的 SHA-512 或文件大小。草稿与预发行版不作为稳定更新推送。
+
+`v2.3.12` 同时发布 Windows `2.3.12` 与 Android `1.1.10`。Windows 的 `latest.yml` 继续只描述同次构建生成的 Windows 安装包；Android 使用独立的 `versionName` / `versionCode`，不写入此清单。先把全部文件上传到草稿并验证文件大小与摘要，再统一公开，避免客户端读到尚未上传完成的更新。Android APK 及其 SHA-256 校验文件与 Windows 安装包放在同一发布页。

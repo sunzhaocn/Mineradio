@@ -1,6 +1,6 @@
 # Mineradio Windows
 
-当前版本：**2.3.11**。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/latest)。
+当前版本：**2.3.12**。[下载安装包](https://github.com/sunzhaocn/Mineradio/releases/latest) · [更新说明](../docs/releases/v2.3.12.md)。
 
 安装包内置 Electron、Python 后端、Node.js、FFmpeg 和登录浏览器兜底。安装后从桌面或开始菜单启动；关闭窗口默认进入托盘，托盘菜单可退出。账号、歌单和设置保存在 `%APPDATA%/Mineradio`，安装升级沿用原目录和用户数据。
 
