@@ -36,6 +36,7 @@
     return '/api/' + (song.provider === 'netease' ? '' : song.provider + '/') + 'lyric?id=' + encodeURIComponent(song.id);
   }
   async function lyricText(song) {
+    if (song.song.localFileId && window.mineradioTrackExports) return mineradioTrackExports.lyric(song.song);
     if (song.song.lyric) return song.song.lyric;
     var data = await apiJson(lyricUrl(song), {timeoutMs:25000});
     var value = data && (data.lyric || data.lrc && (data.lrc.lyric || data.lrc));
@@ -50,6 +51,7 @@
   }
   async function downloadLyric() {
     var selected = target; menu.close('lyric');
+    if (selected.song.localFileId && window.mineradioTrackExports) return mineradioTrackExports.perform(function () { return mineradioTrackExports.exportLyric(selected.song); });
     try {
       var text=await lyricText(selected);
       if(!text.trim())return showToast('当前歌曲暂无可下载歌词');
@@ -92,6 +94,7 @@
     if (!window.browserLocalMusic) return browserDownload(selected, key);
     if(saving.has(identity))return showToast('这首歌正在保存');
     saving.add(identity);menu.close('select');showToast('正在下载并保存到本地曲库…');
+    var preset = window.mineradioTrackExports ? mineradioTrackExports.capture().catch(function () { return null; }) : Promise.resolve(null);
     try {
       var url='/api/download?provider='+encodeURIComponent(selected.provider)+'&id='+encodeURIComponent(selected.id)+'&quality='+encodeURIComponent(key);
       var headers=window.localMusicCredentials ? window.localMusicCredentials.headers(url) : {};
@@ -113,6 +116,12 @@
       var extras=await Promise.all([lyricText(selected).catch(function(){return '';}),localCover(selected.song)]);
       var file=new File([blob],name,{type:blob.type,lastModified:0});
       var result=await browserLocalMusic.saveDownloadedTrack(file,selected.song,extras[0],extras[1]);
+      var captured = await preset;
+      if (captured && result.savedId) {
+        if (extras[1]) captured.resources.cover = {name:'cover',data:extras[1]};
+        try { await mineradioTrackExports.recipe({localFileId:result.savedId}, captured); }
+        catch (_) { showToast('音乐已保存，此曲预设未能保存，可在音乐库重试'); }
+      }
       if(typeof persistentLocalLibraryTracks!=='undefined')persistentLocalLibraryTracks=result.tracks;
       window.dispatchEvent(new Event('mineradio:local-library-changed'));
       if(typeof renderHomeDashboard==='function')renderHomeDashboard();
@@ -132,16 +141,28 @@
   }
   function render() {
     list.replaceChildren();
+    if (target.song.localFileId && window.mineradioTrackExports) {
+      var audioExport=document.createElement('button');audioExport.type='button';audioExport.className='web-download-option';audioExport.textContent='导出本地音频';
+      audioExport.onclick=function(){var selected=target.song;menu.close('audio');mineradioTrackExports.perform(function(){return mineradioTrackExports.exportAudio(selected);});};list.append(audioExport);
+    }
     if (options.some(usable)) option('auto','自动 · 最高可下载','从 '+names[target.provider]+' 选择',false);
     options.filter(usable).forEach(function(item) { option(item.key,item.quality || item.key,detail(item),false); });
     var lyric=document.createElement('button');lyric.type='button';lyric.className='web-download-option web-action-option';lyric.setAttribute('role','menuitem');lyric.textContent='下载歌词 · LRC';lyric.onclick=downloadLyric;list.append(lyric);
+    if (window.mineradioTrackExports) {
+      var presetExport=document.createElement('button');presetExport.type='button';presetExport.className='web-download-option';presetExport.textContent='下载当前预设';
+      presetExport.onclick=function(){var selected=Object.assign({},target.song);menu.close('preset');mineradioTrackExports.perform(async function(){var value=await mineradioTrackExports.forSong(selected);await mineradioTrackExports.recipe(selected,value);await mineradioTrackExports.exportPreset(selected,value);});};list.append(presetExport);
+      if (window.desktopWindow && typeof desktopWindow.exportVisualVideo==='function') {
+        var video=document.createElement('button');video.type='button';video.className='web-download-option';video.textContent='导出视频 · 当前预设';
+        video.onclick=function(){var selected=Object.assign({},target.song);menu.close('video');mineradioTrackExports.perform(function(){return mineradioTrackExports.video(selected);});};list.append(video);
+      }
+    }
     menu.reposition();
   }
   async function open(song,event,anchor) {
     if (event) event.stopPropagation();
     if (!song || !id(song)) { menu.close('empty');return showToast('请先选择歌曲'); }
     var p=provider(song);
-    if (!names[p]) { menu.close('unsupported');return showToast('当前音源暂不支持下载'); }
+    if (!names[p] && !song.localFileId) { menu.close('unsupported');return showToast('当前音源暂不支持下载'); }
     anchor=anchor || event && event.currentTarget || document.getElementById('web-download-btn');
     if (typeof closeControlSourceSwitcher==='function') closeControlSourceSwitcher();
     menu.open(anchor);
@@ -150,7 +171,8 @@
     target={provider:p,id:String(id(song)),name:song.name || song.title || '当前歌曲',song:Object.assign({},song)};
     options=[];list.replaceChildren();
     songTitle.textContent=target.name+(song.artist ? ' · '+song.artist:'');songTitle.title=songTitle.textContent;
-    source.className='tag-source '+p;source.textContent=names[p];
+    source.className='tag-source '+p;source.textContent=names[p] || '本地文件';
+    if (song.localFileId) { status.textContent='直接导出已保存的本地文件';render();return; }
     status.textContent='正在获取音质…';render();
     try {
       var data=await apiJson('/api/download/qualities?provider='+encodeURIComponent(p)+'&id='+encodeURIComponent(target.id),{timeoutMs:95000});

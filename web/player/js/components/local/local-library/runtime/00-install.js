@@ -10,6 +10,7 @@
   var lastFingerprint = '', publishedFingerprint = '';
   var importRequests = new Map(), importProgress = {};
   var savedTracks = [], savedMusicError = '', savedRead = 0;
+  var localShown = 20;
   async function readSavedMusic() {
     if (!window.browserLocalMusic) return;
     var token = ++savedRead;
@@ -232,6 +233,10 @@
       local.append(element('h3', '', '本机已保存的音乐'));
       local.append(element('p', 'web-library-note', savedMusicError || savedTracks.length + ' 首 · ' + savedTracks.filter(function (s) { return s.hasLyric; }).length + ' 首带歌词 · 可离线播放'));
       local.append(button('打开本地歌曲', function () { openPlaylist({provider:'mineradio',id:'local:saved',name:'本机已保存的音乐'}); }, 'fx-mini-btn ghost'));
+      if (window.mineradioTrackExports) {
+        savedTracks.slice(0, localShown).forEach(function (song) { local.append(mineradioTrackExports.createLibraryRow(song)); });
+        if (savedTracks.length > localShown) local.append(button('显示更多本地歌曲', function () { localShown += 20; render(); }, 'fx-mini-btn ghost'));
+      }
       if (!savedTracks.length && !savedMusicError) local.append(element('p', 'web-library-empty', '在歌曲下载菜单中选择音质，等待“已保存音乐”后会出现在这里。'));
       content.append(local);
     }

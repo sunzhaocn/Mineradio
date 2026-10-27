@@ -4,6 +4,7 @@
   var cursor = 0, generation = 0, clock = 0, nextAt = 0, busy = null, imported = false;
   var suspended = document.hidden || !document.hasFocus(), pageHidden = false, displayedSource = '';
   var interval = 8000, importTask = Promise.resolve(), nativeFiles = [], refreshing;
+  var recipeFiles = null;
   var native = window.desktopWindow && typeof desktopWindow.listSlideshowImages === 'function' ? desktopWindow : null;
   var previousPreset = 0;
   try { previousPreset = Math.max(0, Math.min(13, Number(localStorage.getItem('mineradio-slideshow-previous')) || 0)); } catch (_) {}
@@ -36,6 +37,7 @@
     if (typeof setPreset === 'function') setPreset(previousPreset, { silent: true });
   }
   function refresh() {
+    if (recipeFiles) { keys = recipeFiles.map(function (_, i) { return i; }); status(); return Promise.resolve(); }
     if (refreshing) return refreshing;
     refreshing = (async function () {
       if (native) {
@@ -61,11 +63,12 @@
     create(); var task = {}, owner = generation, target = 1 - slot; busy = task;
     try {
       var index = cursor % keys.length;
-      var file = native ? nativeFiles[index] : await operation('readonly', function (store) { return store.get(keys[index]); });
+      var file = recipeFiles ? recipeFiles[index] : native ? nativeFiles[index] : await operation('readonly', function (store) { return store.get(keys[index]); });
       if (owner !== generation || !selected || !file) return;
-      var src = native ? file.url : URL.createObjectURL(file);
+      var nativeSource = native && !recipeFiles;
+      var src = nativeSource ? file.url : URL.createObjectURL(file);
       if (urls[target]) URL.revokeObjectURL(urls[target]);
-      urls[target] = native ? '' : src; images[target].src = src;
+      urls[target] = nativeSource ? '' : src; images[target].src = src;
       await images[target].decode();
       if (owner !== generation || !selected) return;
       images[slot].classList.remove('visible'); images[target].classList.add('visible'); slot = target;
@@ -139,13 +142,14 @@
         added++;
       } catch (_) {} finally { probe.removeAttribute('src'); URL.revokeObjectURL(src); }
     }
-    if (native) await refresh();
+    if (added && recipeFiles) { recipeFiles = null; generation++; busy = null; }
+    if (native || added) await refresh();
     imported = true; status();
     if (typeof showToast === 'function') showToast('已添加 ' + added + ' 张图片，非图片文件已跳过');
     if (added && typeof setPreset === 'function') setPreset(14);
     return added;
   }
-  function add(files) { importTask = importTask.catch(function () {}).then(function () { return importImages(files); }); return importTask; }
+  function add(files) { files=Array.from(files||[]);if(!files.length)return Promise.resolve(0);importTask = importTask.catch(function () {}).then(function () { return importImages(files); }); return importTask; }
   async function entries(entry) {
     if (!entry) return [];
     if (entry.isFile) return new Promise(function (resolve) { entry.file(function (file) { resolve([file]); }, function () { resolve([]); }); });
@@ -188,7 +192,26 @@
     if (card) card.addEventListener('dragover', function (e) { e.preventDefault(); imported = true; status(); });
     status();
   }
-  window.mineradioSlideshow = { select: select, selected: function () { return selected; }, renderSettings: renderSettings, add: add, count: function () { return keys.length; } };
+  window.mineradioSlideshow = { select: select, selected: function () { return selected; }, renderSettings: renderSettings, add: add, count: function () { return keys.length; },
+    intervalSeconds:function () { return interval/1000; },
+    useRecipe:function (files, seconds) {
+      recipeFiles = Array.from(files); interval = Math.max(2, Math.min(3600, Number(seconds) || 8)) * 1000;
+      var input=document.querySelector('#slideshow-settings input');if(input)input.value=interval/1000;
+      cursor = 0; generation++; busy = null; keys = recipeFiles.map(function (_, i) { return i; }); status();
+      if (selected) { nextAt = 0; return advance(); } return Promise.resolve();
+    },
+    exportImages:async function () {
+      if (recipeFiles) return recipeFiles.slice();
+      await refresh(); var files = [];
+      for (var i = 0; i < keys.length; i++) {
+        if (native) {
+          var response = await fetch(nativeFiles[i].url); if (!response.ok) throw new Error('无法读取幻灯片素材');
+          var blob = await response.blob(); files.push(new File([blob], nativeFiles[i].name || 'image-' + i, {type:blob.type}));
+        } else files.push(await operation('readonly', (function (id) { return function (store) { return store.get(id); }; })(keys[i])));
+      }
+      return files;
+    }
+  };
   // Move legacy browser blobs into the editable desktop directory one at a time.
   // Delete a legacy entry only after its native copy was successfully saved.
   async function initialize() {

@@ -1,11 +1,13 @@
 """Upgrade an isolated real Electron profile from the installed old app to the build."""
 import json
+import hashlib
 import atexit
 import os
 from pathlib import Path
 import subprocess
 import tempfile
 import time
+import wave
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -94,6 +96,33 @@ def run():
         assert state['audio'] == 'saved-local-audio' and state['lyric'] == '[00:00]keep lyrics'
         assert state['caches'] == ['music-downloads'] and state['media'] == 'keep music cache'
         assert state['registrations'] == 0 and not state['banner'] and state['updater'] == 'object'
+        fixture = profile / 'export-fixture.wav'
+        with wave.open(str(fixture), 'wb') as wav:
+            wav.setparams((1, 2, 16000, 0, 'NONE', 'not compressed'))
+            wav.writeframes(b'\0\0' * 16000)
+        page.evaluate('''()=>{const input=document.createElement('input');
+          input.type='file';input.id='native-export-fixture';document.body.append(input)}''')
+        # Preserve Chromium's native file path: Playwright's remote upload
+        # creates a byte-only File which Electron correctly cannot authorize.
+        cdp = page.context.new_cdp_session(page)
+        document = cdp.send('DOM.getDocument')['root']['nodeId']
+        node = cdp.send('DOM.querySelector', {'nodeId': document, 'selector': '#native-export-fixture'})['nodeId']
+        cdp.send('DOM.setFileInputFiles', {'nodeId': node, 'files': [str(fixture)]})
+        cdp.detach()
+        exported = page.evaluate('''async()=>{
+          const imported=await desktopWindow.importLocalMusicFiles(Array.from(document.getElementById('native-export-fixture').files));
+          if(!imported.ok)throw new Error(JSON.stringify(imported));
+          const songs=(await desktopWindow.listLocalMusicLibrary()).tracks;
+          const song=songs.find(song=>song.localPath.endsWith('export-fixture.wav'));
+          if(!song)throw new Error('Native import missing: '+JSON.stringify(imported));
+          const file=await browserLocalMusic.readLocalMusicFile(song.localFileId);
+          const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await file.blob.arrayBuffer()))).map(x=>x.toString(16).padStart(2,'0')).join('');
+          return {name:file.name,hash,videoState:await desktopWindow.getVisualVideoExportState(),
+            rejectedEmpty:await desktopWindow.exportVisualVideo({}),saveApi:typeof desktopWindow.saveExportFile};
+        }''')
+        assert exported['name'] == fixture.name and exported['hash'] == hashlib.sha256(fixture.read_bytes()).hexdigest(), exported
+        assert exported['videoState']['status'] == 'idle' and exported['saveApi'] == 'function', exported
+        assert exported['rejectedEmpty']['ok'] is False and '音频' in exported['rejectedEmpty']['error'], exported
         page.evaluate('()=>desktopWindow.close("exit")')
         browser.close()
         assert new_process.wait(timeout=30) == 0
@@ -103,6 +132,7 @@ def run():
                   mediaCachePreserved=True, shellCaches=0, serviceWorkers=0, offlineBanner=False,
                   oldAndNewModules=[old_smoke['moduleCount'], new_smoke['moduleCount']],
                   bothProcessesExitedNormally=True, existingUserInstallationModified=False)
+    result.update(nativeImportedAudioExportBytesMatch=True, nativeVideoIpcRegisteredAndTrusted=True)
     (OUTPUT / 'frozen-windows.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(result))
 

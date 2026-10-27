@@ -292,6 +292,24 @@
   }
 
   window.browserLocalMusic = Object.freeze({
+    readLocalMusicFile:async function (id) {
+      var record = validId(id) ? await read(id) : null;
+      if (record) {
+        var blob = playableFile(record);
+        if (!blob) throw new Error('本地音频不可读，请重新导入');
+        return {blob:blob, name:String(record.path || '本地音乐').split('/').pop()};
+      }
+      if (window.desktopWindow && typeof desktopWindow.listLocalMusicLibrary === 'function') {
+        var library = await desktopWindow.listLocalMusicLibrary();
+        var song = (library.tracks || []).find(function (entry) { return entry.localFileId === id; });
+        if (song && song.localUrl) {
+          var response = await fetch(song.localUrl);
+          if (!response.ok) throw new Error('本地音频读取失败');
+          return {blob:await response.blob(), name:String(song.localPath || song.name || '本地音乐').split(/[\\/]/).pop()};
+        }
+      }
+      throw new Error('本地歌曲不存在，请重新导入');
+    },
     readDownloadedLyric:readDownloadedLyric,
     saveTrackLyric:saveTrackLyric,
     saveDownloadedTrack:saveDownloadedTrack,

@@ -4,7 +4,9 @@
 
 [下载安装包](https://github.com/sunzhaocn/Mineradio/releases/latest) · [公开源代码](https://github.com/sunzhaocn/Mineradio)
 
-Windows 最新版为 **2.3.15**，Android 最新版为 **1.1.12**，更新内容见 [v2.3.15 发布说明](docs/releases/v2.3.15.md)。支持网易云、QQ、酷狗、汽水音乐、本地曲库、歌词、歌单、MV 和桌面视觉效果；平台可用性与会员权益以对应平台实际返回为准。
+Windows 最新版为 **2.3.16**，Android 最新版为 **1.1.13**，更新内容见 [v2.3.16 发布说明](docs/releases/v2.3.16.md)。支持网易云、QQ、酷狗、汽水音乐、本地曲库、歌词、歌单、MV 和桌面视觉效果；平台可用性与会员权益以对应平台实际返回为准。
+
+Windows 支持按当前视觉预设和所选歌曲生成带音乐的 MP4；Windows 与 Android 可从本机音乐库单独导出音频、LRC 和可重新加载的预设配置。用法见 [视频与预设导出](docs/VISUAL_EXPORTS.md)。
 
 ## 使用与更新
 

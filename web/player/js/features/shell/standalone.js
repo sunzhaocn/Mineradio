@@ -13,7 +13,7 @@
   document.documentElement.classList.toggle('hover-player-panels', window.mineradioHoverPanels);
   // Native clients ship their complete UI. Their fresh bootstrap has already
   // retired legacy shell workers; do not register or duplicate UI assets here.
-  if ((window.desktopWindow && window.desktopWindow.isDesktop) || window.MineradioAndroid) return;
+  if (window.mineradioVideoRender || (window.desktopWindow && window.desktopWindow.isDesktop) || window.MineradioAndroid) return;
   var offline = document.createElement('script');
   offline.src = '/js/features/shell/offline-shell.js';
   document.head.appendChild(offline);

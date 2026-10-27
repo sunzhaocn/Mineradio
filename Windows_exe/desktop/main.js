@@ -8,14 +8,13 @@ const { execFile, spawn } = require('child_process');
 const systemMemory = require('./system-memory');
 const {
   WallpaperEngineLibrary,
-  registerWallpaperEngineScheme,
 } = require('./wallpaper-engine-library');
 const {
   LocalMusicLibrary,
-  registerLocalMusicScheme,
 } = require('./local-music-library');
 const { BuiltInPlaylistLibrary } = require('./built-in-playlist-library');
-const { SlideshowLibrary, registerSlideshowScheme, installSlideshowIpc } = require('./slideshow-library');
+const { SlideshowLibrary, installSlideshowIpc } = require('./slideshow-library');
+const { registerMediaSchemes } = require('./media-schemes');
 const { WallpaperEngineRuntime } = require('./wallpaper-engine-runtime');
 const { FullDesktopModeRuntime } = require('./full-desktop-mode-runtime');
 const {
@@ -26,14 +25,19 @@ const {
 const { extractKugouAuth, qishuiCookieHasLogin } = require('./login-helpers');
 const { startBackend } = require('./backend-service');
 const { startupQuery } = require('./startup-assets');
+const { createVideoExporter } = require('./video-exporter');
 const { createDesktopPreferences } = require('./desktop-preferences');
 function clearSpotifyToken() { /* No shared provider credentials in the Python edition. */ }
 
-registerWallpaperEngineScheme(protocol);
-registerLocalMusicScheme(protocol);
-registerSlideshowScheme(protocol);
+registerMediaSchemes(protocol);
 
 let mainWindow = null;
+const visualVideoExporter = createVideoExporter({app, BrowserWindow, dialog, ipcMain,
+  getOwner:() => mainWindow,
+  getBaseUrl:() => mainWindow.webContents.getURL(),
+  getFfmpeg:() => path.join(app.isPackaged ? process.resourcesPath : path.join(__dirname,'..','build'), 'tools','ffmpeg.exe'),
+  isTrusted:isTrustedMainWindowIpc});
+app.on('before-quit', () => visualVideoExporter.cancel());
 let localServer = null;
 let mainServerPort = 0;
 let desktopLyricsWindow = null;
@@ -4710,6 +4714,21 @@ ipcMain.handle('mineradio-export-login-cookie', async (_event, provider) => {
   } catch (e) {
     return { ok: false, error: e.message || 'EXPORT_LOGIN_COOKIE_FAILED' };
   }
+});
+
+ipcMain.handle('mineradio-save-export-file', async (event, payload = {}) => {
+  if (!isTrustedMainWindowIpc(event)) return {ok:false, error:'UNTRUSTED_SENDER'};
+  try {
+    const bytes = payload.bytes;
+    if (!(bytes instanceof Uint8Array) || !bytes.byteLength || bytes.byteLength > 512 * 1024 * 1024) return {ok:false, error:'INVALID_EXPORT'};
+    const name = path.basename(String(payload.name || 'Mineradio-export').replace(/[\\/:*?"<>|\x00-\x1f]/g, '_')).slice(0, 160);
+    const selected = await dialog.showSaveDialog(getSenderWindow(event), {title:'保存导出文件', defaultPath:name});
+    if (selected.canceled || !selected.filePath) return {ok:false, canceled:true};
+    const temporary = selected.filePath + '.' + crypto.randomUUID() + '.part';
+    try { await fs.promises.writeFile(temporary, bytes); await fs.promises.rename(temporary, selected.filePath); }
+    finally { await fs.promises.unlink(temporary).catch(() => {}); }
+    return {ok:true};
+  } catch (_) { return {ok:false, error:'EXPORT_FAILED'}; }
 });
 
 ipcMain.handle('mineradio-export-json-file', async (event, payload = {}) => {

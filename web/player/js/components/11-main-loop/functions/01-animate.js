@@ -2,9 +2,11 @@
 
 
 function animate() {
+  var exportClock = window.mineradioExportClock;
+  if (exportClock && !exportClock.drawing) return;
   mainLoopAnimationRequested = false;
   if (window.mineradioSimplePlayer && window.mineradioSimplePlayer.active()) return;
-  scheduleNextMainLoopFrame();
+  if (!exportClock) scheduleNextMainLoopFrame();
   var perfProbe = window.__mineradioPerf;
   var framePerfStart = performance.now();
   var now = performance.now();
@@ -20,7 +22,7 @@ function animate() {
     tickDeepBackgroundFrame(now, mvDt);
     return;
   }
-  if (shouldSkipAdaptiveRenderFrame(now)) return;
+  if (!exportClock && shouldSkipAdaptiveRenderFrame(now)) return;
   var dt = Math.min((now - prevTime) / 1000, 0.05);
   prevTime = now;
   sampleRenderPerf(now, dt);

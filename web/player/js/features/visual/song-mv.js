@@ -251,6 +251,13 @@
       if (video && layer.classList.contains('active') && window.MineradioSonicWorkshop) MineradioSonicWorkshop.clear();
     }
   }
+  function setEndMode(value) {
+    endMode = value === 'loop' ? 'loop' : 'fallback'; endedKey = '';
+    try { localStorage.setItem('mineradio-mv-end-mode', endMode); } catch (_) {}
+    var input = document.getElementById('mv-end-mode');
+    if (input) input.value = endMode;
+    syncClock();
+  }
   function renderSettings(grid) {
     if (!grid) return;
     var row = document.createElement('label'); row.className = 'mv-fallback-settings'; row.id = 'mv-fallback-settings';
@@ -268,7 +275,7 @@
       var option = document.createElement('option'); option.value = entry[0]; option.textContent = entry[1]; mode.append(option);
     });
     mode.value = endMode; mode.onchange = function () {
-      endMode = mode.value; endedKey = ''; localStorage.setItem('mineradio-mv-end-mode', endMode); syncClock();
+      setEndMode(mode.value);
     };
     row.append(endLabel, mode);
     var card = grid.querySelector('[data-preset="13"]');
@@ -317,7 +324,7 @@
   window.mineradioMV = {
     select: select, selected: function () { return selected; }, active: function () { return !!(layer && layer.classList.contains('active')); },
     fallback: function () { return fallback; }, setFallback: setFallback, renderSettings: renderSettings, refreshSettings: refreshSettings,
-    setHomeVisible: setHomeVisible,
+    setHomeVisible: setHomeVisible, setEndMode: setEndMode,
     status: function () { return {selected:selected, ready:video ? video.readyState : 0, paused:video ? video.paused : true,
       time:video ? video.currentTime : 0, cached:!!objectUrl, buffering:buffering, needsTap:!!(resumeButton && !resumeButton.hidden)}; }
   };

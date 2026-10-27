@@ -1,5 +1,6 @@
 """Render the Android phone pages in Chromium; no phone or real account is used."""
 import argparse
+import base64
 import importlib.util
 import json
 import math
@@ -91,6 +92,9 @@ def main():
                       window.updateFixture={platform:'android',currentVersion:'1.1.12',version:'1.1.13',
                         status:'idle',updateAvailable:false,progress:0,total:104857600,transferred:0,notes:'测试版本说明\\n修复手机布局，保留本地音乐。'};
                       window.MineradioAndroid={isForeground:()=>true,playback:()=>{},
+                        beginSave:(name,mime)=>{window.exportFiles=window.exportFiles||[];const id=String(exportFiles.length);exportFiles.push({id,name,mime,chunks:[],complete:false});return id},
+                        appendSave:(id,bytes)=>{exportFiles[Number(id)].chunks.push(bytes);return true},
+                        finishSave:id=>{exportFiles[Number(id)].complete=true},cancelSave:()=>{},
                         getUpdateState:()=>JSON.stringify(updateFixture),
                         checkForUpdates:()=>{updateFixture.status='available';updateFixture.updateAvailable=true;return JSON.stringify(updateFixture)},
                         downloadUpdate:()=>{updateFixture.status=updateFixture.status==='downloaded'?'downloaded':'downloading';return JSON.stringify(updateFixture)}};
@@ -179,6 +183,43 @@ def main():
                     assert page.locator('#update-btn-label').text_content() == '安装更新'
                     page.evaluate("Object.assign(updateFixture,{status:'error',error:'网络中断，请重试'});mineradioAndroidAcceptUpdate(JSON.parse(JSON.stringify(updateFixture)))")
                     assert page.locator('#update-footnote').inner_text() == '网络中断，请重试'
+                    if width == 420:
+                        page.evaluate('closeUpdatePanel()')
+                        page.locator('#update-modal').wait_for(state='hidden')
+                        stored_song = page.evaluate('async()=>(await browserLocalMusic.listLocalMusicLibrary()).tracks[0]')
+                        page.evaluate('async(song)=>{await mineradioTrackExports.exportAudio(song);await mineradioTrackExports.exportLyric(song)}', stored_song)
+                        exported = page.evaluate('exportFiles')
+                        assert len(exported) == 2 and all(entry['complete'] for entry in exported)
+                        decoded = [b''.join(base64.b64decode(part) for part in entry['chunks']) for entry in exported]
+                        assert decoded[0] == tone.read_bytes(), 'Local export changed the audio bytes'
+                        assert decoded[1].decode('utf-8-sig') == lyric.read_bytes().decode('utf-8')
+                        page.evaluate('''async(song)=>{
+                          localStorage.setItem('export-preservation-fixture','keep');
+                          fx.preset=9;const value=await mineradioTrackExports.capture();
+                          value.accounts={secret:'MUST_NOT_EXPORT'};await mineradioTrackExports.recipe(song,value);
+                          fx.preset=10;await mineradioTrackExports.exportPreset(song);
+                        }''', stored_song)
+                        file = page.evaluate('exportFiles.at(-1)')
+                        preset_bytes = b''.join(base64.b64decode(part) for part in file['chunks'])
+                        preset_data = json.loads(preset_bytes)
+                        assert preset_data['snapshot']['preset'] == 9 and preset_data['type'] == 'mineradio-track-preset', {'preset':preset_data['snapshot']['preset'],'type':preset_data['type']}
+                        assert b'MUST_NOT_EXPORT' not in preset_bytes and 'accounts' not in preset_data
+                        assert page.evaluate('(song)=>mineradioTrackExports.recipe(song)', stored_song)['snapshot']['preset'] == 9
+                        assert page.evaluate('()=>mineradioTrackExports.recipe({localFileId:"bbbbbbbbbbbbbbbbbbbbbbbb"})') is None
+                        preset_path = Path(directory) / 'round-trip.json'
+                        preset_path.write_bytes(preset_bytes)
+                        page.locator('.web-local-export-actions button', has_text='预设').first.click()
+                        with page.expect_file_chooser() as chooser:
+                            page.get_by_role('button', name='导入预设文件到此曲', exact=True).click()
+                        chooser.value.set_files(str(preset_path))
+                        page.wait_for_function('document.getElementById("toast").textContent.includes("已导入此曲预设")')
+                        page.locator('.web-local-export-actions button', has_text='预设').first.click()
+                        page.get_by_role('button', name='加载此曲预设', exact=True).click()
+                        page.wait_for_function('fx.preset===9')
+                        assert page.evaluate('localStorage.getItem("export-preservation-fixture")') == 'keep'
+                        case['trackExports'] = dict(audioBytesUnchanged=True, lyricBytesUnchanged=True,
+                            savedPresetUnaffectedByGlobalPresetChange=True, unrelatedTrackUnaffected=True,
+                            presetFileImportAndApplyPassed=True, noAccountFieldsExported=True)
                     assert not errors, errors
                     case.update(javascriptErrors=errors, localAudioPlaying=page.evaluate('!audio.paused'))
                     report['cases'].append(case)

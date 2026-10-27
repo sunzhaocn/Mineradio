@@ -112,6 +112,15 @@ contextBridge.exposeInMainWorld('desktopWindow', {
   },
   readText: () => ({ ok: true, text: clipboard.readText() || '' }),
   exportJsonFile: (payload) => ipcRenderer.invoke('mineradio-export-json-file', payload || {}),
+  saveExportFile: (payload) => ipcRenderer.invoke('mineradio-save-export-file', payload || {}),
+  exportVisualVideo: (payload) => ipcRenderer.invoke('mineradio-video-export-start', payload || {}),
+  getVisualVideoExportState: () => ipcRenderer.invoke('mineradio-video-export-state'),
+  cancelVisualVideoExport: () => ipcRenderer.invoke('mineradio-video-export-cancel'),
+  onVisualVideoExportState: (callback) => {
+    const listener = (_event, value) => callback(value);
+    ipcRenderer.on('mineradio-video-export-state', listener);
+    return () => ipcRenderer.removeListener('mineradio-video-export-state', listener);
+  },
   exportLoginCookie: (provider) => ipcRenderer.invoke('mineradio-export-login-cookie', provider || ''),
   importJsonFile: () => ipcRenderer.invoke('mineradio-import-json-file'),
   readCurrentFxAutosaveSync: () => ipcRenderer.sendSync('mineradio-current-fx-autosave-read-sync'),
