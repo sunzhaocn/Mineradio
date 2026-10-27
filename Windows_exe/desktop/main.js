@@ -3793,8 +3793,11 @@ function armMainWindowMinimizeIntent(win, reason) {
 
 function consumeMainWindowMinimizeIntent(win) {
   if (!win || win.isDestroyed()) return { intentional: false, reason: '' };
-  const intentional = Number(win.__mineradioMinimizeIntentUntil || 0) >= Date.now();
-  const reason = intentional ? String(win.__mineradioMinimizeIntentReason || 'user') : '';
+  // Win+D, Win+M and taskbar minimization may bypass WM_SYSCOMMAND.
+  // Respect every native minimize event instead of treating it as a fault.
+  const intentional = true;
+  const reason = Number(win.__mineradioMinimizeIntentUntil || 0) >= Date.now()
+    ? String(win.__mineradioMinimizeIntentReason || 'user') : 'system-minimize';
   win.__mineradioMinimizeIntentUntil = 0;
   win.__mineradioMinimizeIntentReason = '';
   win.__mineradioIntentionalMinimize = intentional;
@@ -5279,7 +5282,7 @@ function showMainWindowSafely(win, reason) {
   // A renderer may be reloaded while the user intentionally keeps Mineradio
   // in the tray. Runtime recovery must never turn that reload into a surprise
   // foreground window.
-  if (startupCompleted && win.__mineradioIntentionalHide === true) return false;
+  if (startupCompleted && (win.__mineradioIntentionalHide === true || win.isMinimized())) return false;
   markMainWindowExpectedVisible(win, true, reason || 'show-safe');
   if (win.__mineradioStartupShowTimer) {
     clearTimeout(win.__mineradioStartupShowTimer);
