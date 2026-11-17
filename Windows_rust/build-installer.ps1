@@ -75,6 +75,12 @@ path: $($installer.Name)
 sha512: $sha512
 "@
         [IO.File]::WriteAllText((Join-Path $dist 'latest.yml'), "$manifestText`n", [Text.UTF8Encoding]::new($false))
+        $releaseManifest = [ordered]@{
+            version = $version
+            size = $installer.Length
+            sha256 = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()
+        } | ConvertTo-Json -Compress
+        [IO.File]::WriteAllText((Join-Path $dist 'mineradio-windows-update.json'), "$releaseManifest`n", [Text.UTF8Encoding]::new($false))
     }
     $installer
 } finally {

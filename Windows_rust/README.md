@@ -12,7 +12,7 @@ cargo test --locked --manifest-path Windows_rust/Cargo.toml
 .\Windows_rust\build-installer.ps1
 ```
 
-安装包和旧 Windows 版升级使用的 `latest.yml` 生成在 `Windows_rust/dist`。正式安装包沿用原安装位置、`%APPDATA%\Mineradio` 和旧版记录的端口。附加 `-Isolated` 可构建预览包，默认安装在 `%LOCALAPPDATA%\Programs\Mineradio-Rust-Preview`，使用独立的资料目录及端口。调试时可用 `--profile <路径>` 指定资料目录，用 `--headless --port 0` 启动测试用本地服务。
+安装包、Rust 更新清单 `mineradio-windows-update.json` 和旧 Windows 版升级使用的 `latest.yml` 生成在 `Windows_rust/dist`。正式安装包沿用原安装位置、`%APPDATA%\Mineradio` 和旧版记录的端口。附加 `-Isolated` 可构建预览包，默认安装在 `%LOCALAPPDATA%\Programs\Mineradio-Rust-Preview`，使用独立的资料目录及端口。调试时可用 `--profile <路径>` 指定资料目录，用 `--headless --port 0` 启动测试用本地服务。
 
 首次打开包含旧版资料的目录时，Rust 版将 Chromium 的 Local Storage 和 IndexedDB 复制到 WebView2 的配置目录。迁移时须先退出正在使用该目录的旧版。旧曲库、歌单和视觉配置继续沿用原有文件格式。
 

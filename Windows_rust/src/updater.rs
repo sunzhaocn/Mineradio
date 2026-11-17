@@ -1,6 +1,7 @@
 use crate::providers::request_json;
 use anyhow::{Context, Result, ensure};
 use futures_util::StreamExt;
+use serde::Deserialize;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::sync::Mutex;
@@ -12,7 +13,18 @@ use url::Url;
 const CURRENT: &str = env!("CARGO_PKG_VERSION");
 const RELEASES: &str = "https://github.com/sunzhaocn/Mineradio/releases";
 const FEED: &str = "https://api.github.com/repos/sunzhaocn/Mineradio/releases";
+const MANIFEST_NAME: &str = "mineradio-windows-update.json";
+const MANIFEST_URL: &str =
+    "https://github.com/sunzhaocn/Mineradio/releases/latest/download/mineradio-windows-update.json";
 const MAX_INSTALLER: u64 = 512 * 1024 * 1024;
+const MAX_MANIFEST: usize = 4096;
+
+#[derive(Deserialize)]
+struct ReleaseManifest {
+    version: String,
+    size: u64,
+    sha256: String,
+}
 
 #[derive(Clone)]
 pub struct Release {
@@ -68,7 +80,7 @@ impl Updater {
     }
 
     pub async fn check(&self) {
-        let update = async {
+        let feed = async {
             let client = reqwest::Client::builder()
                 .user_agent(concat!("Mineradio-Windows/", env!("CARGO_PKG_VERSION")))
                 .redirect(reqwest::redirect::Policy::none())
@@ -85,6 +97,10 @@ impl Updater {
             Ok::<_, anyhow::Error>(find_update(&rows))
         }
         .await;
+        let update = match feed {
+            Ok(release) => Ok(release),
+            Err(_) => check_release_manifest().await,
+        };
         let mut state = self.state.lock().expect("update state poisoned");
         match update {
             Ok(release) => {
@@ -208,6 +224,68 @@ fn version(value: &str) -> Option<[u32; 3]> {
     fields.next().is_none().then_some(result)
 }
 
+async fn check_release_manifest() -> Result<Option<Release>> {
+    let client = reqwest::Client::builder()
+        .user_agent(concat!("Mineradio-Windows/", env!("CARGO_PKG_VERSION")))
+        .timeout(Duration::from_secs(12))
+        .redirect(reqwest::redirect::Policy::custom(|request| {
+            if request.previous().len() <= 3 && trusted_manifest_redirect(request.url()) {
+                request.follow()
+            } else {
+                request.error("manifest redirect outside GitHub")
+            }
+        }))
+        .build()?;
+    let response = client
+        .get(MANIFEST_URL)
+        .header("Accept-Encoding", "identity")
+        .send()
+        .await?
+        .error_for_status()?;
+    let mut stream = response.bytes_stream();
+    let mut data = Vec::new();
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk?;
+        ensure!(data.len() + chunk.len() <= MAX_MANIFEST, "更新清单过大");
+        data.extend_from_slice(&chunk);
+    }
+    read_release_manifest(&data)
+}
+
+fn read_release_manifest(data: &[u8]) -> Result<Option<Release>> {
+    let manifest: ReleaseManifest = serde_json::from_slice(data)?;
+    let tag = format!("v{}", manifest.version);
+    let published = version(&tag).context("更新清单版本无效")?;
+    let current = version(CURRENT).context("当前版本无效")?;
+    let release = release_asset(&tag, manifest.size, &manifest.sha256).context("更新清单无效")?;
+    Ok((published > current).then_some(release))
+}
+
+fn rust_installer_name(version: &str) -> String {
+    format!("Mineradio-{version}-Rust-Setup-x64.exe")
+}
+
+fn release_asset(tag: &str, size: u64, hash: &str) -> Option<Release> {
+    version(tag)?;
+    if !(1..=MAX_INSTALLER).contains(&size) {
+        return None;
+    }
+    let mut digest = [0; 32];
+    hex::decode_to_slice(hash, &mut digest).ok()?;
+    let version = tag.strip_prefix('v').unwrap_or(tag);
+    let url = Url::parse(&format!(
+        "{RELEASES}/download/{tag}/{}",
+        rust_installer_name(version)
+    ))
+    .ok()?;
+    Some(Release {
+        version: version.into(),
+        url,
+        size,
+        digest,
+    })
+}
+
 fn find_update(rows: &Value) -> Option<Release> {
     let current = version(CURRENT)?;
     rows.as_array()?
@@ -222,44 +300,49 @@ fn find_update(rows: &Value) -> Option<Release> {
                 return None;
             }
             let version = tag.strip_prefix('v').unwrap_or(tag);
-            let filename = format!("Mineradio-{version}-Rust-Setup-x64.exe");
+            let filename = rust_installer_name(version);
             let asset = row["assets"]
                 .as_array()?
                 .iter()
                 .find(|asset| asset["name"] == filename && asset["state"] == "uploaded")?;
-            let size = asset["size"]
-                .as_u64()
-                .filter(|size| (1..=MAX_INSTALLER).contains(size))?;
+            let size = asset["size"].as_u64()?;
             let hash = asset["digest"].as_str()?.strip_prefix("sha256:")?;
-            let mut digest = [0; 32];
-            hex::decode_to_slice(hash, &mut digest).ok()?;
-            let url = Url::parse(&format!("{RELEASES}/download/{tag}/{filename}")).ok()?;
-            if asset["browser_download_url"].as_str()? != url.as_str() {
+            let release = release_asset(tag, size, hash)?;
+            if asset["browser_download_url"].as_str()? != release.url.as_str() {
                 return None;
             }
-            Some((
-                numeric,
-                Release {
-                    version: version.into(),
-                    url,
-                    size,
-                    digest,
-                },
-            ))
+            Some((numeric, release))
         })
         .max_by_key(|(version, _)| *version)
         .map(|(_, release)| release)
 }
 
-fn trusted_asset_host(url: &Url) -> bool {
+fn trusted_https(url: &Url) -> bool {
     url.scheme() == "https"
         && url.port_or_known_default() == Some(443)
         && url.password().is_none()
         && url.username().is_empty()
+}
+
+fn trusted_asset_host(url: &Url) -> bool {
+    trusted_https(url)
         && matches!(
             url.host_str(),
             Some("release-assets.githubusercontent.com" | "objects.githubusercontent.com")
         )
+}
+
+fn trusted_manifest_redirect(url: &Url) -> bool {
+    trusted_asset_host(url)
+        || (trusted_https(url)
+            && url.host_str() == Some("github.com")
+            && url.query().is_none()
+            && url.fragment().is_none()
+            && url
+                .path()
+                .strip_prefix("/sunzhaocn/Mineradio/releases/download/")
+                .and_then(|path| path.split_once('/'))
+                .is_some_and(|(tag, name)| version(tag).is_some() && name == MANIFEST_NAME))
 }
 
 pub fn install(package: NamedTempFile) -> Result<()> {
@@ -301,5 +384,46 @@ mod tests {
                 .version,
             "9.10.1"
         );
+    }
+
+    #[test]
+    fn release_manifest_validates_version_size_and_digest() {
+        let manifest = |version: &str, size, digest: &str| {
+            serde_json::to_vec(&json!({"version":version,"size":size,"sha256":digest})).unwrap()
+        };
+        let digest = "17".repeat(32);
+        let release = read_release_manifest(&manifest("9.10.1", 500, &digest))
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            release.url.as_str(),
+            "https://github.com/sunzhaocn/Mineradio/releases/download/v9.10.1/Mineradio-9.10.1-Rust-Setup-x64.exe"
+        );
+        assert!(
+            read_release_manifest(&manifest(CURRENT, 500, &digest))
+                .unwrap()
+                .is_none()
+        );
+        assert!(read_release_manifest(&manifest("9.10.1", MAX_INSTALLER + 1, &digest)).is_err());
+        assert!(read_release_manifest(&manifest("9.10.1", 500, "invalid")).is_err());
+        assert!(read_release_manifest(&manifest("v9.10.1", 500, &digest)).is_err());
+    }
+
+    #[test]
+    fn release_manifest_redirects_stay_on_the_release_path_or_asset_host() {
+        let allowed = format!("{RELEASES}/download/v9.10.1/{MANIFEST_NAME}");
+        assert!(trusted_manifest_redirect(&Url::parse(&allowed).unwrap()));
+        assert!(trusted_manifest_redirect(
+            &Url::parse("https://release-assets.githubusercontent.com/example").unwrap()
+        ));
+        assert!(!trusted_manifest_redirect(
+            &Url::parse(&format!("{allowed}?x=1")).unwrap()
+        ));
+        assert!(!trusted_manifest_redirect(
+            &Url::parse(&allowed.replace("sunzhaocn", "another")).unwrap()
+        ));
+        assert!(!trusted_manifest_redirect(
+            &Url::parse(&allowed.replace("https", "http")).unwrap()
+        ));
     }
 }
