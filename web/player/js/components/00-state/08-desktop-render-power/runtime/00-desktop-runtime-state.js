@@ -7,9 +7,7 @@ var desktopRuntimeState = {
   minimized: false,
   visible: true,
   focused: true,
-  fullscreen: false,
-  embedded: false,
-  interactive: false
+  fullscreen: false
 };
 
 var renderPowerState = { mode: '', width: 0, height: 0, pixelRatio: 0 };

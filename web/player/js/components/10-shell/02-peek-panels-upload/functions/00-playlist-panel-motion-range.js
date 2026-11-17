@@ -74,11 +74,11 @@ function shouldAnimatePlaylistPanelOpen(panel) {
 }
 
 function setPeek(el, on, key) {
-  if (!el) return;
+  if (!el || !peekTimers) return;
   if (key === 'pl' && on && el.__dismissedUntil > performance.now()) return;
   if (key === 'fx' && !on && fxPanelPinned) return;
   if (immersiveMode && on && (key === 'search' || key === 'fx' && !window.mineradioHoverPanels)) return;
-  if (on && !diyPlayerMode && key === 'fx') return;
+  if (on && key === 'fx' && (!diyPlayerMode || document.body.matches('.desktop-shell.empty-home-active'))) return;
   if (!on && key === 'search' && emptyHomeActive && !immersiveMode) return;
   if (!on && key === 'pl' && playlistPanelPinned) return;
   if (on && key === 'fx') document.body.classList.remove('fullscreen-diy-peek');

@@ -24,7 +24,6 @@ function isHomeBlankDismissClick(e) {
     '#fx-panel',
     '#playlist-panel',
     '#mini-queue-popover',
-    '#visual-guide',
     '#upload-tip',
     '#toast',
     '#trial-banner',

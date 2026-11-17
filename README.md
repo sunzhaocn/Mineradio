@@ -4,13 +4,13 @@
 
 [下载安装包](https://github.com/sunzhaocn/Mineradio/releases/latest) · [公开源代码](https://github.com/sunzhaocn/Mineradio)
 
-Windows 最新版为 **2.3.17**，Android 最新版为 **1.1.14**，更新内容见 [v2.3.17 发布说明](docs/releases/v2.3.17.md)。支持网易云、QQ、酷狗、汽水音乐、本地曲库、歌词、歌单、MV 和桌面视觉效果；平台可用性与会员权益以对应平台实际返回为准。
+Windows 最新版为 **2.3.25（Rust）**，Android 最新版为 **1.1.14**。支持网易云、QQ、酷狗、汽水音乐、本地曲库、歌词、歌单、MV 和桌面视觉效果。平台可用性与会员权益以对应平台实际返回为准。[v2.3.25 发布说明](https://github.com/sunzhaocn/Mineradio/releases/tag/v2.3.25)
 
 Windows 支持按当前视觉预设和所选歌曲生成带音乐的 MP4；Windows 与 Android 可从本机音乐库单独导出音频、LRC 和可重新加载的预设配置。用法见 [视频与预设导出](docs/VISUAL_EXPORTS.md)。
 
 ## 使用与更新
 
-Windows 下载 Release 中的 Setup 安装包安装，随后从桌面或开始菜单打开。运行环境已内置，无需启动独立网页服务。右上角更新入口可检查新版本；点击“立即更新”后下载并校验，完成后自动退出并覆盖安装，保留账号、歌单和设置。安装完成后可重新打开。2.3.10 及更早版本需先手动安装一次新版。
+Windows 下载 Release 中的 `Mineradio-版本-Rust-Setup-x64.exe`，安装后从桌面或开始菜单打开。软件启动时自动检查更新，发现新版本时在右上角显示入口。点击“立即更新”后下载并校验安装包，自动覆盖安装并重新打开软件，沿用账号、歌单和设置。旧版更新兼容性见 [自动更新说明](docs/AUTO_UPDATE.md)。
 
 如果旧版右上角没有更新入口，请下载安装包覆盖一次，无须卸载或清除应用数据。Windows 和 Android 现在直接读取内置页面，断网仍能打开界面和播放本地音乐；升级时自动清理旧页面缓存，保留账号、歌单、本地音乐、歌词及媒体缓存。迁移与验证范围见 [内置界面缓存清理](docs/EMBEDDED_UI_CACHE_REMOVAL.md)。
 
@@ -22,7 +22,8 @@ Android 保留完整汽水接入，构建前需从自有手机导入匹配的汽
 
 | 目录 | 用途 |
 | --- | --- |
-| `Windows_exe/` | Windows Electron 客户端、打包入口与汽水签名 SDK |
+| `Windows_rust/` | Windows 正式客户端、构建入口与安装程序 |
+| `Windows_exe/` | 历史 Electron 源码及 Rust 构建仍在使用的图标、工具准备脚本和汽水签名 SDK |
 | `Android_apk/` | Android 客户端与构建脚本 |
 | `iOS_ipa/` | iPhone/iPad 客户端与云构建脚本 |
 | `music_app/` | 各客户端共用的平台接口、认证、媒体和内嵌服务 |
@@ -38,11 +39,11 @@ Android 保留完整汽水接入，构建前需从自有手机导入匹配的汽
 
 ```powershell
 python -X utf8 -m unittest discover -s checks -p "test_*.py" -v
-npm --prefix Windows_exe test
+cargo test --locked --manifest-path Windows_rust/Cargo.toml
 python -X utf8 -m unittest discover -s Android_apk/checks -p "test_*.py" -v
-node --test Android_apk/checks/bridge-regressions.test.cjs checks/listen-stats.test.cjs
+node --test Android_apk/checks/bridge-regressions.test.cjs checks/listen-stats.test.cjs checks/visual-exports.test.cjs
 ```
 
-GitHub Actions 在 Windows 和 Linux 上自动执行上述检查。Android 材料检查使用合成测试文件，服务策略检查需要 JDK；完整 APK 另行使用本地 SDK 材料构建。iOS 的准备、检查与真机验证范围见 [iOS_ipa/README.md](iOS_ipa/README.md)。
+GitHub Actions 在 Windows 上执行 Rust 检查，并在 Windows 和 Linux 上执行共享和 Android 检查。Android 材料检查使用合成测试文件，服务策略检查需要 JDK。完整 APK 另行使用本地 SDK 材料构建。iOS 的准备、检查与真机验证范围见 [iOS_ipa/README.md](iOS_ipa/README.md)。
 
-账号凭据保存在当前客户端本地；公开源码不包含开发机器上的 Cookie、账号配置、个人音乐或运行缓存。Windows 用户数据位于 `%APPDATA%/Mineradio`。
+Windows 用户数据位于 `%APPDATA%/Mineradio`。账号来源可选本地登录或从账号服务器领取 Cookie。各音乐平台的请求由客户端发出。[账号登录说明](docs/LOGIN.md)

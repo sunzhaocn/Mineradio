@@ -1,3 +1,13 @@
+#splash.preparing::before,
+#splash.preparing *,
+#splash.preparing *::after {
+  animation: none !important;
+}
+
+#splash.preparing::before {
+  opacity: .72;
+}
+
 #splash.exiting {
   pointer-events: none;
   opacity: 0;

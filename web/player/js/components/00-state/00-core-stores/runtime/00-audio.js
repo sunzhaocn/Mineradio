@@ -248,8 +248,6 @@ var FREE_CAMERA_STORE_KEY = 'mineradio-free-camera-v1';
 
 var HOTKEY_SETTINGS_STORE_KEY = 'mineradio-hotkey-settings-v1';
 
-var VISUAL_GUIDE_SEEN_STORE_KEY = 'mineradio-visual-guide-seen-v2';
-
 var CLOSE_BEHAVIOR_STORE_KEY = 'mineradio-close-behavior-v1';
 
 var LAST_PLAYBACK_STORE_KEY = 'mineradio-last-playback-v1';
@@ -335,10 +333,6 @@ var likedSongMap = {}, likeBusyMap = {}, likeStatusToken = 0;
 var collectTargetSong = null, collectBusy = false;
 
 var uploadTipTimer = null, uploadTipAttempts = 0;
-
-var visualGuideActive = false, visualGuideStep = 0, visualGuideResizeBound = false;
-
-var visualGuideState = { bottomWasVisible: false, searchWasPeek: false, manual: false };
 
 var emptyHomeActive = false;
 

@@ -35,11 +35,8 @@
               title="桌面歌词绑定鼓点电影震动，基础漂浮始终保留"><span>桌面歌词电影震动</span><span class="dot"></span></div>
             <div class="fx-toggle" id="t-desktopLyricsHighlight" onclick="toggleFx('desktopLyricsHighlight')"
               title="桌面歌词按播放进度高亮"><span>桌面歌词高亮跟随</span><span class="dot"></span></div>
-            <div class="fx-toggle" id="t-wallpaperMode" onclick="toggleFx('wallpaperMode')"
-              title="把当前完整 Mineradio 放到 Windows 桌面；右上控制器可显示、隐藏桌面图标，Esc 退出">
-              <span>完整桌面模式<em class="fx-dev-badge">试验</em></span><span class="dot"></span></div>
           </div>
-          <div class="fx-section-label">桌面 / 壁纸</div>
+          <div class="fx-section-label">桌面歌词</div>
           <div class="fx-slider"><label>桌面歌词大小</label><input id="fx-desktoplyricssize" type="range" min="0.72"
               max="1.55" step="0.01"><output></output></div>
           <div class="fx-slider"><label>桌面歌词透明</label><input id="fx-desktoplyricsopacity" type="range" min="0.28"
@@ -54,14 +51,5 @@
             <button data-desktop-lyrics-fps="120">120</button>
             <button data-desktop-lyrics-fps="0">无上限</button>
           </div>
-          <div class="desktop-mode-note">开启后可在右上控制器显示或隐藏 Windows 桌面图标；按 Esc 直接退出。重启默认关闭。</div>
-          <div class="fx-section-label" hidden>壁纸帧数</div>
-          <div class="fx-seg" id="wallpaper-fps-seg" hidden>
-            <button data-wallpaper-fps="24">24</button>
-            <button data-wallpaper-fps="30">30</button>
-            <button data-wallpaper-fps="60">60</button>
-          </div>
-          <div class="fx-slider" hidden><label>壁纸透明度</label><input id="fx-wallpaperopacity" type="range" min="0.35"
-              max="1" step="0.01"><output></output></div>
         </div>
       </div>

@@ -2,14 +2,17 @@
 
 
 
-// Each browser owns its credentials. The server only relays the credentials
-// attached to a request and never acts as a shared account store.
 (function installLocalAccountLogin() {
   if (!window.MINERADIO_LOCAL_WEB) return;
   var providers = ['netease', 'qq', 'kugou', 'qishui'];
   var labels = { netease: '网易云音乐', qq: 'QQ 音乐', kugou: '酷狗音乐', qishui: '汽水音乐' };
   var shortLabels = { netease: '网易云', qq: 'QQ 音乐', kugou: '酷狗', qishui: '汽水' };
   var accounts = {}, STORE = 'mineradio-local-accounts-v1';
+  var SOURCE = 'mineradio-account-source-v1';
+  var supportsServer = !!(window.desktopWindow && window.desktopWindow.isDesktop);
+  var useServer = supportsServer;
+  try { useServer = supportsServer && localStorage.getItem(SOURCE) !== 'local'; } catch (_) {}
+  var serverStatus = {}, serverRevision = '', serverPending = null, serverCheckedAt = 0;
   var profileRequests = {}, profileAttempts = {};
   var PROFILE_SCHEMA = 2;
   var currentProvider = 'netease', phoneMode = 'sms', sessionKey = '', sessionDeadline = 0;
@@ -42,6 +45,10 @@
     });
   });
   function refreshHealth() {
+    if (useServer) {
+      if (!document.hidden) fetchServerStatuses();
+      return;
+    }
     if (!document.hidden) providers.forEach(function (provider) { health[provider].refresh(false); });
   }
   function startHealthRefresh() {
@@ -130,10 +137,15 @@
     catch (_) { throw new Error('浏览器无法保存 Cookie，请允许本地存储后重试。'); }
     if (typeof window.dispatchEvent === 'function' && typeof Event === 'function') window.dispatchEvent(new Event('mineradio:accounts-changed'));
   }
+  function musicTarget(url) {
+    var target = new URL(url, window.location.origin);
+    return target.origin === window.location.origin && target.pathname.startsWith('/api/') &&
+      !target.pathname.startsWith('/api/local/auth/') ? target : null;
+  }
   function credentialsFor(url, provider) {
     try {
-      var target = new URL(url, window.location.origin);
-      if (target.origin !== window.location.origin || !target.pathname.startsWith('/api/') || target.pathname.startsWith('/api/local/auth/')) return {};
+      var target = musicTarget(url);
+      if (useServer || !target) return {};
       provider = provider || target.searchParams.get('provider') || target.searchParams.get('platform');
       if (!provider) {
         var match = target.pathname.match(/^\/api\/(qq|kugou|qishui)\//);
@@ -152,8 +164,10 @@
     } catch (_) { return {}; }
   }
   window.localMusicCredentials = {
-    read: localAccount,
+    read: function (provider) { return useServer ? {} : localAccount(provider); },
+    configured: function (provider) { return !!savedProviderStatus(provider).configured; },
     observeAccountStatus: function (data) {
+      if (useServer) return;
       providers.forEach(function (provider) {
         var status = data && (data.providers && data.providers[provider] || data.provider === provider && data);
         if (status) health[provider].observe(status);
@@ -163,10 +177,27 @@
     refresh: function (provider) { return refreshProvider(normalizeProvider(provider)); },
     all: function () { return credentialsFor('/api/local/catalog'); },
     headers: function (url) {
+      if (useServer) {
+        try {
+          return musicTarget(url) ? {
+            'X-Mineradio-Account-Source': 'server',
+            'X-Mineradio-Account-Revision': serverRevision
+          } : {};
+        } catch (_) { return {}; }
+      }
       var values = credentialsFor(url);
       return Object.keys(values).length ? { 'X-Music-Credentials': JSON.stringify(values) } : {};
     },
     url: function (url, provider) {
+      if (useServer) {
+        try {
+          var serverTarget = musicTarget(url);
+          if (!serverTarget) return url;
+          serverTarget.searchParams.delete('credentials');
+          serverTarget.searchParams.set('account_source', 'server');
+          return serverTarget.pathname + serverTarget.search + serverTarget.hash;
+        } catch (_) { return url; }
+      }
       var values = credentialsFor(url, provider);
       if (!Object.keys(values).length) return url;
       var target = new URL(url, window.location.origin);
@@ -231,7 +262,28 @@
     renderUserBtn();
     renderTabs();
   }
+  function fetchServerStatuses() {
+    if (serverPending) return serverPending;
+    if (Date.now() - serverCheckedAt < 30000) return Promise.resolve(accounts);
+    serverCheckedAt = Date.now();
+    serverPending = fetch('/api/server-account/status', {
+      cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(27000)
+    }).then(async function (response) {
+      if (!response.ok) return accounts;
+      var data = await response.json();
+      if (!useServer || !data.platforms) return accounts;
+      var revision = String(data.revision || '');
+      var changed = revision !== serverRevision || JSON.stringify(serverStatus) !== JSON.stringify(data.platforms);
+      serverRevision = revision;
+      serverStatus = data.platforms;
+      applyStatuses(data);
+      if (changed) window.dispatchEvent(new Event('mineradio:accounts-changed'));
+      return accounts;
+    }).catch(function () { return accounts; }).finally(function () { serverPending = null; });
+    return serverPending;
+  }
   function fetchStatuses(force) {
+    if (useServer) return fetchServerStatuses();
     var source = {};
     providers.forEach(function (provider) {
       source[provider] = savedProviderStatus(provider);
@@ -249,6 +301,7 @@
   }
   function savedProviderStatus(provider) {
     provider = normalizeProvider(provider);
+    if (useServer) return normalizedStatus(provider, serverStatus[provider]);
     var saved = localAccount(provider), account = saved.account || {};
     var session = health[provider].status();
     return normalizedStatus(provider, Object.assign({ loggedIn: !!saved.cookie, configured: !!saved.cookie, userId: account.id,
@@ -309,7 +362,7 @@
   }
   function refreshProvider(provider) {
     return fetchStatuses(false).then(async function () {
-      if (!document.hidden) await health[provider].refresh(false);
+      if (!useServer && !document.hidden) await health[provider].refresh(false);
       return accounts[provider] || normalizedStatus(provider);
     }, function () {
       return accounts[provider] || normalizedStatus(provider);
@@ -390,10 +443,16 @@
   }
   function renderTabs() {
     if (!ui) return;
+    if (ui.serverTab) {
+      ui.serverTab.classList.toggle('active', useServer);
+      ui.serverTab.setAttribute('aria-selected', String(useServer));
+    }
     providers.forEach(function (provider) {
       var state = accounts[provider] || {};
-      ui.tabs[provider].classList.toggle('active', provider === currentProvider);
-      ui.tabs[provider].setAttribute('aria-selected', provider === currentProvider ? 'true' : 'false');
+      var selected = !useServer && provider === currentProvider;
+      ui.tabs[provider].classList.toggle('active', selected);
+      ui.tabs[provider].setAttribute('aria-selected', String(selected));
+      ui.tabStatus[provider].hidden = useServer;
       ui.tabStatus[provider].textContent = state.reauthRequired ? '已失效' : state.configured && state.authState === 'unknown' ? (state.checkFailed ? '检测失败' : '待检测') : state.loggedIn ? '已登录' : (state.configured ? '已配置' : '未登录');
       ui.tabStatus[provider].classList.toggle('expired', !!state.reauthRequired);
       ui.tabStatus[provider].classList.toggle('online', !!state.loggedIn);
@@ -411,6 +470,13 @@
     }
   }
   function renderProvider() {
+    ui.details.hidden = useServer;
+    ui.serverNotice.hidden = !useServer;
+    ui.mask.setAttribute('aria-labelledby', useServer ? 'local-auth-server-notice' : 'local-auth-title');
+    if (useServer) {
+      renderTabs();
+      return;
+    }
     var provider = currentProvider, account = accounts[provider] || {};
     var qishuiPhone = qishuiPhoneLogin(provider);
     var isPhone = provider === 'netease' && !window.__mineradioIOS || qishuiPhone, loggedIn = !!account.loggedIn, manual = loginMode === 'cookie';
@@ -499,7 +565,21 @@
     reauth = false;
     loginMode = 'official';
     renderProvider();
-    health[currentProvider].refresh(false);
+    if (!useServer) health[currentProvider].refresh(false);
+  }
+  function switchAccountSource(toServer) {
+    if (!supportsServer || toServer === useServer) return;
+    stopPending();
+    clearFields();
+    useServer = toServer;
+    try { localStorage.setItem(SOURCE, toServer ? 'server' : 'local'); } catch (_) {}
+    if (useServer) {
+      serverCheckedAt = 0;
+      applyStatuses({ platforms: serverStatus });
+    } else if (!document.hidden) health[currentProvider].refresh(false);
+    fetchStatuses(false);
+    window.dispatchEvent(new Event('mineradio:accounts-changed'));
+    if (opened) renderProvider();
   }
   function changeLoginMode(mode) {
     if (loginMode === mode) return;
@@ -831,8 +911,22 @@
     tabs.setAttribute('role', 'tablist');
     tabs.setAttribute('aria-label', '音乐平台');
     ui = { mask: mask, root: root, tabs: {}, tabStatus: {} };
+    if (supportsServer) {
+      tabs.classList.add('with-server');
+      ui.serverTab = button('', '', function () { switchAccountSource(true); });
+      ui.serverTab.setAttribute('role', 'tab');
+      ui.serverTab.appendChild(element('b', '', '使用服务器'));
+      tabs.appendChild(ui.serverTab);
+    }
     providers.forEach(function (provider) {
-      var tab = button('', '', function () { switchProvider(provider); });
+      var tab = button('', '', function () {
+        if (useServer) {
+          currentProvider = loginProvider = provider;
+          loginMode = 'official';
+          reauth = false;
+          switchAccountSource(false);
+        } else switchProvider(provider);
+      });
       tab.setAttribute('role', 'tab');
       tab.dataset.localProvider = provider;
       tab.appendChild(element('b', '', shortLabels[provider]));
@@ -842,12 +936,20 @@
       ui.tabs[provider] = tab; ui.tabStatus[provider] = status;
     });
     root.appendChild(tabs);
-    ui.title = element('h2'); ui.title.id = 'local-auth-title'; root.appendChild(ui.title);
-    ui.description = element('p', 'local-auth-description'); root.appendChild(ui.description);
-    ui.configured = element('p', 'local-auth-configured', 'Cookie 保存在当前浏览器。'); root.appendChild(ui.configured);
+    ui.serverNotice = element('p', 'local-auth-message local-auth-server-notice', '切换成功');
+    ui.serverNotice.id = 'local-auth-server-notice';
+    ui.serverNotice.dataset.kind = 'success';
+    ui.serverNotice.setAttribute('role', 'status');
+    ui.serverNotice.hidden = true;
+    root.appendChild(ui.serverNotice);
+    var details = ui.details = element('div');
+    root.appendChild(details);
+    ui.title = element('h2'); ui.title.id = 'local-auth-title'; details.appendChild(ui.title);
+    ui.description = element('p', 'local-auth-description'); details.appendChild(ui.description);
+    ui.configured = element('p', 'local-auth-configured', 'Cookie 保存在当前浏览器。'); details.appendChild(ui.configured);
     ui.account = element('div', 'local-auth-account');
     ui.avatar = element('img'); ui.avatar.alt = ''; ui.avatar.referrerPolicy = 'no-referrer'; ui.account.appendChild(ui.avatar);
-    var identity = element('div'); ui.accountName = element('b'); ui.accountId = element('small'); ui.accountHealth = element('small', 'local-auth-health'); identity.append(ui.accountName, ui.accountId, ui.accountHealth); ui.account.appendChild(identity); root.appendChild(ui.account);
+    var identity = element('div'); ui.accountName = element('b'); ui.accountId = element('small'); ui.accountHealth = element('small', 'local-auth-health'); identity.append(ui.accountName, ui.accountId, ui.accountHealth); ui.account.appendChild(identity); details.appendChild(ui.account);
     ui.accountActions = element('div', 'local-auth-account-actions');
     ui.relogin = button('', '重新登录', function () { stopPending(); clearFields(); reauth = true; renderProvider(); });
     ui.profileRefresh = button('', '刷新昵称与头像', async function () {
@@ -860,10 +962,10 @@
       } finally { ui.profileRefresh.disabled = false; }
     });
     ui.checkLogin = button('', '检测登录', async function () { ui.checkLogin.disabled = true; try { await health[currentProvider].refresh(true); } finally { ui.checkLogin.disabled = false; } });
-    ui.logout = button('local-auth-logout', '退出当前平台', logoutCurrent); ui.accountActions.append(ui.relogin, ui.checkLogin, ui.profileRefresh, ui.logout); root.appendChild(ui.accountActions);
+    ui.logout = button('local-auth-logout', '退出当前平台', logoutCurrent); ui.accountActions.append(ui.relogin, ui.checkLogin, ui.profileRefresh, ui.logout); details.appendChild(ui.accountActions);
     ui.savedCredentials = element('div'); ui.savedCookie = element('textarea'); ui.savedCookie.rows = 4; ui.savedCookie.readOnly = true; ui.savedCookie.spellcheck = false; ui.savedCookie.setAttribute('aria-label', '已保存的 Cookie'); labeled(ui.savedCredentials, '当前平台 Cookie', ui.savedCookie);
-    ui.copyCookie = button('local-auth-primary', '复制 Cookie', copyCookie); ui.savedCredentials.appendChild(ui.copyCookie); root.appendChild(ui.savedCredentials);
-    ui.login = element('div'); root.appendChild(ui.login);
+    ui.copyCookie = button('local-auth-primary', '复制 Cookie', copyCookie); ui.savedCredentials.appendChild(ui.copyCookie); details.appendChild(ui.savedCredentials);
+    ui.login = element('div'); details.appendChild(ui.login);
     var loginModes = element('div', 'local-auth-mode');
     ui.modeOfficial = button('', '手机号登录', function () { changeLoginMode('official'); });
     ui.modeCookie = button('', '手动输入 Cookie', function () { changeLoginMode('cookie'); });
@@ -895,8 +997,8 @@
     ui.qishuiFields = element('div'); ui.deviceId = makeInput('text', 'device_id（按需填写）'); ui.deviceId.maxLength = 128; ui.deviceId.setAttribute('aria-label', '设备 ID'); labeled(ui.qishuiFields, '设备 ID（device_id）', ui.deviceId);
     ui.installId = makeInput('text', 'install_id（可选）'); ui.installId.maxLength = 128; ui.installId.setAttribute('aria-label', '安装 ID'); labeled(ui.qishuiFields, '安装 ID（install_id，可选）', ui.installId); ui.cookieForm.appendChild(ui.qishuiFields);
     ui.cookieSubmit = element('button', 'local-auth-primary', '保存并应用 Cookie'); ui.cookieSubmit.type = 'submit'; ui.cookieForm.appendChild(ui.cookieSubmit); ui.cookieForm.appendChild(element('p', 'local-auth-footnote', 'Cookie 只保存在当前浏览器，读取昵称与头像时随请求发送到对应平台。')); ui.login.appendChild(ui.cookieForm);
-    ui.message = element('p', 'local-auth-message'); ui.message.setAttribute('role', 'status'); ui.message.setAttribute('aria-live', 'polite'); root.appendChild(ui.message);
-    root.appendChild(element('p', 'local-auth-footnote', window.__mineradioIOS ? '各平台账号分别保存在本机，切换平台互不影响。' : 'Cookie 随每次平台请求发送，切换平台互不影响。'));
+    ui.message = element('p', 'local-auth-message'); ui.message.setAttribute('role', 'status'); ui.message.setAttribute('aria-live', 'polite'); details.appendChild(ui.message);
+    details.appendChild(element('p', 'local-auth-footnote', window.__mineradioIOS ? '各平台账号分别保存在本机，切换平台互不影响。' : 'Cookie 随每次平台请求发送，切换平台互不影响。'));
     panel.appendChild(root);
     smsTimer = setInterval(updateSmsButton, 1000);
     document.addEventListener('keydown', function (event) {

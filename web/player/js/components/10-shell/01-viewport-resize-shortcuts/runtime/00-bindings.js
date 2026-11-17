@@ -23,7 +23,7 @@ document.addEventListener('keydown', function (e) {
   else if (e.code === 'ArrowRight') nextTrack(true);
   else if (e.code === 'ArrowLeft') prevTrack(true);
   else if (e.code === 'Escape') {
-    if (immersiveMode && !fx.wallpaperMode) {
+    if (immersiveMode) {
       e.preventDefault();
       setImmersiveMode(false);
       return;

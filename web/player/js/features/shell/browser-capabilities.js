@@ -8,7 +8,6 @@
     desktopLyricsClickThrough: 'setDesktopLyricsEnabled',
     desktopLyricsCinema: 'setDesktopLyricsEnabled',
     desktopLyricsHighlight: 'setDesktopLyricsEnabled',
-    wallpaperMode: 'setWallpaperMode',
     memoryAutoTrimApp: 'trimAppMemory',
     memoryAutoTrimOnBackground: 'trimAppMemory',
     memoryAutoSystemTrim: 'purgeSystemMemory',
@@ -34,7 +33,6 @@
   var nativeSelectors = [
     '#t-desktopLyrics', '#t-desktopLyricsClickThrough', '#t-desktopLyricsCinema', '#t-desktopLyricsHighlight',
     '#fx-desktoplyricssize', '#fx-desktoplyricsopacity', '#fx-desktoplyricsy', '#desktop-lyrics-fps-seg',
-    '#t-wallpaperMode', '#fx-wallpaperopacity', '#wallpaper-fps-seg', '.desktop-mode-note',
     '.wallpaper-engine-row', '#wallpaper-engine-opacity', '#wallpaper-engine-position-x',
     '#wallpaper-engine-position-y', '#wallpaper-engine-scale', '#close-behavior-seg',
     '#t-memoryAutoTrimApp', '#t-memoryAutoTrimOnBackground', '#t-memoryAutoSystemTrim', '#t-memorySystemAutoElevate',

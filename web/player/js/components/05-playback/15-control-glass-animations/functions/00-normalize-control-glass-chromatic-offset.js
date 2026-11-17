@@ -266,6 +266,7 @@ function syncWallpaperEngineControlGlassSurface(force) {
   var geometryKey = [
     sessionId,
     surfaceActive ? 1 : 0,
+    visible ? 1 : 0,
     Math.round(rect.left * 10),
     Math.round(rect.top * 10),
     Math.round(rect.width * 10),
@@ -280,6 +281,7 @@ function syncWallpaperEngineControlGlassSurface(force) {
   api.updateWallpaperEngineGlassSurface({
     sessionId: sessionId,
     active: surfaceActive,
+    visible: visible,
     left: rect.left,
     top: rect.top,
     width: rect.width,

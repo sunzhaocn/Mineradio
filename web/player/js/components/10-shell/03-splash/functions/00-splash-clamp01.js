@@ -29,12 +29,7 @@ function stopSplashIntroSound() {
 function releaseStartupFastSkipPreload() {
   if (!document.documentElement.classList.contains('startup-fast-skip-preload')) return false;
   document.body.classList.add('startup-fast-skip-revealing');
-  // This gate hides the whole renderer (including the player console) before
-  // the fast-skip splash is released. Full desktop mode briefly hides and
-  // reparents the Chromium HWND; waiting for another rAF here can therefore
-  // leave the gate latched forever while only the native desktop controller is
-  // visible. Release the gate synchronously, then keep only the cosmetic reveal
-  // class on a timer.
+  // Release the startup gate before playing the cosmetic reveal.
   document.documentElement.classList.remove('startup-fast-skip-preload');
   setTimeout(function () { document.body.classList.remove('startup-fast-skip-revealing'); }, 520);
   return true;

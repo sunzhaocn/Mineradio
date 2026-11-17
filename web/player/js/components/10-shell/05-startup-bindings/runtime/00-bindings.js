@@ -18,7 +18,8 @@ if (!simplePlayerAtStartup) initControlGlassSurface();
 
 if (!simplePlayerAtStartup) bindPlayerControlAnimations();
 
-if (!simplePlayerAtStartup) scheduleUiWarmTask(function () {
+// The prepared desktop splash warms the visible scene with a real draw.
+if (!simplePlayerAtStartup && (!prepareStartupSplash || startupFastSkipPreference)) scheduleUiWarmTask(function () {
   updateControlGlassDisplacementMap();
   updateSearchBoxGlassDisplacementMap();
   updateSearchPillGlassDisplacementMap();
@@ -39,7 +40,6 @@ if (!simplePlayerAtStartup) applyControlsAutoHidePreference();
 
 applyDesktopLyricsState(false);
 
-applyWallpaperModeState(false);
 
 if (!simplePlayerAtStartup) setShelfMode(fx.shelf);
 

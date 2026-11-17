@@ -12,7 +12,7 @@
     "js/components/00-state/02-preferences-ui-modes/functions/00-read-saved-volume.js",
     "js/components/00-state/02-preferences-ui-modes/functions/01-apply-diy-mode.js",
     "js/components/00-state/03-beat-dj-state/functions/00-is-podcast-song.js",
-    "js/components/00-state/04-fx-defaults/functions/00-normalize-wallpaper-fps.js",
+    "js/components/00-state/04-fx-defaults/functions/00-normalize-foreground-fps-mode.js",
     "js/components/00-state/05-packaged-fx-archive/functions/00-clone-packaged-default-fx-snapshot.js",
     "js/components/00-state/06-fx-runtime-layout/functions/00-is-development-locked-fx.js",
     "js/components/00-state/08-desktop-render-power/functions/00-pulse-object-value.js",
@@ -191,7 +191,7 @@
     "js/components/07-fx/05-fx-panel-performance/functions/02-organize-fx-panel.js",
     "js/components/07-fx/06-hotkeys/functions/00-get-hotkey-defaults.js",
     "js/components/07-fx/07-bindings-shelf-immersive/functions/00-bind-fx-panel.js",
-    "js/components/07-fx/07-bindings-shelf-immersive/functions/01-toggle-wallpaper-mode-from-ui.js",
+    "js/components/07-fx/07-bindings-shelf-immersive/functions/01-toggle-fx.js",
     "js/components/07-fx/07-bindings-shelf-immersive/functions/02-set-cam-mode.js",
     "js/components/07-fx/08-cache-storage-settings/functions/00-mineradio-cache-storage-node.js",
     "js/components/07-fx/09-console-workspace/functions/00-fx-console-item.js",
@@ -224,9 +224,8 @@
     "js/components/10-shell/03-splash/functions/00-splash-clamp01.js",
     "js/components/10-shell/03-splash/functions/01-draw-mineradio-splash.js",
     "js/components/10-shell/04-desktop-overlay-fullscreen/functions/00-get-desktop-window-api.js",
-    "js/components/10-shell/04-desktop-overlay-fullscreen/functions/01-request-desktop-keyboard-focus.js",
-    "js/components/10-shell/04-desktop-overlay-fullscreen/functions/02-schedule-desktop-icon-shield-report.js",
-    "js/components/10-shell/04-desktop-overlay-fullscreen/functions/03-sync-desktop-wallpaper-body-classes.js",
+    "js/components/10-shell/04-desktop-overlay-fullscreen/functions/02-desktop-lyrics-payload.js",
+    "js/components/10-shell/04-desktop-overlay-fullscreen/functions/03-desktop-lyrics-and-window-transitions.js",
     "js/components/10-shell/04-desktop-overlay-fullscreen/functions/04-toggle-fullscreen.js",
     "js/components/11-main-loop/functions/00-reset-fixed-render-cadence-state.js",
     "js/components/11-main-loop/functions/01-animate.js",
@@ -388,7 +387,7 @@
     },
     "js/modules/00-state/04-fx-defaults.js": {
       "declarations": [
-        "js/components/00-state/04-fx-defaults/functions/00-normalize-wallpaper-fps.js"
+        "js/components/00-state/04-fx-defaults/functions/00-normalize-foreground-fps-mode.js"
       ],
       "runtime": [
         "js/components/00-state/04-fx-defaults/runtime/00-fx-defaults.js"
@@ -1118,7 +1117,7 @@
     "js/modules/07-fx/07-bindings-shelf-immersive.js": {
       "declarations": [
         "js/components/07-fx/07-bindings-shelf-immersive/functions/00-bind-fx-panel.js",
-        "js/components/07-fx/07-bindings-shelf-immersive/functions/01-toggle-wallpaper-mode-from-ui.js",
+        "js/components/07-fx/07-bindings-shelf-immersive/functions/01-toggle-fx.js",
         "js/components/07-fx/07-bindings-shelf-immersive/functions/02-set-cam-mode.js"
       ],
       "runtime": []
@@ -1252,9 +1251,8 @@
     "js/modules/10-shell/04-desktop-overlay-fullscreen.js": {
       "declarations": [
         "js/components/10-shell/04-desktop-overlay-fullscreen/functions/00-get-desktop-window-api.js",
-        "js/components/10-shell/04-desktop-overlay-fullscreen/functions/01-request-desktop-keyboard-focus.js",
-        "js/components/10-shell/04-desktop-overlay-fullscreen/functions/02-schedule-desktop-icon-shield-report.js",
-        "js/components/10-shell/04-desktop-overlay-fullscreen/functions/03-sync-desktop-wallpaper-body-classes.js",
+        "js/components/10-shell/04-desktop-overlay-fullscreen/functions/02-desktop-lyrics-payload.js",
+        "js/components/10-shell/04-desktop-overlay-fullscreen/functions/03-desktop-lyrics-and-window-transitions.js",
         "js/components/10-shell/04-desktop-overlay-fullscreen/functions/04-toggle-fullscreen.js"
       ],
       "runtime": [

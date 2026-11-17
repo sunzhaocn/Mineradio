@@ -20,25 +20,6 @@ function hasActivePlaybackControls() {
 }
 
 
-function desktopWallpaperKeepsPlayerConsoleVisible() {
-  var body = document.body;
-  if (!body
-    || !body.classList.contains('desktop-wallpaper-mode')
-    || !body.classList.contains('desktop-wallpaper-interactive')) return false;
-  // Home and the 3D shelf are complete Mineradio surfaces of their own. In the
-  // ordinary desktop stage, however, allowing the generic inactivity timer to
-  // hide the only player console makes the renderer look as if it fell behind
-  // the wallpaper/Explorer plane.
-  if (body.classList.contains('empty-home-active')
-    || body.classList.contains('home-controls-locked')) return false;
-  try {
-    return !isBottomControlsSuppressedForShelf();
-  } catch (_) {
-    return true;
-  }
-}
-
-
 function shouldShowHomeForPausedStartupRestore() {
   return !!(startupRestoreHomePending
     && restoredLastPlaybackSnapshot
@@ -53,9 +34,9 @@ function setControlsHidden(hidden) {
   if (!bar) return;
   // Compact browser controls must remain reachable without mouse hover.
   if (hidden && !window.mineradioRemoteApp && document.body && document.body.classList.contains('web-adapter')
+    && !document.body.classList.contains('desktop-shell')
     && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 900px)').matches
     && !immersiveMode) hidden = false;
-  if (hidden && desktopWallpaperKeepsPlayerConsoleVisible()) hidden = false;
   if (hidden && controlsRevealHoldUntil > performance.now()) hidden = false;
   if (hidden && (controlsHovering || miniQueueOpen)) hidden = false;
   // 菜单移到 body 后，鼠标虽然离开控制台，正在操作的入口仍需要保持可见。
@@ -128,11 +109,6 @@ function scheduleControlsHide(delay) {
   if (!window.mineradioRemoteApp && document.body && document.body.classList.contains('web-adapter')
     && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 900px)').matches
     && !immersiveMode) {
-    controlsHideTimer = null;
-    setControlsHidden(false);
-    return;
-  }
-  if (desktopWallpaperKeepsPlayerConsoleVisible()) {
     controlsHideTimer = null;
     setControlsHidden(false);
     return;

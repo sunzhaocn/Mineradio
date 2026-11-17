@@ -307,9 +307,6 @@ function gestureModelComplexity() {
 
 function gestureHostVisible() {
   if (typeof desktopRuntimeState === 'object' && desktopRuntimeState && desktopRuntimeState.desktop) {
-    // 完整桌面模式会把同一个 Mineradio HWND 嵌入桌面；此时 Electron
-    // 的 isVisible/isMinimized 可能不代表用户肉眼看到的桌面宿主。
-    if (desktopRuntimeState.embedded === true || desktopRuntimeState.interactive === true) return true;
     return desktopRuntimeState.minimized !== true && desktopRuntimeState.visible !== false;
   }
   return !document.hidden;

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, screen, session, globalShortcut, dialog, Tray, Menu, protocol, desktopCapturer, powerMonitor } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, screen, session, globalShortcut, dialog, Tray, Menu, protocol, desktopCapturer } = require('electron');
 const net = require('net');
 const http = require('http');
 const path = require('path');
@@ -85,9 +85,6 @@ let localServerStartPromise = null;
 let mainWindowCreatePromise = null;
 let mainWindowRendererRecoveryPromise = null;
 let mainWindowRendererRecoveryAttempts = [];
-let mainWindowVisibilityTimer = null;
-let mainWindowFullscreenVisibilityTimer = null;
-let mainWindowMinimizeRecoveryTimer = null;
 let startupState = { pid: process.pid, startedAt: Date.now(), phase: 'module-loaded', events: [] };
 const registeredGlobalHotkeys = new Map();
 let fullDesktopEnableOperation = 0;
@@ -119,11 +116,7 @@ const STARTUP_NAVIGATION_TIMEOUT_MS = 15000;
 const STARTUP_SHOW_WATCHDOG_MS = 3500;
 const RENDERER_RECOVERY_WINDOW_MS = 2 * 60 * 1000;
 const RENDERER_RECOVERY_MAX_ATTEMPTS = 3;
-const MAIN_WINDOW_VISIBILITY_CHECK_MS = 5000;
-const MAIN_WINDOW_HIDE_RECOVERY_DELAY_MS = 900;
-const MAIN_WINDOW_MINIMIZE_RECOVERY_DELAY_MS = 1200;
 const MAIN_WINDOW_MINIMIZE_INTENT_TTL_MS = 3000;
-const FULLSCREEN_VISIBILITY_CHECK_MS = 5000;
 const WINDOWS_WM_SYSCOMMAND = 0x0112;
 const WINDOWS_SC_MINIMIZE = 0xF020;
 const CACHE_SETTINGS_FILE = 'cache-settings.json';
@@ -2020,7 +2013,6 @@ function focusMainWindow() {
   launchInTray = false;
   if (!mainWindow || mainWindow.isDestroyed()) return false;
   mainWindow.__mineradioIntentionalHide = false;
-  markMainWindowExpectedVisible(mainWindow, true, 'focus-main-window');
   const desktopMode = fullDesktopModeRuntime.getStatus('focus-main-window');
   if (desktopMode.enabled === true) {
     setFullDesktopModeInteractive(true, 'focus-main-window').catch((error) => {
@@ -3311,7 +3303,7 @@ function getAdaptiveWindowMinimumSize(display) {
 }
 
 function updateMainWindowMinimumSize(win) {
-  if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed() || win.isMinimized() || (win.__mineradioHasShown && !win.isVisible())) return;
   if (win === mainWindow && (fullDesktopModeHostVisibilityTransitionDepth > 0 || fullDesktopModeRuntime.isEnabled())) return;
   const minimum = getAdaptiveWindowMinimumSize(getWindowDisplay(win));
   win.setMinimumSize(minimum.width, minimum.height);
@@ -3334,7 +3326,8 @@ function clampBoundsToDisplayArea(bounds, display) {
 }
 
 function ensureMainWindowInsideDisplay(win) {
-  if (!win || win.isDestroyed() || win.isFullScreen()) return;
+  if (!win || win.isDestroyed() || win.isFullScreen() || win.isMinimized()
+      || (win.__mineradioHasShown && !win.isVisible())) return;
   if (win === mainWindow && (fullDesktopModeHostVisibilityTransitionDepth > 0 || fullDesktopModeRuntime.isEnabled())) return;
   const display = getWindowDisplay(win);
   updateMainWindowMinimumSize(win);
@@ -3958,6 +3951,7 @@ ipcMain.handle('mineradio-full-desktop-request-keyboard-focus', async (event, re
   if (!webContents || webContents.isDestroyed() || typeof webContents.focus !== 'function') {
     return { ok: false, focused: false, error: 'KEYBOARD_FOCUS_WINDOW_UNAVAILABLE' };
   }
+  if (win.isMinimized() || !win.isVisible()) return { ok: false, focused: false, error: 'KEYBOARD_FOCUS_WINDOW_HIDDEN' };
   const pendingRepair = ordinaryWindowImeFocusRepairs.get(webContents);
   if (pendingRepair) return pendingRepair;
   // Native confirm/logout can leave Chromium's editable surface unfocused in the
@@ -3967,7 +3961,6 @@ ipcMain.handle('mineradio-full-desktop-request-keyboard-focus', async (event, re
   const repair = (async () => {
     if (typeof webContents.blur === 'function') webContents.blur();
     if (typeof win.setFocusable === 'function') win.setFocusable(true);
-    if (typeof win.restore === 'function' && typeof win.isMinimized === 'function' && win.isMinimized()) win.restore();
     if (typeof win.focus === 'function') win.focus();
     await new Promise(resolve => setTimeout(resolve, 0));
     webContents.focus();
@@ -5279,17 +5272,14 @@ function showMainWindowSafely(win, reason) {
     sendWindowState(win);
     return true;
   }
-  // A renderer may be reloaded while the user intentionally keeps Mineradio
-  // in the tray. Runtime recovery must never turn that reload into a surprise
-  // foreground window.
-  if (startupCompleted && (win.__mineradioIntentionalHide === true || win.isMinimized())) return false;
-  markMainWindowExpectedVisible(win, true, reason || 'show-safe');
+  // Windows owns visibility after the first show, including Show Desktop.
+  if (win.__mineradioIntentionalHide === true || win.isMinimized()
+      || (win.__mineradioHasShown && !win.isVisible())) return false;
   if (win.__mineradioStartupShowTimer) {
     clearTimeout(win.__mineradioStartupShowTimer);
     win.__mineradioStartupShowTimer = null;
   }
   ensureMainWindowInsideDisplay(win);
-  if (win.isMinimized()) win.restore();
   if (!win.isVisible()) win.show();
   resetMainWindowZoom(win);
   sendWindowState(win);
@@ -5298,118 +5288,6 @@ function showMainWindowSafely(win, reason) {
   }
   if (reason) console.log('[StartupWindow] visible:', reason);
   return true;
-}
-
-function markMainWindowExpectedVisible(win, expected, reason) {
-  if (!win || win.isDestroyed()) return;
-  win.__mineradioExpectedVisible = expected === true;
-  win.__mineradioExpectedVisibleReason = String(reason || '');
-}
-
-function clearMainWindowVisibilityGuard() {
-  if (mainWindowVisibilityTimer) clearInterval(mainWindowVisibilityTimer);
-  mainWindowVisibilityTimer = null;
-  if (mainWindowMinimizeRecoveryTimer) clearTimeout(mainWindowMinimizeRecoveryTimer);
-  mainWindowMinimizeRecoveryTimer = null;
-}
-
-function clearMainWindowFullscreenVisibilityGuard() {
-  if (mainWindowFullscreenVisibilityTimer) clearInterval(mainWindowFullscreenVisibilityTimer);
-  mainWindowFullscreenVisibilityTimer = null;
-}
-
-function shouldRestoreUnexpectedMainWindowVisibility(win) {
-  if (!win || win.isDestroyed() || appQuitting || !startupCompleted) return false;
-  if (win.__mineradioIntentionalHide === true || win.__mineradioExpectedVisible === false) return false;
-  if (fullDesktopModeHostVisibilityTransitionDepth > 0 || fullDesktopModeRuntime.getStatus('main-window-visibility-guard').enabled === true) return false;
-  if (win.isMinimized() || win.isVisible()) return false;
-  return true;
-}
-
-function shouldRestoreUnexpectedMainWindowMinimize(win) {
-  if (!win || win.isDestroyed() || appQuitting || !startupCompleted) return false;
-  if (win.__mineradioIntentionalHide === true || win.__mineradioExpectedVisible === false) return false;
-  if (win.__mineradioIntentionalMinimize === true) return false;
-  if (fullDesktopModeHostVisibilityTransitionDepth > 0 || fullDesktopModeRuntime.getStatus('main-window-minimize-guard').enabled === true) return false;
-  return win.isMinimized();
-}
-
-function shouldRestoreUnexpectedFullscreenVisibility(win) {
-  if (!win || win.isDestroyed() || appQuitting || win.__mineradioIntentionalHide === true) return false;
-  if (fullDesktopModeHostVisibilityTransitionDepth > 0 || fullDesktopModeRuntime.getStatus('fullscreen-visibility-guard').enabled === true) return false;
-  if (!win.isFullScreen() || win.isMinimized() || win.isVisible()) return false;
-  return true;
-}
-
-function restoreHiddenMainWindow(win, reason, scope) {
-  console.warn(`[WindowRecovery] restoring unexpectedly hidden ${scope} window:`, reason);
-  markMainWindowExpectedVisible(win, true, `visibility-recovered-${reason}`);
-  win.__mineradioIntentionalHide = false;
-  ensureMainWindowInsideDisplay(win);
-  try { win.showInactive(); } catch (_) { try { win.show(); } catch (_) { } }
-  resetMainWindowZoom(win);
-  if (fullDesktopModeHostVisibilityTransitionDepth <= 0) {
-    resumeWallpaperEngineForVisibleHost(win, `visibility-recovered-${reason}`);
-  }
-  sendWindowState(win);
-  return true;
-}
-
-function restoreUnexpectedMainWindowMinimize(win, reason = 'minimize-visibility-guard') {
-  if (!shouldRestoreUnexpectedMainWindowMinimize(win)) return false;
-  console.warn('[WindowRecovery] restoring unexpectedly minimized main window:', reason);
-  clearMainWindowMinimizeIntent(win);
-  markMainWindowExpectedVisible(win, true, `minimize-recovered-${reason}`);
-  win.__mineradioIntentionalHide = false;
-  writeStartupState('window-minimize-recovered', {
-    minimizeRecoveryAt: Date.now(),
-    minimizeRecoveryReason: String(reason || ''),
-  });
-  ensureMainWindowInsideDisplay(win);
-  try { win.restore(); } catch (_) { }
-  if (!win.isVisible()) {
-    try { win.showInactive(); } catch (_) { try { win.show(); } catch (_) { } }
-  }
-  resetMainWindowZoom(win);
-  if (fullDesktopModeHostVisibilityTransitionDepth <= 0) {
-    resumeWallpaperEngineForVisibleHost(win, `minimize-recovered-${reason}`);
-  }
-  sendWindowState(win);
-  return true;
-}
-
-function restoreUnexpectedFullscreenVisibility(win, reason = 'fullscreen-visibility-guard') {
-  if (!shouldRestoreUnexpectedFullscreenVisibility(win)) return false;
-  return restoreHiddenMainWindow(win, reason, 'fullscreen');
-}
-
-function restoreUnexpectedMainWindowVisibility(win, reason = 'main-window-visibility-guard') {
-  if (shouldRestoreUnexpectedMainWindowMinimize(win)) {
-    return restoreUnexpectedMainWindowMinimize(win, reason);
-  }
-  if (shouldRestoreUnexpectedFullscreenVisibility(win)) {
-    return restoreUnexpectedFullscreenVisibility(win, reason);
-  }
-  if (!shouldRestoreUnexpectedMainWindowVisibility(win)) return false;
-  return restoreHiddenMainWindow(win, reason, 'main');
-}
-
-function startMainWindowVisibilityGuard(win) {
-  clearMainWindowVisibilityGuard();
-  if (!win || win.isDestroyed()) return;
-  mainWindowVisibilityTimer = setInterval(() => {
-    restoreUnexpectedMainWindowVisibility(win, 'visibility-watchdog');
-  }, MAIN_WINDOW_VISIBILITY_CHECK_MS);
-  if (typeof mainWindowVisibilityTimer.unref === 'function') mainWindowVisibilityTimer.unref();
-}
-
-function startMainWindowFullscreenVisibilityGuard(win) {
-  clearMainWindowFullscreenVisibilityGuard();
-  if (!win || win.isDestroyed()) return;
-  mainWindowFullscreenVisibilityTimer = setInterval(() => {
-    restoreUnexpectedFullscreenVisibility(win, 'fullscreen-watchdog');
-  }, FULLSCREEN_VISIBILITY_CHECK_MS);
-  if (typeof mainWindowFullscreenVisibilityTimer.unref === 'function') mainWindowFullscreenVisibilityTimer.unref();
 }
 
 function reserveMainWindowRendererRecoveryAttempt() {
@@ -5490,7 +5368,6 @@ function recoverMainWindowAfterRendererGone(win, details = {}, cleanupPromise = 
     return Promise.resolve(false);
   }
   const keepFullscreen = win.isFullScreen() || windowFullscreenActive;
-  const keepIntentionallyHidden = win.__mineradioIntentionalHide === true;
   mainWindowRendererRecoveryPromise = (async () => {
     // Do not navigate synchronously from render-process-gone. Chromium may
     // still be finalizing the dead renderer during the event callback.
@@ -5500,14 +5377,12 @@ function recoverMainWindowAfterRendererGone(win, details = {}, cleanupPromise = 
     if (appQuitting || win.isDestroyed() || win !== mainWindow) return false;
     await ensureLocalServerStarted();
     await loadMainWindowWithRetry(win);
-    if (keepFullscreen && !win.isFullScreen()) {
+    if (keepFullscreen && win.isVisible() && !win.isMinimized() && !win.isFullScreen()) {
       windowFullscreenActive = true;
       setMainWindowFullscreenResizeGuard(win, true);
       win.setFullScreen(true);
     }
-    win.__mineradioIntentionalHide = keepIntentionallyHidden;
-    if (!keepIntentionallyHidden) showMainWindowSafely(win, `renderer-recovered-${attempt}`);
-    else sendWindowState(win);
+    sendWindowState(win);
     writeStartupState('renderer-recovered', {
       rendererRecoveredAt: Date.now(),
       rendererRecoveryAttempt: attempt,
@@ -5518,10 +5393,7 @@ function recoverMainWindowAfterRendererGone(win, details = {}, cleanupPromise = 
     const log = writeStartupErrorLog('Runtime renderer recovery', 'MR-RUNTIME-RENDERER-LOAD', error);
     console.error('[WindowRecovery] renderer reload failed:', error && error.message || error);
     if (!appQuitting && !win.isDestroyed()) {
-      if (!keepIntentionallyHidden) {
-        try { win.show(); } catch (_) { }
-      }
-      if (attempt >= RENDERER_RECOVERY_MAX_ATTEMPTS) {
+      if (win.isVisible() && !win.isMinimized() && attempt >= RENDERER_RECOVERY_MAX_ATTEMPTS) {
         dialog.showErrorBox('Mineradio 显示恢复失败', `前台界面无法重新加载。\n日志：${log.file}`);
       }
     }
@@ -5727,28 +5599,17 @@ async function createWindowOnce() {
     });
     sendWindowState(win);
     if (fullDesktopModeHostVisibilityTransitionDepth <= 0) suspendWallpaperEngineForHiddenHost(win, 'minimize');
-    if (minimizeIntent.intentional) {
-      scheduleAppMemoryTrim('minimize', 1600);
-      return;
-    }
-    if (mainWindowMinimizeRecoveryTimer) clearTimeout(mainWindowMinimizeRecoveryTimer);
-    mainWindowMinimizeRecoveryTimer = setTimeout(() => {
-      mainWindowMinimizeRecoveryTimer = null;
-      restoreUnexpectedMainWindowMinimize(win, 'minimize-event');
-    }, MAIN_WINDOW_MINIMIZE_RECOVERY_DELAY_MS);
+    scheduleAppMemoryTrim('minimize', 1600);
   });
   win.on('restore', () => {
-    if (mainWindowMinimizeRecoveryTimer) clearTimeout(mainWindowMinimizeRecoveryTimer);
-    mainWindowMinimizeRecoveryTimer = null;
     clearMainWindowMinimizeIntent(win);
     win.__mineradioIntentionalHide = false;
-    markMainWindowExpectedVisible(win, true, 'restore');
     sendWindowState(win);
     if (fullDesktopModeHostVisibilityTransitionDepth <= 0) resumeWallpaperEngineForVisibleHost(win, 'restore');
   });
   win.on('show', () => {
+    win.__mineradioHasShown = true;
     win.__mineradioIntentionalHide = false;
-    markMainWindowExpectedVisible(win, true, 'show');
     if (fullDesktopModeHostVisibilityTransitionDepth > 0) return;
     sendWindowState(win);
     resumeWallpaperEngineForVisibleHost(win, 'show');
@@ -5757,9 +5618,6 @@ async function createWindowOnce() {
     if (fullDesktopModeHostVisibilityTransitionDepth > 0) return;
     sendWindowState(win);
     suspendWallpaperEngineForHiddenHost(win, 'hide');
-    if (win.__mineradioIntentionalHide !== true && win.__mineradioExpectedVisible !== false && !win.isMinimized()) {
-      setTimeout(() => restoreUnexpectedMainWindowVisibility(win, 'hide-event'), MAIN_WINDOW_HIDE_RECOVERY_DELAY_MS);
-    }
     scheduleAppMemoryTrim('hide', 2200);
   });
   win.on('focus', () => sendWindowState(win));
@@ -5809,7 +5667,6 @@ async function createWindowOnce() {
       win.__mineradioDesktopModeCloseArmed = false;
       createOrUpdateTray();
       win.__mineradioIntentionalHide = true;
-      markMainWindowExpectedVisible(win, false, 'tray-hide');
       flushMainWindowFxAutosave('tray-hide').finally(() => {
         if (win.isDestroyed()) return;
         win.hide();
@@ -5829,8 +5686,6 @@ async function createWindowOnce() {
   });
   win.on('closed', () => {
     mainWindowCloseFlushArmed = false;
-    clearMainWindowVisibilityGuard();
-    clearMainWindowFullscreenVisibilityGuard();
     mainWindowRendererRecoveryPromise = null;
     mainWindowRendererRecoveryAttempts = [];
     win.__mineradioDesktopModeCloseArmed = false;
@@ -5861,7 +5716,6 @@ async function createWindowOnce() {
     windowFullscreenActive = true;
     setMainWindowFullscreenResizeGuard(win, true);
     sendWindowState(win);
-    startMainWindowFullscreenVisibilityGuard(win);
     // Some Windows builds coalesce the final resize event during native
     // fullscreen. Re-arm the settled debounce from the authoritative event.
     setTimeout(() => scheduleWallpaperEngineHostBoundsRestart(win, 'enter-full-screen'), 40);
@@ -5869,7 +5723,6 @@ async function createWindowOnce() {
   win.on('leave-full-screen', () => {
     windowFullscreenActive = false;
     setMainWindowFullscreenResizeGuard(win, false);
-    clearMainWindowFullscreenVisibilityGuard();
     setTimeout(() => {
       const targetDisplay = getFullscreenTargetDisplay(win);
       applyWindowedBounds(win, targetDisplay);
@@ -5905,10 +5758,8 @@ async function createWindowOnce() {
   await loadMainWindowWithRetry(win);
   if (win.isDestroyed()) throw new Error('Main BrowserWindow was destroyed after navigation');
   startupCompleted = true;
-  startMainWindowVisibilityGuard(win);
   if (launchInTray) {
     win.__mineradioIntentionalHide = true;
-    markMainWindowExpectedVisible(win, false, 'startup-in-tray');
     win.hide();
     sendWindowState(win);
   } else showMainWindowSafely(win, 'navigation-complete');
@@ -5928,7 +5779,6 @@ function createWindow() {
   if (mainWindowCreatePromise) return mainWindowCreatePromise;
   if (mainWindow && !mainWindow.isDestroyed()) {
     showMainWindowSafely(mainWindow, startupCompleted ? 'reuse' : 'startup-in-progress');
-    if (startupCompleted) startMainWindowVisibilityGuard(mainWindow);
     return Promise.resolve(mainWindow);
   }
   mainWindowCreatePromise = createWindowOnce().finally(() => {
@@ -5993,8 +5843,6 @@ if (!gotSingleInstanceLock) {
     screen.on('display-metrics-changed', handleDisplayLayoutChanged);
     screen.on('display-added', handleDisplayLayoutChanged);
     screen.on('display-removed', handleDisplayLayoutChanged);
-    powerMonitor.on('resume', () => restoreUnexpectedMainWindowVisibility(mainWindow, 'system-resume'));
-    powerMonitor.on('unlock-screen', () => restoreUnexpectedMainWindowVisibility(mainWindow, 'screen-unlock'));
     await createWindow();
   }).catch((e) => reportWindowCreationFailure('Main', e));
 

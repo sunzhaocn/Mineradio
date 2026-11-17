@@ -4,7 +4,9 @@
 
 document.body.classList.add('splash-active');
 
-var splashAnimating = !(window.mineradioSimplePlayer && window.mineradioSimplePlayer.active());
+var prepareStartupSplash = !!window.desktopWindow?.prepareStartupSplash;
+
+var splashAnimating = !prepareStartupSplash && !(window.mineradioSimplePlayer && window.mineradioSimplePlayer.active());
 
 var splashCanvas = null, splashCtx = null;
 
@@ -20,7 +22,7 @@ var splashShards = [];
 
 var splashPixelRatio = 1;
 
-var splashStartedAt = performance.now();
+var splashStartedAt = prepareStartupSplash ? 0 : performance.now();
 
 var splashSoundPlayed = false;
 
@@ -35,7 +37,7 @@ var reduceSplashMotion = false;
 var splashReadyToEnter = false;
 
 
-(function initMineradioSplashCanvas() {
+function initMineradioSplashCanvas() {
   if (window.mineradioSimplePlayer && window.mineradioSimplePlayer.active()) return;
   splashCanvas = document.getElementById('splash-canvas');
   if (!splashCanvas) return;
@@ -43,6 +45,13 @@ var splashReadyToEnter = false;
     splashCtx = null;
   } else {
     splashCtx = splashCanvas.getContext('2d');
+    if (!splashCtx) {
+      // A canvas with a failed WebGL program can still own a WebGL context.
+      var fallbackCanvas = splashCanvas.cloneNode(false);
+      splashCanvas.replaceWith(fallbackCanvas);
+      splashCanvas = fallbackCanvas;
+      splashCtx = splashCanvas.getContext('2d');
+    }
   }
   function resize() {
     splashPixelRatio = Math.min(1.6, Math.max(1, window.devicePixelRatio || 1));
@@ -104,8 +113,12 @@ var splashReadyToEnter = false;
   }
   resize();
   window.addEventListener('resize', resize);
+}
+
+if (!prepareStartupSplash) {
+  initMineradioSplashCanvas();
   drawMineradioSplash();
-})();
+}
 
 
 onMineradioDomReady(function () {
@@ -113,6 +126,7 @@ onMineradioDomReady(function () {
   if (!s) return;
   markAppPerf('dom-content-loaded');
   if (startupFastSkipPreference || window.mineradioSimplePlayer && window.mineradioSimplePlayer.active()) {
+    s.classList.remove('preparing');
     dismissSplash({ instant: true });
     return;
   }
@@ -130,11 +144,51 @@ onMineradioDomReady(function () {
       requestSplashEnter();
     }
   });
-  if (reduceSplashMotion) {
-    s.classList.add('reduce-motion');
-    splashTimer = setTimeout(markSplashReadyToEnter, 650);
+  function startSplash() {
+    if (!reduceSplashMotion) playMineradioIntroSound();
+    if (prepareStartupSplash) {
+      s.classList.remove('preparing');
+      splashStartedAt = performance.now();
+      splashAnimating = true;
+      markAppPerf('splash-start');
+      drawMineradioSplash();
+    }
+    if (reduceSplashMotion) s.classList.add('reduce-motion');
+    splashTimer = setTimeout(markSplashReadyToEnter, reduceSplashMotion ? 650 : 1500);
+  }
+  if (!prepareStartupSplash) {
+    startSplash();
     return;
   }
-  playMineradioIntroSound();
-  splashTimer = setTimeout(markSplashReadyToEnter, 1500);
+  requestAnimationFrame(function () {
+    initMineradioSplashCanvas();
+    try {
+      renderMainSceneForSplash(performance.now());
+    } catch (error) {
+      console.warn('Could not warm the player scene:', error);
+    }
+    if (splashGl) {
+      // Prime the original shader and drawing surface before the animation clock starts.
+      drawMineradioSplashWebgl(0);
+      splashGl.finish();
+    }
+    markAppPerf('splash-prepared');
+
+    // Let the first resize and layout frames settle while the scene is static.
+    var deadline = performance.now() + 350;
+    var previousFrame = performance.now();
+    var steadyFrames = 0;
+    function waitForSplashPaint() {
+      var now = performance.now();
+      steadyFrames = now - previousFrame <= 32 ? steadyFrames + 1 : 0;
+      previousFrame = now;
+      if (steadyFrames >= 3 || now >= deadline) {
+        startSplash();
+        return;
+      }
+      if (splashGl) drawMineradioSplashWebgl(0);
+      requestAnimationFrame(waitForSplashPaint);
+    }
+    requestAnimationFrame(waitForSplashPaint);
+  });
 });

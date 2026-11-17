@@ -1,0 +1,21 @@
+[Unit]
+Description=Mineradio server accounts
+After=mineradio.service
+Wants=mineradio.service
+
+[Service]
+User=mineradio
+Group=mineradio
+WorkingDirectory=/opt/mineradio/account-gateway
+Environment=PYTHONPATH=/opt/mineradio/account-gateway
+ExecStart=/opt/mineradio/venv/bin/python -B deploy/server-accounts/gateway.py
+Restart=on-failure
+StateDirectory=mineradio-accounts
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target

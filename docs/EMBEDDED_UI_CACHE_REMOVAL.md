@@ -17,13 +17,6 @@
 3. **真实 Windows 成品：** 原安装 2.3.13 与新成品 2.3.14 复用同一个独立测试数据目录和回环来源，复现旧 Worker/缓存后，由新成品自动执行迁移。账号、歌单、本地音频和歌词测试数据、其他媒体缓存保留；Worker 数量和页面缓存均为 0，无离线提示。两版各 334 个模块加载成功，均正常退出。用户当前正在使用的安装和数据没有被此测试替换。
 4. **准备与打包：** Windows 与 Android 的生成目录均移除三份废弃资源，不会残留旧生成文件。Android 保留完整 21 个 SDK DEX、原生库、原签名身份，并完成版本、ZIP 对齐及签名检查。
 
-自动边界检查由 GitHub Actions 在 Windows 和 Linux 执行。人工触发的成品和浏览器检查命令：
-
-```powershell
-python Windows_exe/checks/check_embedded_cache.py
-python Windows_exe/checks/check_frozen_cache_migration.py
-```
-
-前者需要 Playwright 和 Edge；后者还需要本机已有的旧版 Windows 安装及刚构建的成品，会使用专用测试目录，不读取用户的真实账号。其余单元检查按项目 README 运行。
+上面记录了当时针对 Electron 包和共享界面的迁移验证。当前 Windows Rust 包的内置资源与资料迁移由 `cargo test --locked --manifest-path Windows_rust/Cargo.toml` 检查。
 
 本轮没有向安卓手机安装新版；Android 系统 WebView 上的升级迁移尚需真机验收。浏览器迁移验证与 APK 检查分别证明其对应范围。

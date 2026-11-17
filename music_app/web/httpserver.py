@@ -21,6 +21,7 @@ from music_app.core.comments import CommentError
 from . import media as _web_media
 from . import router as _web_router
 from . import client_assets as _web_client_assets
+from . import server_account_client as _server_account_client
 
 
 class Handler(_web_media.MediaMixin, SimpleHTTPRequestHandler):
@@ -45,12 +46,19 @@ class Handler(_web_media.MediaMixin, SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlsplit(self.path)
+        if parsed.path == _server_account_client.STATUS and _server_account_client.enabled():
+            try:
+                return self.json(_server_account_client.status(self))
+            except _web_auth_security.LocalAuthError as error:
+                return self.json(dict(error=error.code, message=str(error)), error.status)
         if not parsed.path.startswith('/api/') or (parsed.path.startswith('/api/local/auth/') and parsed.path != '/api/local/auth/status'):
             return self._get()
         query = {k: v[0] for k, v in urllib.parse.parse_qs(parsed.query).items()}
         provider = next((p for p in ('qq', 'kugou', 'qishui') if parsed.path.startswith('/api/' + p + '/')), query.get('provider') or query.get('platform') or 'netease')
         try:
-            values = request_credentials.parse_request(self.headers, query, provider)
+            values = _server_account_client.parse_request(self, query, provider)
+        except _web_auth_security.LocalAuthError as error:
+            return self.json(dict(error=error.code, message=str(error)), error.status)
         except (ValueError, TypeError):
             return self.json(dict(error='cookie_input_invalid', message='请求的 Cookie 参数格式错误'), 400)
         cancellable = parsed.path.endswith(('/song/url', '/lyric', '/album/detail', '/song/comments')) or parsed.path == '/api/mv'
@@ -177,7 +185,7 @@ class Handler(_web_media.MediaMixin, SimpleHTTPRequestHandler):
                 provider = _web_comments.LIKE_ROUTES[parsed.path]
                 payload = _web_auth_security.read_json_request(self)
                 try:
-                    values = request_credentials.parse_request(self.headers, {}, provider)
+                    values = _server_account_client.parse_request(self, {}, provider)
                 except (ValueError, TypeError):
                     return self.json(dict(ok=False, error='cookie_input_invalid', message='平台凭据格式不正确'), 400)
                 with request_credentials.bind(values):
@@ -186,7 +194,7 @@ class Handler(_web_media.MediaMixin, SimpleHTTPRequestHandler):
                 _web_auth_security.assert_local_request(self)
                 payload = _web_auth_security.read_json_request(self)
                 try:
-                    values = request_credentials.parse_request(self.headers, {}, payload.get('provider'))
+                    values = _server_account_client.parse_request(self, {}, payload.get('provider'))
                 except (ValueError, TypeError):
                     return self.json(dict(ok=False, error='cookie_input_invalid', message='平台凭据格式错误'), 400)
                 with request_credentials.bind(values):
@@ -217,7 +225,6 @@ class Handler(_web_media.MediaMixin, SimpleHTTPRequestHandler):
 
     def route(self, path, query):
         return _web_router.dispatch(path, query)
-
 
 def create_server(host='127.0.0.1', port=18080):
     """创建尚未开始监听循环的服务，便于统一启动和关闭。"""

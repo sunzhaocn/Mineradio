@@ -59,20 +59,16 @@ function updateDevelopmentFxControls() {
     ['desktopLyrics', 't-desktopLyrics', '全屏幕置顶歌词'],
     ['desktopLyricsClickThrough', 't-desktopLyricsClickThrough', '锁定后防误触；鼠标移到桌面歌词上按中键可锁定/解锁'],
     ['desktopLyricsCinema', 't-desktopLyricsCinema', '桌面歌词绑定鼓点电影震动，基础漂浮始终保留'],
-    ['desktopLyricsHighlight', 't-desktopLyricsHighlight', '桌面歌词按播放进度高亮'],
-    ['wallpaperMode', 't-wallpaperMode', '把完整 Mineradio 放到 Windows 桌面；仅通过设置开关退出；重启默认关闭']
+    ['desktopLyricsHighlight', 't-desktopLyricsHighlight', '桌面歌词按播放进度高亮']
   ].forEach(function (item) {
-    var runtimeUnavailable = item[0] === 'wallpaperMode'
-      && typeof desktopWallpaperRuntimeState !== 'undefined'
-      && desktopWallpaperRuntimeState.supported === false;
-    var locked = isDevelopmentLockedFx(item[0]) || runtimeUnavailable;
+    var locked = isDevelopmentLockedFx(item[0]);
     var el = document.getElementById(item[1]);
     if (!el) return;
     el.classList.toggle('dev-locked', locked);
     if (locked) {
       el.classList.remove('on');
       el.setAttribute('aria-disabled', 'true');
-      el.title = runtimeUnavailable ? '当前系统不支持桌面壁纸模式' : '开发中，暂不可用';
+      el.title = '开发中，暂不可用';
     } else {
       el.removeAttribute('aria-disabled');
       el.title = item[2];
@@ -81,23 +77,14 @@ function updateDevelopmentFxControls() {
   [
     ['desktopLyrics', 'fx-desktoplyricssize'],
     ['desktopLyrics', 'fx-desktoplyricsopacity'],
-    ['desktopLyrics', 'fx-desktoplyricsy'],
-    ['wallpaperMode', 'fx-wallpaperopacity']
+    ['desktopLyrics', 'fx-desktoplyricsy']
   ].forEach(function (item) {
-    var runtimeUnavailable = item[0] === 'wallpaperMode'
-      && typeof desktopWallpaperRuntimeState !== 'undefined'
-      && desktopWallpaperRuntimeState.supported === false;
-    var locked = isDevelopmentLockedFx(item[0]) || runtimeUnavailable;
+    var locked = isDevelopmentLockedFx(item[0]);
     var input = document.getElementById(item[1]);
     if (!input) return;
     input.disabled = locked;
     var row = input.closest && input.closest('.fx-slider');
     if (row) row.classList.toggle('dev-locked', locked);
-  });
-  var wallpaperFpsLocked = isDevelopmentLockedFx('wallpaperMode')
-    || (typeof desktopWallpaperRuntimeState !== 'undefined' && desktopWallpaperRuntimeState.supported === false);
-  document.querySelectorAll('#wallpaper-fps-seg [data-wallpaper-fps]').forEach(function (btn) {
-    btn.disabled = wallpaperFpsLocked;
   });
 }
 
@@ -105,15 +92,6 @@ function updateDesktopLyricsFpsControls() {
   var fps = normalizeDesktopLyricsFps(fx.desktopLyricsFps);
   document.querySelectorAll('#desktop-lyrics-fps-seg [data-desktop-lyrics-fps]').forEach(function (btn) {
     btn.classList.toggle('active', normalizeDesktopLyricsFps(btn.getAttribute('data-desktop-lyrics-fps')) === fps);
-  });
-}
-
-function updateWallpaperFpsControls() {
-  fx.wallpaperFps = normalizeWallpaperFps(fx.wallpaperFps);
-  document.querySelectorAll('#wallpaper-fps-seg [data-wallpaper-fps]').forEach(function (btn) {
-    var active = normalizeWallpaperFps(btn.getAttribute('data-wallpaper-fps')) === fx.wallpaperFps;
-    btn.classList.toggle('active', active);
-    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
 }
 

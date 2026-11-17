@@ -66,10 +66,10 @@
     bottom: 128px
   }
 
-  body.desktop-shell:not(.desktop-wallpaper-mode).empty-home-active #empty-home,
-  body.desktop-shell:not(.desktop-wallpaper-mode).empty-home-active.controls-visible #empty-home,
-  html:fullscreen body.desktop-shell:not(.desktop-wallpaper-mode).empty-home-active #empty-home,
-  html:fullscreen body.desktop-shell:not(.desktop-wallpaper-mode).empty-home-active.controls-visible #empty-home {
+  body.desktop-shell.empty-home-active #empty-home,
+  body.desktop-shell.empty-home-active.controls-visible #empty-home,
+  html:fullscreen body.desktop-shell.empty-home-active #empty-home,
+  html:fullscreen body.desktop-shell.empty-home-active.controls-visible #empty-home {
     bottom: 126px
   }
 }
@@ -77,8 +77,8 @@
 @media (min-width:761px) and (max-height:760px) {
   body.empty-home-active:not(.desktop-shell) #empty-home,
   body.empty-home-active:not(.desktop-shell).controls-visible #empty-home,
-  body.desktop-shell:not(.desktop-wallpaper-mode).empty-home-active #empty-home,
-  body.desktop-shell:not(.desktop-wallpaper-mode).empty-home-active.controls-visible #empty-home {
+  body.desktop-shell.empty-home-active #empty-home,
+  body.desktop-shell.empty-home-active.controls-visible #empty-home {
     bottom: 122px
   }
 }
@@ -383,46 +383,4 @@
   .home-platform-recommend-list {
     max-height: none
   }
-}
-
-/* Full-desktop work-area layout. These offsets are renderer DIPs supplied by
-   Electron, so a bottom/side taskbar never covers desktop-mode controls. */
-
-:root {
-  --desktop-safe-top: 0px;
-  --desktop-safe-right: 0px;
-  --desktop-safe-bottom: 0px;
-  --desktop-safe-left: 0px;
-}
-
-body.desktop-shell.desktop-wallpaper-mode #desktop-titlebar {
-  display: none !important;
-}
-
-body.desktop-wallpaper-mode.desktop-wallpaper-interactive #desktop-mode-control-dock {
-  top: calc(var(--desktop-safe-top) + 16px);
-  right: calc(var(--desktop-safe-right) + 24px);
-}
-
-/* Explorer's layered colour-key host can be reported as fully occluded while
-   the main HWND is being reparented. Chromium then freezes a newly started
-   opacity transition at its transparent first frame even though the final
-   class is already correct. Full desktop uses an immediate outer HUD state;
-   the existing glass/filter contents and their own animations stay untouched. */
-
-body.desktop-wallpaper-hud-prime.desktop-wallpaper-mode.desktop-wallpaper-interactive #bottom-bar,
-body.desktop-wallpaper-hud-prime.desktop-wallpaper-mode.desktop-wallpaper-interactive #empty-home {
-  transition: none !important;
-}
-
-/* The desktop renderer can be reported as occluded while Explorer reparents
-   it. Keep the final functional surfaces explicit so an opacity transition
-   cannot remain frozen on its transparent first sample. This only fixes the
-   outer visibility state; the saved player glass/filter texture is untouched. */
-
-body.desktop-wallpaper-mode.desktop-wallpaper-interactive.empty-home-active #empty-home {
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
-  transform: translateX(-50%) translateY(0) scale(1) !important;
 }

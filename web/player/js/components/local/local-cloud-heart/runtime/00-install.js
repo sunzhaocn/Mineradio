@@ -18,7 +18,7 @@
     } finally { clearTimeout(timer); }
   }
   var cloud = window.createWebCloudHeartStore({ request: request, labels: labels, sameSong: window.webFavoriteTools.sameSong,
-    configured: function (p) { return !!(window.localMusicCredentials && window.localMusicCredentials.read && window.localMusicCredentials.read(p).cookie); },
+    configured: function (p) { return !!(window.localMusicCredentials && window.localMusicCredentials.configured(p)); },
     match: function (song, p) { return findControlSourceMatchResult(song, p); }, onChange: scheduleScan });
   window.webCloudHeart = cloud;
   var press = window.createWebHeartPressController({

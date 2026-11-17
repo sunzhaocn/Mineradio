@@ -264,7 +264,8 @@ function wallpaperEngineProjectById(id) {
 function wallpaperEngineMediaUrl(item, kind) {
   item = item || {};
   kind = kind === 'media' ? 'media' : 'preview';
-  return 'mineradio-wallpaper://' + kind + '/' + encodeURIComponent(item.id || '') + '?v=' + encodeURIComponent(String(item.updatedAt || 0)) + '&token=' + encodeURIComponent(wallpaperEngineMediaToken);
+  var prefix = wallpaperEngineDesktopApi()?.wallpaperEngineHttpMedia ? '/api/native/wallpaper/' : 'mineradio-wallpaper://';
+  return prefix + kind + '/' + encodeURIComponent(item.id || '') + '?v=' + encodeURIComponent(String(item.updatedAt || 0)) + '&token=' + encodeURIComponent(wallpaperEngineMediaToken);
 }
 
 

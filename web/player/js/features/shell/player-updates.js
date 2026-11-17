@@ -32,11 +32,13 @@
     updatePreviewState.status = state.status;
     var entry = document.getElementById('update-entry');
     if (entry) {
-      entry.title = state.updateAvailable ? '发现新版本，点击更新' : '检查更新';
+      entry.title = '发现新版本，点击更新';
       entry.setAttribute('aria-label', entry.title);
       entry.classList.toggle('downloading', state.status === 'downloading');
     }
-    if (typeof setUpdatePreviewVisible === 'function' && !updatePreviewState.visible) setUpdatePreviewVisible(true);
+    if (typeof setUpdatePreviewVisible === 'function' && updatePreviewState.visible !== !!state.updateAvailable) {
+      setUpdatePreviewVisible(!!state.updateAvailable);
+    }
     var version = document.getElementById('update-modal-version');
     if (version) version.textContent = 'v' + updatePreviewState.version;
     var title = document.getElementById('update-modal-title');
@@ -71,8 +73,11 @@
       : android ? '从 GitHub 下载并校验安装包，按系统提示覆盖安装。保留账号、歌单、本地音乐和设置。'
       : '点击立即更新后，下载并校验安装包，自动退出并覆盖安装。保留账号、歌单和设置，安装后可重新打开。');
     var androidEntry = document.getElementById('android-update-entry');
-    if (androidEntry) androidEntry.textContent = state.status === 'downloading' ? '下载 ' + Math.floor(state.progress || 0) + '%'
-      : state.status === 'downloaded' ? '安装更新' : state.updateAvailable ? '发现新版本' : '检查更新';
+    if (androidEntry) {
+      androidEntry.hidden = !state.updateAvailable;
+      androidEntry.textContent = state.status === 'downloading' ? '下载 ' + Math.floor(state.progress || 0) + '%'
+        : state.status === 'downloaded' ? '安装更新' : '发现新版本';
+    }
     var secondary = document.querySelector('#update-modal .update-secondary-btn');
     if (secondary) secondary.textContent = busy() ? '收起' : '关闭';
   }
@@ -97,11 +102,12 @@
       var actions = document.querySelector('.web-library-actions');
       if (actions && !document.getElementById('android-update-entry')) {
         var entry = document.createElement('button');
-        entry.id = 'android-update-entry'; entry.type = 'button'; entry.textContent = '检查更新';
+        entry.id = 'android-update-entry'; entry.type = 'button'; entry.hidden = true;
         entry.addEventListener('click', function () { openUpdatePanel(); });
         actions.appendChild(entry);
       }
     }
-    bridge.getUpdateState().then(accept).then(function () { if (!android) return check(); }).catch(function () {});
+    bridge.getUpdateState().then(accept).catch(function () {}).then(check);
+    setInterval(function () { if (!document.hidden && !state.updateAvailable) check(); }, 30 * 60 * 1000);
   }, { once: true });
 })();

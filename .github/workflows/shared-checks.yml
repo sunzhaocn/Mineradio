@@ -32,10 +32,14 @@ jobs:
         run: python -m pip install Pillow==13.0.0
       - name: Check Python authentication and media boundaries
         run: python -X utf8 -m unittest discover -s checks -p 'test_*.py' -v
-      - name: Check desktop lifecycle and update retries
-        working-directory: Windows_exe
-        run: npm test
       - name: Check Android preparation, SDK validation and service lifecycle policy
         run: python -X utf8 -m unittest discover -s Android_apk/checks -p 'test_*.py' -v
       - name: Check Android playback bridge and local listening statistics
         run: node --test Android_apk/checks/bridge-regressions.test.cjs checks/listen-stats.test.cjs checks/visual-exports.test.cjs
+  windows-rust:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install stable --profile minimal
+      - run: cargo +stable test --locked --manifest-path Windows_rust/Cargo.toml

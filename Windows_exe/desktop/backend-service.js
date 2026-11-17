@@ -78,7 +78,8 @@ async function startBackend(app, userData, onUnexpectedExit) {
   const log = fs.createWriteStream(logFile, { flags: 'a' });
   const child = spawn(executable, ['--host', '127.0.0.1', '--api-port', String(ports.api), '--web-port', String(ports.web)], {
     cwd: path.dirname(executable),
-      env: { ...process.env, MINERADIO_DATA_ROOT: data, MINERADIO_PARENT_PID: String(process.pid), MINERADIO_CLIENT_ASSET_INIT: '1',
+    env: { ...process.env, MINERADIO_DATA_ROOT: data, MINERADIO_PARENT_PID: String(process.pid), MINERADIO_CLIENT_ASSET_INIT: '1',
+      MINERADIO_DESKTOP_SERVER_ACCOUNTS: '1',
       MINERADIO_NODE_PATH: path.join(tools, 'node.exe'), MINERADIO_FFMPEG_PATH: path.join(tools, 'ffmpeg.exe'),
       QISHUI_SDK_DIR: sdk, MINERADIO_BUNDLED_SDK_DIR: sdk,
       PATH: tools + path.delimiter + (process.env.PATH || ''), PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' },

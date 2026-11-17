@@ -1,6 +1,15 @@
 'use strict';
 
 
+function renderMainSceneForSplash(now) {
+  splashWarmRenderLast = now;
+  var startedAt = performance.now();
+  renderer.render(scene, camera);
+  var probe = window.__mineradioPerf;
+  if (probe && probe.markSince) probe.markSince('renderer.render.splash', startedAt);
+}
+
+
 function animate() {
   var exportClock = window.mineradioExportClock;
   if (exportClock && !exportClock.drawing) return;
@@ -43,12 +52,7 @@ function animate() {
       if (floatGroup) floatGroup.visible = false;
       if (backCoverGroup) backCoverGroup.visible = false;
     }
-    if (now - splashWarmRenderLast > 520) {
-      splashWarmRenderLast = now;
-      var splashRenderPerfStart = performance.now();
-      renderer.render(scene, camera);
-      if (perfProbe && perfProbe.markSince) perfProbe.markSince('renderer.render.splash', splashRenderPerfStart);
-    }
+    if (!prepareStartupSplash && now - splashWarmRenderLast > 520) renderMainSceneForSplash(now);
     var splashFrameCostMs = performance.now() - framePerfStart;
     if (typeof sampleAdaptiveFrameCost === 'function') {
       var splashFrameLoad = sampleAdaptiveFrameCost(splashFrameCostMs, renderPerfState.targetFps || renderPerfState.displayHz || 60);

@@ -122,7 +122,6 @@ function applyFxArchiveSnapshot(snapshot) {
   applySavedLyricPaletteState();
   refreshCurrentLyricStyle();
   applyDesktopLyricsState(true);
-  applyWallpaperModeState(true);
   updateRenderPowerClasses();
   applyRendererPowerMode();
   saveLyricLayout({ user: true, reason: 'archiveApply' });

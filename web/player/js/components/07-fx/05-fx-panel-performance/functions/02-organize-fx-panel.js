@@ -215,7 +215,6 @@ function relabelFxPanelControls() {
   setFxSectionBefore('fx-lyricscale', '位置与角度');
   setFxSectionBefore('fx-desktoplyricssize', '桌面歌词');
   setFxSectionBefore('desktop-lyrics-fps-seg', '桌面歌词帧率');
-  setFxSectionBefore('wallpaper-fps-seg', '壁纸帧率');
   setFxSectionBefore('close-behavior-seg', '关闭窗口');
   setFxSectionBefore('t-startupAutoplay', '启动播放');
   setFxSectionBefore('fx-playlistblur', '左侧歌单栏');
@@ -265,7 +264,6 @@ function relabelFxPanelControls() {
   setFxSliderLabel('fx-desktoplyricssize', '桌面歌词大小');
   setFxSliderLabel('fx-desktoplyricsopacity', '桌面歌词透明度');
   setFxSliderLabel('fx-desktoplyricsy', '桌面歌词高度');
-  setFxSliderLabel('fx-wallpaperopacity', '壁纸透明度');
   setFxSliderLabel('fx-shelfsize', '歌单架大小');
   setFxSliderLabel('fx-shelfx', '左右位置');
   setFxSliderLabel('fx-shelfy', '上下位置');

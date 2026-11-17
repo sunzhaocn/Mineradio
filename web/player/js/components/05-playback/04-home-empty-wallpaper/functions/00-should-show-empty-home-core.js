@@ -139,6 +139,7 @@ function applyStartupStarfieldPreset() {
 function updateEmptyHomeVisibility(opts) {
   opts = opts || {};
   var show = shouldShowEmptyHome();
+  var enteringHome = show && !emptyHomeActive;
   emptyHomeActive = show;
   document.body.classList.toggle('empty-home-active', show);
   if (window.mineradioMV) mineradioMV.setHomeVisible(show);
@@ -147,6 +148,7 @@ function updateEmptyHomeVisibility(opts) {
   if (show) activateHomeWallpaperPreview();
   else deactivateHomeWallpaperPreview(false);
   if (show) {
+    if (enteringHome && document.body.classList.contains('desktop-shell')) toggleFxPanel(false);
     setPeek(document.getElementById('search-area'), true, 'search');
     renderHomeDiscover();
     if (!hasAnyPlatformLogin() && !window.MINERADIO_LOCAL_WEB) {
@@ -197,11 +199,6 @@ function openHomeLocalImport() {
   updateEmptyHomeVisibility();
   if (typeof loadPersistedLocalLibraryIntoQueue === 'function' && loadPersistedLocalLibraryIntoQueue()) return;
   openUploadPanel();
-}
-
-function openHomeProductGuide() {
-  closeLoginModal();
-  setTimeout(function () { startVisualGuide({ manual: true, source: 'home' }); }, 160);
 }
 
 async function waitForHomeDiscoverIdle(timeout) {
@@ -322,10 +319,6 @@ function openHomeThirdCard() {
 }
 
 function openHomeLibrary() {
-  if (!hasAnyPlatformLogin() && !homeDiscoverState.loggedIn) {
-    openHomeProductGuide();
-    return;
-  }
   homeSuppressed = false;
   setHomeControlsLocked(false);
   openPlaylistPanelTab('playlists', true);

@@ -120,10 +120,6 @@ function executeHotkeyAction(actionKey, source) {
   if (actionKey === 'toggleDesktopLyrics') return toggleFx('desktopLyrics');
 }
 
-function desktopInteractionHotkeyHint() {
-  return '请在设置中开启或关闭完整桌面模式';
-}
-
 function handleConfiguredLocalHotkey(e) {
   if (!hotkeySettings || !hotkeySettings.local || isTypingTarget(e.target)) return false;
   if (hotkeyCaptureState || document.getElementById('hotkey-modal') && document.getElementById('hotkey-modal').classList.contains('show')) return false;

@@ -1,0 +1,61 @@
+[package]
+name = "mineradio-windows"
+version = "2.3.25"
+edition = "2024"
+license = "GPL-3.0-only"
+
+[features]
+preview = []
+
+[[bin]]
+name = "MineradioRust"
+path = "src/main.rs"
+
+[dependencies]
+aes = "0.8"
+anyhow = "1"
+axum = "0.8"
+base64 = "0.22"
+bytes = "1"
+cbc = { version = "0.1", features = ["alloc", "block-padding"] }
+ctr = "0.9"
+flate2 = "1"
+futures-util = "0.3"
+getrandom = "0.4"
+hex = "0.4"
+include_dir = "0.7"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+md-5 = "0.10"
+mime_guess = "2"
+num-bigint = "0.4"
+qrcode = { version = "0.14", default-features = false }
+regex = "1"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-native-roots", "cookies", "json", "stream", "gzip", "deflate", "brotli"] }
+ring = "0.17"
+rumqttc = { version = "0.25.1", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_urlencoded = "0.7"
+sha2 = "0.10"
+tempfile = "3"
+time = "0.3"
+tokio = { version = "1", features = ["fs", "io-util", "macros", "net", "process", "rt-multi-thread", "sync", "time"] }
+tokio-util = { version = "0.7", features = ["io"] }
+tokio-tungstenite = { version = "0.28", features = ["rustls-tls-native-roots"] }
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+
+[target.'cfg(windows)'.dependencies]
+rfd = { version = "0.15.4", default-features = false }
+tao = "0.35"
+tray-icon = "0.26"
+webview2-com = "0.39.1"
+windows = { version = "0.62", features = ["Graphics_Capture", "Graphics_DirectX_Direct3D11", "Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_System_WinRT_Direct3D11", "Win32_System_WinRT_Graphics_Capture"] }
+windows-core = "0.62"
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Dwm", "Win32_Graphics_Gdi", "Win32_Security", "Win32_Storage_FileSystem", "Win32_System_Com", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Pipes", "Win32_System_ProcessStatus", "Win32_System_Registry", "Win32_System_SystemInformation", "Win32_System_Threading", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }
+wry = "0.57.2"
+zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
+
+[profile.release]
+strip = true
+lto = "thin"

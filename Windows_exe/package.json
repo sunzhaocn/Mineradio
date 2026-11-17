@@ -1,7 +1,7 @@
 {
   "name": "mineradio-windows",
   "productName": "Mineradio",
-  "version": "2.3.17",
+  "version": "2.3.18",
   "description": "Mineradio 四平台音乐播放器 Windows 桌面版",
   "author": "Mineradio contributors",
   "license": "GPL-3.0-only",
@@ -9,7 +9,6 @@
   "main": "desktop/main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node --test checks/*.test.js",
     "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
     "pack": "electron-builder --win dir --x64 --publish never",
     "dist": "electron-builder --win nsis --x64 --publish never"

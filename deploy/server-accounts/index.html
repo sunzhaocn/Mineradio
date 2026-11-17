@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mineradio 服务器账号</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui, "Microsoft YaHei", sans-serif; background: #11171c; color: #edf2f3; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100dvh; padding: clamp(18px, 5vw, 56px); background: radial-gradient(ellipse at 50% 0, #263835, transparent 65%); }
+    main { max-width: 600px; margin: 0 auto; padding: clamp(16px, 4vw, 32px); background: #131b20; border: 1px solid #ffffff1c; border-radius: 24px; }
+    h1 { margin: 0 0 22px; font-size: clamp(20px, 5vw, 28px); }
+    h2 { margin: 0; font-size: 20px; }
+    nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 24px; }
+    button, textarea, input { font: inherit; }
+    button { border: 1px solid #ffffff25; border-radius: 10px; background: #ffffff0b; color: inherit; padding: 9px 10px; min-height: 42px; }
+    button { cursor: pointer; }
+    button:disabled { cursor: default; opacity: .5; }
+    nav button { font-size: 13px; padding: 7px 2px; }
+    button[aria-pressed="true"], .primary { border-color: #b9d68f; }
+    :focus-visible { outline: 2px solid #b9d68f; outline-offset: 3px; }
+    label, #account-state { display: block; margin: 12px 0; font-size: 13px; color: #bbcad1; }
+    textarea, input { display: block; width: 100%; margin-top: 7px; padding: 10px; border: 1px solid #ffffff28; border-radius: 9px; background: #0f151a; color: #edf2f3; }
+    textarea { resize: vertical; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .row label { flex: 1 1 140px; }
+    .hint { color: #bbcad1; font-size: 13px; line-height: 1.6; }
+    #message { color: #c6e3ad; min-height: 1.3em; margin: 16px 0 0; font-size: 14px; }
+    #message.error { color: #ffb0b4; }
+    details { margin-top: 22px; padding-top: 14px; border-top: 1px solid #ffffff22; color: #bbcad1; font-size: 13px; }
+    summary { cursor: pointer; }
+    details p { line-height: 1.7; overflow-wrap: anywhere; }
+    a { color: #c6e3ad; }
+    [hidden] { display: none !important; }
+  </style>
+  <script defer src="accounts.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Mineradio 服务器账号</h1>
+    <nav aria-label="音乐平台">
+      <button type="button" data-provider="netease">网易云</button>
+      <button type="button" data-provider="qq">QQ 音乐</button>
+      <button type="button" data-provider="kugou">酷狗</button>
+      <button type="button" data-provider="qishui">汽水</button>
+    </nav>
+    <h2 id="platform">网易云音乐</h2>
+    <p id="account-state">正在读取账号状态…</p>
+    <p class="hint">在 Mineradio 登录对应平台后，点击「复制 Cookie」，再粘贴到这里。</p>
+    <form id="cookie-form" autocomplete="off">
+      <label>登录 Cookie
+        <textarea id="cookie" rows="4" maxlength="25000" required spellcheck="false" placeholder="粘贴音乐平台请求中的 Cookie"></textarea>
+      </label>
+      <div id="qishui-fields" class="row" hidden>
+        <label>设备 ID（可选）<input id="device-id" inputmode="numeric" pattern="[0-9]{1,25}"></label>
+        <label>安装 ID（可选）<input id="install-id" inputmode="numeric" pattern="[0-9]{1,25}"></label>
+      </div>
+      <div class="row">
+        <button id="save" type="submit" class="primary">保存到服务器</button>
+        <button id="remove" type="button">清除登录</button>
+      </div>
+    </form>
+    <p id="message" role="status" aria-live="polite"></p>
+    <details>
+      <summary>给另一台 Windows 设备授权</summary>
+      <p>将授权文件保存到 <code>%APPDATA%\Mineradio\data\config</code>，文件名保持为 <code>server-account.key</code>。打开客户端，选「使用服务器」。</p>
+      <a href="api/device-key" download>下载设备授权文件</a>
+    </details>
+  </main>
+</body>
+</html>

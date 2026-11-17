@@ -92,11 +92,11 @@ body.song-mv-selected.immersive-mode:not(.controls-visible) #bottom-handle {
 .mv-fallback-settings option { background: #202126; color: #eee; }
 
 /* Touch launchers occupy the header; panels begin below them in both rotations. */
-html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen):not(.desktop-wallpaper-mode) {
+html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen) {
   --web-safe-top: 58px; --web-header-bottom: 170px;
 }
-html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen):not(.desktop-wallpaper-mode) #top-right,
-html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen):not(.desktop-wallpaper-mode) #search-area.peek {
+html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen) #top-right,
+html.player-controls-shell body.desktop-shell:not(.desktop-fullscreen) #search-area.peek {
   top: 58px !important;
 }
 html.player-controls-shell body:is(.web-adapter,.desktop-shell) #fx-panel {
@@ -122,6 +122,9 @@ html.player-controls-shell body:is(.web-adapter,.desktop-shell) #fx-fab {
   transform: none !important;
 }
 html.player-controls-shell body:is(.web-adapter,.desktop-shell) #fx-fab-hide-btn { display: none; }
+html.player-controls-shell body.desktop-shell.empty-home-active :is(#fx-fab, #fx-fab-hide-btn, #fx-panel) {
+  display: none !important;
+}
 html.player-controls-shell body:is(.web-adapter,.desktop-shell) #top-right { flex-direction: row; width: auto; gap: 8px; }
 html.player-controls-shell body:is(.web-adapter,.desktop-shell) #diy-mode-btn {
   position: relative; top: auto; right: auto; margin: 0;

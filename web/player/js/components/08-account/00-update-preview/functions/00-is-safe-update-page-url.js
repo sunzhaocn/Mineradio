@@ -69,6 +69,7 @@ function setUpdatePreviewVisible(visible) {
   updatePreviewState.visible = !!visible;
   var entry = document.getElementById('update-entry');
   if (!entry) return;
+  entry.hidden = !updatePreviewState.visible;
   entry.classList.toggle('available', updatePreviewState.visible);
   if (!updatePreviewState.visible && window.gsap) {
     window.gsap.killTweensOf(entry);

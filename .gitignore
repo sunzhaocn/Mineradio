@@ -17,6 +17,8 @@
 **/build/
 **/verification/
 **/.local/
+/Windows_rust/target/
+/Windows_rust/dist/
 **/.gradle/
 *.keystore
 *.p12

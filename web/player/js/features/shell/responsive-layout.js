@@ -4,24 +4,25 @@
 (function () {
   var body = document.body;
   var bar = document.getElementById('bottom-bar');
-  var compact = window.matchMedia('(max-width: 1100px)');
   var frame = 0, visibilityKey = '';
   function sync() {
     frame = 0;
-    if (!body.classList.contains('web-adapter') && !body.classList.contains('desktop-shell')) return;
+    var desktop = body.classList.contains('desktop-shell');
+    if (!body.classList.contains('web-adapter') && !desktop) return;
     var viewport = window.visualViewport;
     var height = viewport ? viewport.height : window.innerHeight;
     var input = document.activeElement;
     var editing = input && (input.matches('input, textarea, select') || input.isContentEditable);
     body.classList.toggle('web-keyboard-open', !!(editing && viewport && window.innerHeight - height > 140));
     var shown = bar && bar.classList.contains('visible') && !body.classList.contains('home-controls-locked');
-    if (!window.mineradioRemoteApp && shown && window.innerWidth <= 900 && bar.classList.contains('soft-hidden')
+    if (!desktop && !window.mineradioRemoteApp && shown && window.innerWidth <= 900 && bar.classList.contains('soft-hidden')
       && !body.classList.contains('immersive-mode') && typeof setControlsHidden === 'function') setControlsHidden(false);
     // Read layout before changing inherited variables. A desktop player needs
     // no console measurement; unchanged values must not invalidate the scene.
-    var reserve = 24;
-    if (shown && bar) {
-      var bottom = parseFloat(getComputedStyle(bar).bottom) || 0;
+    var reserve = desktop ? 8 : 24;
+    var barStyle = shown && !bar.classList.contains('soft-hidden') ? getComputedStyle(bar) : null;
+    if (barStyle && barStyle.display !== 'none' && barStyle.visibility !== 'hidden') {
+      var bottom = parseFloat(barStyle.bottom) || 0;
       reserve = Math.ceil(bar.offsetHeight + bottom + 12);
     }
     var viewportValue = Math.round(height) + 'px', spaceValue = reserve + 'px';
@@ -35,7 +36,7 @@
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(sync); }
   function visibilityChanged() {
-    var key = [body.classList.contains('web-adapter'), body.classList.contains('home-controls-locked'),
+    var key = [body.classList.contains('web-adapter'), body.classList.contains('desktop-shell'), body.classList.contains('home-controls-locked'),
       body.classList.contains('immersive-mode'), body.classList.contains('web-mobile-active'),
       bar && bar.classList.contains('visible'), bar && bar.classList.contains('soft-hidden')].join('|');
     if (key === visibilityKey) return;

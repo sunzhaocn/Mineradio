@@ -58,7 +58,7 @@ async function ensureWallpaperEngineGlassSamplerCapture(sessionId, layerToken, a
       || video.srcObject !== stream) {
       throw new Error('WALLPAPER_GLASS_CAPTURE_FIRST_FRAME_TIMEOUT');
     }
-    var primingPixels = sampleWallpaperEngineGlassSamplerPixels(video);
+    var primingPixels = prepared.liveFrames === true ? null : sampleWallpaperEngineGlassSamplerPixels(video);
     if (typeof api.activateWallpaperEngineDwmSurface !== 'function') {
       throw new Error('WALLPAPER_ENGINE_DWM_ACTIVATE_HANDLER_MISSING');
     }
@@ -71,7 +71,8 @@ async function ensureWallpaperEngineGlassSamplerCapture(sessionId, layerToken, a
     // surface. Confirm its pixels changed after DWM activation before exposing
     // the clipped sampler beneath the saved SVG glass. This remains reliable
     // even when Chromium marks the transparent host as document.hidden.
-    var livePixels = await waitForWallpaperEngineGlassSamplerPixelChange(video, stream, primingPixels, 3600);
+    var livePixels = prepared.liveFrames === true ? { meanAbsoluteRgb: 0 }
+      : await waitForWallpaperEngineGlassSamplerPixelChange(video, stream, primingPixels, 3600);
     if (!livePixels || !wallpaperEngineGlassSamplerIsCurrent(sessionId, layerToken, captureToken)) {
       throw new Error('WALLPAPER_GLASS_CAPTURE_LIVE_PIXELS_TIMEOUT');
     }

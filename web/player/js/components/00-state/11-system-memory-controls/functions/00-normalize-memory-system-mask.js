@@ -118,6 +118,7 @@ function updateMemoryControls() {
     if (el) el.classList.toggle('on', !!fx[pair[0]]);
   });
   var systemAvailable = !memoryLastStatusPayload || memoryLastStatusPayload.systemPurgeAvailable !== false;
+  var minimizesForRelease = window.desktopWindow && window.desktopWindow.manualMemoryPurgeMinimizes;
   ['t-memoryAutoSystemTrim', 't-memorySystemAutoElevate'].forEach(function (id) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -138,13 +139,13 @@ function updateMemoryControls() {
       btn.disabled = !systemAvailable;
       btn.classList.toggle('dev-locked', !systemAvailable);
       btn.title = systemAvailable
-        ? 'Manual system memory release. Mineradio skips it while the main window is visible to avoid CPU spikes.'
+        ? (minimizesForRelease ? '最小化播放器后释放系统内存。' : 'Manual system memory release. Mineradio skips it while the main window is visible to avoid CPU spikes.')
         : 'System-level purge is unavailable; background app trim remains active.';
     } else if (index > 1) {
       btn.disabled = !systemAvailable;
       btn.classList.toggle('dev-locked', !systemAvailable);
       btn.title = systemAvailable
-        ? 'Manual elevated release. Minimize or hide Mineradio first; the foreground window is skipped to avoid CPU spikes.'
+        ? (minimizesForRelease ? '最小化播放器后以管理员权限释放系统内存。' : 'Manual elevated release. Minimize or hide Mineradio first; the foreground window is skipped to avoid CPU spikes.')
         : 'System-level purge is unavailable; background app trim remains active.';
     }
   });
@@ -194,7 +195,9 @@ function runSystemMemoryPurge(autoElevate) {
     showToast('桌面版才支持系统级释放');
     return;
   }
-  updateMemoryStatusText(autoElevate ? '正在请求提权系统释放（前台可见时会跳过）...' : '正在尝试系统级手动释放（前台可见时会跳过）...');
+  var minimizesForRelease = window.desktopWindow.manualMemoryPurgeMinimizes;
+  updateMemoryStatusText(minimizesForRelease ? '正在释放系统内存…'
+    : autoElevate ? '正在请求提权系统释放（前台可见时会跳过）...' : '正在尝试系统级手动释放（前台可见时会跳过）...');
   window.desktopWindow.purgeSystemMemory({
     mask: normalizeMemorySystemMask(fx && fx.memorySystemMask),
     autoElevate: !!autoElevate,
@@ -209,7 +212,8 @@ function runSystemMemoryPurge(autoElevate) {
       updateMemoryStatusText('系统释放完成，约释放 ' + (result.freedMB || 0) + ' MB' + (result.partial ? '（部分权限）' : ''));
       showToast('系统释放完成');
     } else if (result && result.needAdmin) {
-      updateMemoryStatusText(autoElevate ? '提权释放未完成：可能取消了管理员权限或被系统拦截' : '当前权限只能完成部分释放；需要时可最小化后点提权释放');
+      updateMemoryStatusText(autoElevate ? '提权释放未完成：可能取消了管理员权限或被系统拦截'
+        : minimizesForRelease ? '当前权限无法完成系统释放，可使用提权释放。' : '当前权限只能完成部分释放；需要时可最小化后点提权释放');
       showToast(autoElevate ? '提权释放未完成' : '需要管理员权限的部分已跳过');
     } else {
       updateMemoryStatusText('系统释放未完成: ' + String(result && result.message || payload && payload.error || ''));

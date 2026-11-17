@@ -42,8 +42,6 @@
 
 ```powershell
 node --test checks/visual-exports.test.cjs
-python -X utf8 Windows_exe/checks/check_video_export.py
-python -X utf8 checks/check_export_ui.py
 python -X utf8 checks/check_mobile_layout.py
 ```
 
